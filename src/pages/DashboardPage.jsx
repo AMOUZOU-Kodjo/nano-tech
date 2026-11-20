@@ -18,10 +18,16 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-6 flex flex-wrap gap-4">
-        <Link to="/account" className="text-sm font-semibold text-sky-700 hover:text-sky-800">
+        <Link
+          to="/account"
+          className="rounded-lg bg-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600"
+        >
           Gérer mon compte →
         </Link>
-        <Link to="/jobs" className="text-sm font-semibold text-sky-700 hover:text-sky-800">
+        <Link
+          to="/jobs"
+          className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+        >
           Voir mes jobs →
         </Link>
       </div>

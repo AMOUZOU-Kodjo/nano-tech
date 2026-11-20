@@ -9,7 +9,9 @@ export function useBilling() {
   return {
     data: status.data ?? checkout.data,
     status: status.data,
+    checkout: checkout.data,
     checkoutUrl: checkout.data?.checkout_url ?? null,
+    sessionId: checkout.data?.session_id ?? null,
     loading: status.loading || checkout.loading,
     error: status.error ?? checkout.error,
     getBillingStatus: status.run,
