@@ -18,18 +18,90 @@ const QUOTA_LABELS = {
   remaining: 'Restant',
 }
 
-// Transforme le quota en lignes lisibles sans ajouter de champ inventé.
-function quotaRows(quota) {
-  if (!quota || typeof quota !== 'object') {
+const USAGE_LABELS = {
+  authenticated: 'Compte authentifié',
+  plan: 'Formule',
+  credits: 'Crédits',
+  paywall_enabled: 'Paywall actif',
+  free_uses_left: 'Essais gratuits restants',
+  ai_uses_left_today: 'Rendus IA restants aujourd’hui',
+  daily_jobs_left: 'Jobs restants aujourd’hui',
+  daily_renders_left: 'Rendus restants aujourd’hui',
+}
+
+const LIMIT_LABELS = {
+  tier: 'Niveau',
+  max_file_mb: 'Taille max. par fichier',
+  max_total_mb: 'Total max. par lot',
+  max_files: 'Nombre max. de fichiers',
+  max_pdf_pages: 'Pages PDF max.',
+  max_video_minutes: 'Durée vidéo max.',
+  max_documents: 'Documents max.',
+  max_document_storage_mb: 'Stockage documents max.',
+}
+
+const AI_LABELS = {
+  limit: 'Limite quotidienne',
+  used: 'Utilisé',
+  remaining: 'Restant',
+  resets_at: 'Réinitialisation',
+}
+
+function formatValue(key, value) {
+  if (typeof value === 'boolean') {
+    return value ? 'Oui' : 'Non'
+  }
+  if (key === 'resets_at' && typeof value === 'string' && !Number.isNaN(Date.parse(value))) {
+    return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+  }
+  if (typeof value === 'number' && key.endsWith('_mb')) {
+    return `${value} Mo`
+  }
+  if (typeof value === 'number' && key.endsWith('_minutes')) {
+    return `${value} min`
+  }
+  return String(value)
+}
+
+function rowsFrom(values, labels) {
+  if (!values || typeof values !== 'object') {
     return []
   }
 
-  return Object.entries(QUOTA_LABELS)
-    .filter(([key]) => key in quota && quota[key] !== null && quota[key] !== undefined)
-    .map(([key, label]) => {
-      const value = quota[key]
-      return { key, label, value: typeof value === 'boolean' ? (value ? 'Oui' : 'Non') : String(value) }
-    })
+  return Object.entries(labels)
+    .filter(([key]) => key in values && values[key] !== null && values[key] !== undefined)
+    .map(([key, label]) => ({ key, label, value: formatValue(key, values[key]) }))
+}
+
+function quotaRows(quota) {
+  return rowsFrom(quota, QUOTA_LABELS)
+}
+
+function usageIdentity(data) {
+  if (!data) {
+    return null
+  }
+  if (!data.user) {
+    return 'Invité'
+  }
+  return data.user.email ?? data.user.id ?? 'Compte connecté'
+}
+
+function ValueList({ rows }) {
+  if (!rows.length) {
+    return <p className="mt-4 text-sm text-slate-600">Aucune donnée disponible.</p>
+  }
+
+  return (
+    <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+      {rows.map((row) => (
+        <div key={row.key} className="rounded-lg bg-slate-50 p-3">
+          <dt className="text-xs uppercase tracking-wide text-slate-500">{row.label}</dt>
+          <dd className="mt-1 text-sm text-slate-700">{row.value}</dd>
+        </div>
+      ))}
+    </dl>
+  )
 }
 
 // Affiche une réponse API non typée sous forme JSON, sans interprétation hasardeuse.
@@ -93,6 +165,16 @@ export default function AccountPage() {
   }
 
   const rows = quotaRows(quota)
+  const usageData = usage.data
+  const usageRows = rowsFrom(usageData, USAGE_LABELS)
+  const limitRows = rowsFrom(usageData?.limits, LIMIT_LABELS)
+  const aiRows = rowsFrom(usageData?.ai, AI_LABELS)
+  const enabledTools = usageData?.tools_enabled && typeof usageData.tools_enabled === 'object'
+    ? Object.values(usageData.tools_enabled).filter(Boolean).length
+    : null
+  const enabledToolsTotal = usageData?.tools_enabled && typeof usageData.tools_enabled === 'object'
+    ? Object.keys(usageData.tools_enabled).length
+    : null
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-12">
@@ -140,7 +222,40 @@ export default function AccountPage() {
             {usage.error.message}
           </p>
         )}
-        {usage.data && <JsonBlock value={usage.data} />}
+        {usageData && (
+          <div className="mt-5 space-y-6">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">Accès et compteurs</h3>
+              <ValueList rows={[{ key: 'identity', label: 'Identité', value: usageIdentity(usageData) }, ...usageRows]} />
+            </div>
+
+            {limitRows.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">Limites du compte</h3>
+                <ValueList rows={limitRows} />
+              </div>
+            )}
+
+            {aiRows.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">Rendus IA</h3>
+                <ValueList rows={aiRows} />
+              </div>
+            )}
+
+            {enabledTools !== null && (
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">Outils activés</h3>
+                <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-lg bg-slate-50 p-3">
+                    <dt className="text-xs uppercase tracking-wide text-slate-500">Outils disponibles</dt>
+                    <dd className="mt-1 text-sm text-slate-700">{enabledTools} / {enabledToolsTotal}</dd>
+                  </div>
+                </dl>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">

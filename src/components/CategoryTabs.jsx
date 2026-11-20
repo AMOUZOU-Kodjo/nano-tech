@@ -13,10 +13,10 @@ export default function CategoryTabs({ categories, activeCategory, onChange }) {
             aria-selected={isActive}
             aria-controls="tools-grid"
             onClick={() => onChange(category.id)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 ${
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 ${
               isActive
-                ? 'bg-sky-500 text-slate-950'
-                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                ? 'border-sky-500 bg-sky-500 text-white'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
             {category.label}

@@ -10,13 +10,13 @@ export default function LogoutButton({ onSuccess }) {
         type="button"
         onClick={logout}
         disabled={loading}
-        className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700 disabled:opacity-60"
+        className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
       >
         {loading ? 'Déconnexion…' : 'Se déconnecter'}
       </button>
 
       {error && (
-        <p className="text-sm text-red-300" role="alert">
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
           {error.message}
         </p>
       )}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { buildApiUrl } from '@/api/client.js'
 import { useCatalog } from '@/hooks/useCatalog.js'
 import { useRender } from '@/hooks/useRender.js'
 
@@ -26,21 +27,149 @@ function normalizeTemplates(payload) {
     .filter((item) => item.id)
 }
 
-// Analyse un champ JSON attendu comme objet ou retourne un message d'erreur local.
-function parseObject(value, label) {
-  let parsed
+function formatValue(value) {
+  if (value === null || value === undefined) {
+    return '—'
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'oui' : 'non'
+  }
+  if (Array.isArray(value)) {
+    return value.length ? value.join(', ') : '—'
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value)
+  }
+  return String(value)
+}
 
+function ValueRows({ value }) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+
+  const rows = Object.entries(value).filter(([, item]) => item !== null && item !== undefined)
+  if (!rows.length) {
+    return <p className="mt-3 text-sm text-slate-600">Aucune information supplémentaire.</p>
+  }
+
+  return (
+    <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+      {rows.map(([key, item]) => (
+        <div key={key} className="rounded-lg bg-slate-50 p-3">
+          <dt className="text-xs uppercase tracking-wide text-slate-500">{key}</dt>
+          <dd className="mt-1 text-sm text-slate-700">{formatValue(item)}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+function resolveUrl(value) {
+  if (typeof value !== 'string' || !value) {
+    return null
+  }
+  return /^https?:\/\//i.test(value) ? value : buildApiUrl(value)
+}
+
+function RenderResult({ data }) {
+  if (typeof data === 'string') {
+    return (
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
+        <h2 className="text-xl font-semibold text-slate-900">Aperçu du rendu</h2>
+        <iframe
+          srcDoc={data}
+          sandbox=""
+          title="Aperçu du rendu"
+          className="mt-4 h-96 w-full rounded-lg border border-slate-200 bg-white"
+        />
+      </div>
+    )
+  }
+
+  const downloadUrl = resolveUrl(data?.download_url ?? data?.document?.download_url ?? data?.url)
+  const fileName = data?.document?.filename ?? data?.document?.name
+  const details = data?.document && typeof data.document === 'object' ? data.document : data
+  const hasRows = details && typeof details === 'object' && !Array.isArray(details) && Object.keys(details).length > 0
+
+  return (
+    <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
+      <h2 className="text-xl font-semibold text-slate-900">Résultat du rendu</h2>
+      {downloadUrl ? (
+        <a
+          href={downloadUrl}
+          className="mt-4 inline-block rounded-lg bg-sky-500 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-600"
+        >
+          {fileName ? `Télécharger ${fileName}` : 'Télécharger le document'}
+        </a>
+      ) : (
+        <p className="mt-3 text-sm text-slate-600">Aucun lien de téléchargement renvoyé.</p>
+      )}
+      {hasRows ? <ValueRows value={details} /> : <JsonBlock value={data} />}
+    </div>
+  )
+}
+
+function RewriteResult({ data }) {
+  const missing = Array.isArray(data?.missing) ? data.missing : []
+  const hasRows = data?.data && typeof data.data === 'object' && !Array.isArray(data.data) && Object.keys(data.data).length > 0
+
+  return (
+    <div className="mt-6 rounded-2xl border border-emerald-200 bg-white p-6">
+      <h2 className="text-xl font-semibold text-slate-900">Résultat de la réécriture</h2>
+      {hasRows && <ValueRows value={data.data} />}
+      {missing.length > 0 && (
+        <div className="mt-5">
+          <h3 className="text-sm font-semibold text-slate-900">Informations manquantes</h3>
+          <ul className="mt-2 space-y-2 text-sm text-slate-600">
+            {missing.map((item, index) => (
+              <li key={`${item?.path ?? 'question'}-${index}`} className="rounded-lg bg-amber-50 p-3">
+                <span className="font-medium text-amber-900">{item?.path ?? 'Question'}</span>
+                {item?.question ? ` — ${item.question}` : ''}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {!hasRows && missing.length === 0 && <JsonBlock value={data} />}
+    </div>
+  )
+}
+
+function parseJson(value, label) {
   try {
-    parsed = JSON.parse(value || '{}')
+    return { value: JSON.parse(value) }
   } catch {
     return { error: `${label} doit être un JSON valide.` }
   }
+}
 
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+// Analyse un champ JSON attendu comme objet ou retourne un message d'erreur local.
+function parseRequiredObject(value, label) {
+  const parsed = parseJson(value, label)
+  if (parsed.error) {
+    return parsed
+  }
+  if (!parsed.value || typeof parsed.value !== 'object' || Array.isArray(parsed.value)) {
     return { error: `${label} doit être un objet JSON.` }
   }
+  return { value: parsed.value }
+}
 
-  return { value: parsed }
+function parseOptionalObject(value, label) {
+  const raw = value.trim()
+  if (!raw || raw === 'null') {
+    return { value: null }
+  }
+
+  const parsed = parseJson(raw, label)
+  if (parsed.error) {
+    return parsed
+  }
+  if (!parsed.value || typeof parsed.value !== 'object' || Array.isArray(parsed.value)) {
+    return { error: `${label} doit être un objet JSON ou null.` }
+  }
+  return { value: parsed.value }
 }
 
 // Page studio : catalogue, rendu de modèles et assistants de réécriture documentés.
@@ -49,13 +178,9 @@ export default function StudioPage() {
   const render = useRender()
   const {
     templates,
-    preview,
-    photoSpecs,
     loading: catalogLoading,
     error: catalogError,
     listTemplates: fetchTemplates,
-    getTemplatePreview: fetchPreview,
-    getPhotoSpecs: fetchPhotoSpecs,
   } = catalog
   const {
     data: renderData,
@@ -71,17 +196,18 @@ export default function StudioPage() {
   } = render
   const [templateKind, setTemplateKind] = useState('cv')
   const [previewId, setPreviewId] = useState('')
-  const [renderForm, setRenderForm] = useState({ kind: 'cv', template_id: '', format: '', data: '{}' })
+  const [lastAction, setLastAction] = useState(null)
+  const [renderForm, setRenderForm] = useState({ kind: 'cv', template_id: '', format: 'html', data: '{}' })
   const [rewriteForm, setRewriteForm] = useState({
     kind: 'cv',
     lang: 'fr',
     target_job: '',
     raw_text: '',
-    existing_data: '{}',
+    existing_data: 'null',
     letter_kind: '',
     job_title: '',
     company: '',
-    cv_data: '{}',
+    cv_data: 'null',
   })
   const [localError, setLocalError] = useState(null)
 
@@ -102,25 +228,32 @@ export default function StudioPage() {
   }, [templateKind, fetchTemplates])
 
   const items = normalizeTemplates(templates)
+  const previewUrl = previewId
+    ? buildApiUrl(`/v1/templates/${encodeURIComponent(templateKind)}/${encodeURIComponent(previewId)}/preview.svg`)
+    : null
 
   function handleRender(event) {
     event.preventDefault()
     setLocalError(null)
 
-    const parsed = parseObject(renderForm.data, 'Les données')
+    if (!renderForm.template_id.trim()) {
+      setLocalError('Sélectionnez un modèle.')
+      return
+    }
+
+    const parsed = parseRequiredObject(renderForm.data, 'Les données')
     if (parsed.error) {
       setLocalError(parsed.error)
       return
     }
 
-    const changes = { data: parsed.value }
-    if (renderForm.template_id.trim()) {
-      changes.template_id = renderForm.template_id.trim()
-    }
-    if (renderForm.format.trim()) {
-      changes.format = renderForm.format.trim()
+    const changes = {
+      template_id: renderForm.template_id.trim(),
+      format: renderForm.format,
+      data: parsed.value,
     }
 
+    setLastAction('render')
     if (renderForm.kind === 'cv') {
       renderCv(changes)
     } else if (renderForm.kind === 'letter') {
@@ -139,8 +272,10 @@ export default function StudioPage() {
       return
     }
 
+    setLastAction('rewrite')
+
     if (rewriteForm.kind === 'cv') {
-      const parsed = parseObject(rewriteForm.existing_data, 'Les données existantes')
+      const parsed = parseOptionalObject(rewriteForm.existing_data, 'Les données existantes')
       if (parsed.error) {
         setLocalError(parsed.error)
         return
@@ -154,7 +289,7 @@ export default function StudioPage() {
       return
     }
 
-    const parsed = parseObject(rewriteForm.cv_data, 'Les données CV')
+    const parsed = parseOptionalObject(rewriteForm.cv_data, 'Les données CV')
     if (parsed.error) {
       setLocalError(parsed.error)
       return
@@ -196,14 +331,6 @@ export default function StudioPage() {
               <option value="cv">CV</option>
               <option value="letter">Lettre</option>
             </select>
-            <button
-              type="button"
-              onClick={fetchPhotoSpecs}
-              disabled={catalogLoading}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:border-slate-300 disabled:opacity-50"
-            >
-              Spécifications photo
-            </button>
           </div>
 
           {catalogLoading && !items.length && <p className="mt-4 text-sm text-slate-600">Chargement…</p>}
@@ -213,24 +340,36 @@ export default function StudioPage() {
             {items.map((item) => (
               <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-3">
                 <span className="text-sm text-slate-700">{item.title}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPreviewId(item.id)
-                    fetchPreview(templateKind, item.id)
-                  }}
-                  className="text-sm text-sky-600 hover:text-sky-700"
-                >
-                  Aperçu
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setRenderForm((current) => ({ ...current, template_id: item.id }))}
+                    className="text-sm text-sky-700 hover:text-sky-800"
+                  >
+                    Utiliser
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewId(item.id)}
+                    className="text-sm text-sky-600 hover:text-sky-700"
+                  >
+                    Aperçu
+                  </button>
+                </div>
               </div>
             ))}
           </div>
 
-          {previewId && typeof preview === 'string' && (
-            <pre className="mt-4 max-h-64 overflow-auto rounded-lg bg-slate-900 p-3 text-xs text-slate-300">{preview}</pre>
+          {previewUrl && (
+            <div className="mt-4">
+              <p className="text-sm font-medium text-slate-700">Aperçu du modèle</p>
+              <img
+                src={previewUrl}
+                alt={`Aperçu du modèle ${previewId}`}
+                className="mt-2 max-h-96 w-full rounded-lg border border-slate-200 bg-white object-contain"
+              />
+            </div>
           )}
-          {photoSpecs && <JsonBlock value={photoSpecs} />}
         </div>
 
         <form onSubmit={handleRender} className="rounded-2xl border border-slate-200 bg-white p-6">
@@ -250,29 +389,38 @@ export default function StudioPage() {
               </select>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="render-template" className="block text-sm font-medium text-slate-700">
-                  Identifiant du modèle
-                </label>
-                <input
-                  id="render-template"
-                  type="text"
-                  value={renderForm.template_id}
-                  onChange={(event) => setRenderForm({ ...renderForm, template_id: event.target.value })}
-                  className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
-                />
-              </div>
-              <div>
-                <label htmlFor="render-format" className="block text-sm font-medium text-slate-700">Format</label>
-                <input
-                  id="render-format"
-                  type="text"
-                  value={renderForm.format}
-                  onChange={(event) => setRenderForm({ ...renderForm, format: event.target.value })}
-                  className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
-                />
-              </div>
+            <div>
+              <label htmlFor="render-template" className="block text-sm font-medium text-slate-700">
+                Identifiant du modèle
+              </label>
+              <input
+                id="render-template"
+                type="text"
+                list="render-templates"
+                required
+                value={renderForm.template_id}
+                onChange={(event) => setRenderForm({ ...renderForm, template_id: event.target.value })}
+                className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
+              />
+              <datalist id="render-templates">
+                {items.map((item) => (
+                  <option key={item.id} value={item.id}>{item.title}</option>
+                ))}
+              </datalist>
+            </div>
+
+            <div>
+              <label htmlFor="render-format" className="block text-sm font-medium text-slate-700">Format</label>
+              <select
+                id="render-format"
+                value={renderForm.format}
+                onChange={(event) => setRenderForm({ ...renderForm, format: event.target.value })}
+                className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
+              >
+                <option value="html">HTML</option>
+                <option value="pdf">PDF</option>
+                <option value="docx">DOCX</option>
+              </select>
             </div>
 
             <div>
@@ -280,6 +428,7 @@ export default function StudioPage() {
               <textarea
                 id="render-data"
                 rows="6"
+                required
                 value={renderForm.data}
                 onChange={(event) => setRenderForm({ ...renderForm, data: event.target.value })}
                 className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 font-mono text-xs text-slate-900"
@@ -289,7 +438,7 @@ export default function StudioPage() {
             <button
               type="submit"
               disabled={renderLoading}
-              className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-50"
+              className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50"
             >
               {renderLoading ? 'Rendu…' : 'Rendre'}
             </button>
@@ -318,13 +467,15 @@ export default function StudioPage() {
 
           <div>
             <label htmlFor="rewrite-lang" className="block text-sm font-medium text-slate-700">Langue</label>
-            <input
+            <select
               id="rewrite-lang"
-              type="text"
               value={rewriteForm.lang}
               onChange={(event) => setRewriteForm({ ...rewriteForm, lang: event.target.value })}
               className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
-            />
+            >
+              <option value="fr">Français</option>
+              <option value="en">Anglais</option>
+            </select>
           </div>
         </div>
 
@@ -335,13 +486,16 @@ export default function StudioPage() {
               <input
                 id="rewrite-target"
                 type="text"
+                maxLength={300}
                 value={rewriteForm.target_job}
                 onChange={(event) => setRewriteForm({ ...rewriteForm, target_job: event.target.value })}
                 className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
               />
             </div>
             <div>
-              <label htmlFor="rewrite-existing" className="block text-sm font-medium text-slate-700">Données existantes</label>
+              <label htmlFor="rewrite-existing" className="block text-sm font-medium text-slate-700">
+                Données existantes
+              </label>
               <textarea
                 id="rewrite-existing"
                 rows="4"
@@ -349,6 +503,7 @@ export default function StudioPage() {
                 onChange={(event) => setRewriteForm({ ...rewriteForm, existing_data: event.target.value })}
                 className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 font-mono text-xs text-slate-900"
               />
+              <p className="mt-1 text-xs text-slate-500">Utilisez `null` si aucune donnée existante n’est disponible.</p>
             </div>
           </div>
         ) : (
@@ -401,6 +556,7 @@ export default function StudioPage() {
           <textarea
             id="rewrite-raw"
             rows="6"
+            required
             value={rewriteForm.raw_text}
             onChange={(event) => setRewriteForm({ ...rewriteForm, raw_text: event.target.value })}
             className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
@@ -410,7 +566,7 @@ export default function StudioPage() {
         <button
           type="submit"
           disabled={renderLoading}
-          className="mt-4 rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-50"
+          className="mt-4 rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50"
         >
           {renderLoading ? 'Traitement…' : 'Réécrire'}
         </button>
@@ -421,7 +577,8 @@ export default function StudioPage() {
           Réécriture terminée.
         </p>
       )}
-      {renderData && <JsonBlock value={renderData} />}
+      {lastAction === 'rewrite' && renderData && <RewriteResult data={renderData} />}
+      {lastAction === 'render' && renderData && <RenderResult data={renderData} />}
 
       {(localError || catalogError || renderError) && (
         <p role="alert" className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">

@@ -9,6 +9,11 @@ const CV_REWRITE_FIELDS = ['lang', 'target_job', 'raw_text', 'existing_data']
 // Champs validés pour l'assistant lettre ; l'OpenAPI attend un paramètre payload.
 const LETTER_REWRITE_FIELDS = ['lang', 'kind', 'job_title', 'company', 'raw_text', 'cv_data']
 
+// Construit le paramètre de requête exigé par les routes de réécriture de lettres.
+function rewritePayload(changes) {
+  return encodeURIComponent(JSON.stringify(pickFields(LETTER_REWRITE_FIELDS, changes)))
+}
+
 // Filtre un objet selon une liste de champs autorisés.
 function pickFields(fields, changes) {
   return Object.fromEntries(
@@ -56,18 +61,16 @@ export function rewriteCv(changes = {}) {
   })
 }
 
-// Réécrit une lettre avec le corps validé dans FRONTEND.md.
+// Réécrit une lettre avec le paramètre payload exigé par l'OpenAPI.
 export function rewriteLetter(changes = {}) {
-  return apiFetch('/v1/letter/rewrite', {
+  return apiFetch(`/v1/letter/rewrite?payload=${rewritePayload(changes)}`, {
     method: 'POST',
-    body: pickFields(LETTER_REWRITE_FIELDS, changes),
   })
 }
 
-// Réécrit plusieurs lettres avec le corps validé dans FRONTEND.md.
+// Réécrit plusieurs lettres avec le paramètre payload exigé par l'OpenAPI.
 export function rewriteLetters(changes = {}) {
-  return apiFetch('/v1/letters/rewrite', {
+  return apiFetch(`/v1/letters/rewrite?payload=${rewritePayload(changes)}`, {
     method: 'POST',
-    body: pickFields(LETTER_REWRITE_FIELDS, changes),
   })
 }

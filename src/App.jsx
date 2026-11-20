@@ -5,6 +5,8 @@ import SiteFooter from '@/components/SiteFooter.jsx'
 import AccountPage from '@/pages/AccountPage.jsx'
 import BillingPage from '@/pages/BillingPage.jsx'
 import BillingReturnPage from '@/pages/BillingReturnPage.jsx'
+import CataloguePage from '@/pages/CataloguePage.jsx'
+import DashboardPage from '@/pages/DashboardPage.jsx'
 import DocumentSharePage from '@/pages/DocumentSharePage.jsx'
 import DocumentsPage from '@/pages/DocumentsPage.jsx'
 import ForgotPasswordPage from '@/pages/ForgotPasswordPage.jsx'
@@ -28,6 +30,8 @@ export default function App() {
         <main className="min-h-screen bg-white text-slate-900">
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/catalogue" element={<CataloguePage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/tools/:tool" element={<ToolPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />

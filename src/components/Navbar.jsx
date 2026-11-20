@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import logoUrl from '../../Logo NanoFile bleu et cyan.png'
 import { useMeContext } from '@/hooks/useMeContext.js'
 
 // Liens principaux affichés dans la barre de navigation.
 const MAIN_LINKS = [
-  { to: '/', label: 'Outils' },
+  { to: '/', label: 'Accueil' },
+  { to: '/catalogue', label: 'Catalogue' },
+  { to: '/dashboard', label: 'Espace' },
   { to: '/studio', label: 'Studio' },
   { to: '/documents', label: 'Documents' },
   { to: '/jobs', label: 'Jobs' },
@@ -56,12 +59,11 @@ export default function Navbar() {
           onClick={() => setMenuOpen(false)}
           className="flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
         >
-          <span
-            aria-hidden="true"
-            className="grid h-9 w-9 place-items-center rounded-xl bg-sky-500 text-lg font-bold text-white"
-          >
-            N
-          </span>
+          <img
+            src={logoUrl}
+            alt=""
+            className="h-14 w-14 shrink-0 rounded-xl object-contain"
+          />
           <span>
             <span className="block text-lg font-bold text-slate-900">NanoFile</span>
             <span className="block text-xs text-slate-500">Outils pour vos fichiers</span>
