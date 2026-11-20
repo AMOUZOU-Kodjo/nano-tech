@@ -5,14 +5,40 @@ function jobPath(jobId, suffix = '') {
   return `/jobs/${encodeURIComponent(jobId)}${suffix}`
 }
 
-// Récupère le statut d'un job ; la réponse 200 est documentée sans schéma détaillé.
-export function getJob(jobId) {
-  return apiFetch(jobPath(jobId))
+// Récupère le statut d'un job ; la route v1 est prioritaire, l'ancienne route sert de repli.
+export async function getJob(jobId) {
+  const id = encodeURIComponent(jobId)
+
+  try {
+    return await apiFetch(`/v1/jobs/${id}`)
+  } catch (error) {
+    if (error?.status !== 404) {
+      throw error
+    }
+
+    return apiFetch(jobPath(jobId))
+  }
 }
 
-// Récupère le résultat d'un job ; la réponse 200 est documentée sans schéma détaillé.
-export function downloadJob(jobId) {
-  return apiFetch(jobPath(jobId, '/download'))
+function resultFileId(file) {
+  if (file?.file_id) {
+    return String(file.file_id)
+  }
+
+  const match = typeof file?.url === 'string' ? file.url.match(/\/files\/([^/?#]+)/) : null
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+// Récupère le résultat via le fichier documenté, avec repli sur l'ancien endpoint de téléchargement.
+export async function downloadJob(jobId, file = null) {
+  const resultFile = file ?? (await getJob(jobId))?.result?.files?.[0]
+  const fileId = resultFileId(resultFile)
+
+  if (fileId) {
+    return apiFetch(`/v1/files/${encodeURIComponent(fileId)}`, { responseType: 'blob' })
+  }
+
+  return apiFetch(jobPath(jobId, '/download'), { responseType: 'blob' })
 }
 
 // Crée un job v1 avec les fichiers et les options sérialisées attendues par l'API.

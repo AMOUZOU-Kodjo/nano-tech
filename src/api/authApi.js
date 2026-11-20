@@ -62,12 +62,25 @@ function pickRegisterFields(changes) {
   )
 }
 
-// Crée un compte ; la réponse 201 est documentée sans schéma détaillé.
-export function register(changes = {}) {
-  return apiFetch('/auth/register', {
-    method: 'POST',
-    body: pickRegisterFields(changes),
-  })
+// Crée un compte ; la route /api est essayée en priorité, puis la route /v1 si elle refuse le corps validé.
+export async function register(changes = {}) {
+  const body = pickRegisterFields(changes)
+
+  try {
+    return await apiFetch('/auth/register', {
+      method: 'POST',
+      body,
+    })
+  } catch (error) {
+    if (error?.status !== 422) {
+      throw error
+    }
+
+    return apiFetch('/v1/auth/register', {
+      method: 'POST',
+      body,
+    })
+  }
 }
 
 // Ne garde que les champs validés pour la connexion.

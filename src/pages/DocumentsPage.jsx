@@ -162,6 +162,10 @@ export default function DocumentsPage() {
 
   // Diffère les chargements pour ne pas modifier l'état pendant l'effet lui-même.
   useEffect(() => {
+    if (meLoading || isGuest) {
+      return undefined
+    }
+
     let active = true
 
     Promise.resolve().then(() => {
@@ -174,10 +178,10 @@ export default function DocumentsPage() {
     return () => {
       active = false
     }
-  }, [fetchDocuments])
+  }, [fetchDocuments, isGuest, meLoading])
 
   useEffect(() => {
-    if (!selected) {
+    if (!selected || isGuest) {
       return undefined
     }
 
@@ -193,7 +197,7 @@ export default function DocumentsPage() {
     return () => {
       active = false
     }
-  }, [selected, fetchDocument])
+  }, [selected, fetchDocument, isGuest])
 
   const items = normalizeDocuments(listed)
 
@@ -207,6 +211,27 @@ export default function DocumentsPage() {
     await removeDocument(selected)
     setSelected('')
     fetchDocuments()
+  }
+
+  async function handleDownloadDocument() {
+    setLocalError(null)
+
+    const payload = await downloadDocument(selected)
+    if (!(payload instanceof Blob)) {
+      setLocalError('Le document n’a pas pu être téléchargé.')
+      return
+    }
+
+    const name = documentData?.filename ?? documentData?.name ?? `document-${selected}`
+    const url = URL.createObjectURL(payload)
+    const link = document.createElement('a')
+
+    link.href = url
+    link.download = name
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 0)
   }
 
   function handleGetFile() {
@@ -269,7 +294,7 @@ export default function DocumentsPage() {
               detail={documentData}
               disabled={documentsLoading}
               onSave={handleSave}
-              onDownload={() => downloadDocument(selected)}
+              onDownload={handleDownloadDocument}
               onSend={() => sendEmail(selected)}
               onDelete={handleDelete}
             />
@@ -284,8 +309,6 @@ export default function DocumentsPage() {
           Document envoyé par email.
         </p>
       )}
-
-      {documentData && selected && <JsonBlock value={documentData} />}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
@@ -331,7 +354,16 @@ export default function DocumentsPage() {
         </div>
       </div>
 
-      {fileData && <JsonBlock value={fileData} />}
+      {fileData && !(fileData instanceof Blob) && <JsonBlock value={fileData} />}
+      {fileData instanceof Blob && (
+        <a
+          href={URL.createObjectURL(fileData)}
+          download={fileData.name || 'fichier'}
+          className="mt-6 inline-block text-sm text-sky-600 hover:text-sky-700"
+        >
+          Télécharger le fichier récupéré
+        </a>
+      )}
 
       {(localError || documentsError || filesError) && (
         <p role="alert" className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">

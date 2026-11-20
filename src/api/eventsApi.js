@@ -7,10 +7,22 @@ export function sendEvent() {
   })
 }
 
+function normalizeEvent(event) {
+  const name = typeof event?.name === 'string' ? event.name.trim().slice(0, 40) : ''
+  const props = event?.props && typeof event.props === 'object' && !Array.isArray(event.props) ? event.props : {}
+  return { name, props }
+}
+
 // Envoie un événement ou un lot d'événements via la route v1 documentée.
 export function sendEvents(payload) {
+  const events = Array.isArray(payload) ? payload.map(normalizeEvent) : [normalizeEvent(payload)]
+
+  if (events.some((event) => !event.name)) {
+    throw new Error('Nom d’événement invalide.')
+  }
+
   return apiFetch('/v1/events', {
     method: 'POST',
-    body: payload,
+    body: Array.isArray(payload) ? events : events[0],
   })
 }

@@ -42,7 +42,7 @@ export function deleteDocument(documentId) {
 
 // Télécharge un document privé ; la réponse 200 est non typée dans l'OpenAPI.
 export function downloadDocument(documentId) {
-  return apiFetch(documentPath(documentId, '/download'))
+  return apiFetch(documentPath(documentId, '/download'), { responseType: 'blob' })
 }
 
 // Envoie un document par email ; la réponse 204 est renvoyée comme null par apiFetch.

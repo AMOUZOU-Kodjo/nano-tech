@@ -7,14 +7,14 @@ export function useJobDownload() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  // Lance le téléchargement ; la réponse 200 est documentée sans schéma détaillé.
-  const download = useCallback(async (jobId) => {
+  // Lance le téléchargement du fichier choisi ou du premier résultat documenté.
+  const download = useCallback(async (jobId, file = null) => {
     setLoading(true)
     setError(null)
     setData(null)
 
     try {
-      const payload = await downloadJobRequest(jobId)
+      const payload = await downloadJobRequest(jobId, file)
       setData(payload)
       return payload
     } catch (caughtError) {

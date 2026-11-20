@@ -79,14 +79,69 @@ function rememberAnonId(payload) {
   }
 }
 
+function formatValidationIssues(issues) {
+  return issues
+    .map((issue) => {
+      const path = issue?.loc ?? issue?.location
+      const location = Array.isArray(path) ? path.join('.') : typeof path === 'string' ? path : ''
+      const message = issue?.msg ?? issue?.message ?? 'invalide'
+      return location ? `${location} : ${message}` : message
+    })
+    .join(' ; ')
+}
+
+async function readBlobPayload(blob) {
+  const text = await blob.text()
+
+  if (!text) {
+    return null
+  }
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
+}
+
+const PAYMENT_ERROR_MESSAGES = {
+  QUOTA_EXCEEDED: 'Vos essais gratuits sont épuisés. Connectez-vous ou choisissez une offre pour continuer.',
+  INSUFFICIENT_CREDITS: 'Votre solde de crédits est insuffisant pour lancer ce traitement.',
+}
+
+const STATUS_ERROR_MESSAGES = {
+  404: 'Ressource introuvable ou supprimée.',
+  410: 'Ce résultat a expiré. Relancez le traitement pour en obtenir un nouveau.',
+  429: 'Limite atteinte. Réessayez plus tard.',
+}
+
+function extractErrorMessage(status, payload) {
+  const detail = payload?.detail
+  const error = payload?.error
+  const code = detail?.code ?? error?.code
+  // OpenAPI : detail[] ; curl 401 : detail.code/message ; FRONTEND.md : error.code/message/details.
+  const firstMessage = Array.isArray(detail) ? detail[0]?.msg : detail?.message ?? error?.message
+  const baseMessage =
+    (status === 402 && PAYMENT_ERROR_MESSAGES[code]) ||
+    firstMessage ||
+    (typeof detail === 'string' ? detail : null) ||
+    STATUS_ERROR_MESSAGES[status] ||
+    `Erreur HTTP ${status}`
+  const issues = code === 'VALIDATION_ERROR' ? error?.details?.issues : null
+
+  if (Array.isArray(issues) && issues.length) {
+    return `${baseMessage} : ${formatValidationIssues(issues)}`
+  }
+
+  return baseMessage
+}
+
 // Erreur uniforme renvoyée aux hooks : elle gère les trois formats décrits dans nos sources.
 export class ApiError extends Error {
   constructor(status, payload) {
     const detail = payload?.detail
     const error = payload?.error
-    // OpenAPI : detail[] ; curl 401 : detail.code/message ; FRONTEND.md : error.code/message/details.
-    const firstMessage = Array.isArray(detail) ? detail[0]?.msg : detail?.message ?? error?.message
-    const message = firstMessage ?? (typeof detail === 'string' ? detail : null) ?? `Erreur HTTP ${status}`
+    const message = extractErrorMessage(status, payload)
 
     super(message)
     this.name = 'ApiError'
@@ -116,7 +171,7 @@ function hasContentType(headers) {
 
 // Appel HTTP centralisé : ajoute les en-têtes recommandés, sérialise le JSON et normalise les erreurs.
 export async function apiFetch(path, options = {}) {
-  const { method = 'GET', body, headers = {}, signal, ...rest } = options
+  const { method = 'GET', body, headers = {}, signal, responseType = 'text', ...rest } = options
   const requestHeaders = { ...headers }
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
 
@@ -145,6 +200,21 @@ export async function apiFetch(path, options = {}) {
   }
 
   const contentType = response.headers.get('content-type') ?? ''
+  const isBinaryResponse =
+    responseType === 'blob' ||
+    /^application\/(?:pdf|octet-stream|zip|msword|vnd\.openxmlformats-officedocument\.)/i.test(contentType) ||
+    /^(?:image|audio|video)\//i.test(contentType)
+
+  if (isBinaryResponse) {
+    const blob = await response.blob()
+
+    if (!response.ok) {
+      throw new ApiError(response.status, await readBlobPayload(blob))
+    }
+
+    return blob
+  }
+
   const rawBody = await response.text()
   let payload = null
 

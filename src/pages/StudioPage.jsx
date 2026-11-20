@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { buildApiUrl } from '@/api/client.js'
+import CvDataForm from '@/components/CvDataForm.jsx'
 import { useCatalog } from '@/hooks/useCatalog.js'
 import { useRender } from '@/hooks/useRender.js'
 
@@ -156,22 +157,6 @@ function parseRequiredObject(value, label) {
   return { value: parsed.value }
 }
 
-function parseOptionalObject(value, label) {
-  const raw = value.trim()
-  if (!raw || raw === 'null') {
-    return { value: null }
-  }
-
-  const parsed = parseJson(raw, label)
-  if (parsed.error) {
-    return parsed
-  }
-  if (!parsed.value || typeof parsed.value !== 'object' || Array.isArray(parsed.value)) {
-    return { error: `${label} doit être un objet JSON ou null.` }
-  }
-  return { value: parsed.value }
-}
-
 // Page studio : catalogue, rendu de modèles et assistants de réécriture documentés.
 export default function StudioPage() {
   const catalog = useCatalog()
@@ -194,6 +179,7 @@ export default function StudioPage() {
     rewriteLetter,
     rewriteLetters,
   } = render
+  const [activeTab, setActiveTab] = useState('studio')
   const [templateKind, setTemplateKind] = useState('cv')
   const [previewId, setPreviewId] = useState('')
   const [lastAction, setLastAction] = useState(null)
@@ -203,11 +189,13 @@ export default function StudioPage() {
     lang: 'fr',
     target_job: '',
     raw_text: '',
-    existing_data: 'null',
+    existing_data: null,
+    useStructuredCv: false,
     letter_kind: '',
     job_title: '',
     company: '',
-    cv_data: 'null',
+    cv_data: null,
+    useStructuredCvForLetter: false,
   })
   const [localError, setLocalError] = useState(null)
 
@@ -275,23 +263,12 @@ export default function StudioPage() {
     setLastAction('rewrite')
 
     if (rewriteForm.kind === 'cv') {
-      const parsed = parseOptionalObject(rewriteForm.existing_data, 'Les données existantes')
-      if (parsed.error) {
-        setLocalError(parsed.error)
-        return
-      }
       rewriteCv({
         lang: rewriteForm.lang,
         target_job: rewriteForm.target_job,
         raw_text: rewriteForm.raw_text,
-        existing_data: parsed.value,
+        existing_data: rewriteForm.useStructuredCv ? rewriteForm.existing_data : null,
       })
-      return
-    }
-
-    const parsed = parseOptionalObject(rewriteForm.cv_data, 'Les données CV')
-    if (parsed.error) {
-      setLocalError(parsed.error)
       return
     }
 
@@ -301,7 +278,7 @@ export default function StudioPage() {
       job_title: rewriteForm.job_title,
       company: rewriteForm.company,
       raw_text: rewriteForm.raw_text,
-      cv_data: parsed.value,
+      cv_data: rewriteForm.useStructuredCvForLetter ? rewriteForm.cv_data : null,
     }
 
     if (rewriteForm.kind === 'letter') {
@@ -313,10 +290,39 @@ export default function StudioPage() {
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-12">
-      <h1 className="text-3xl font-bold text-slate-900">Studio CV et lettres</h1>
-      <p className="mt-2 text-sm text-slate-600">Modèles, rendu et réécriture assistée documentés par l’API.</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Studio CV et lettres</h1>
+          <p className="mt-2 text-sm text-slate-600">Modèles, rendu et réécriture assistée documentés par l’API.</p>
+        </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="inline-flex self-start rounded-xl border border-slate-200 bg-slate-50 p-1 sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setActiveTab('studio')}
+            aria-pressed={activeTab === 'studio'}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+              activeTab === 'studio' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            Modèles et rendu
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('rewrite')}
+            aria-pressed={activeTab === 'rewrite'}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+              activeTab === 'rewrite' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            Réécriture assistée
+          </button>
+        </div>
+      </div>
+
+      {activeTab === 'studio' && (
+        <>
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
           <h2 className="text-xl font-semibold text-slate-900">Catalogue de modèles</h2>
           <div className="mt-4 flex flex-wrap gap-3">
@@ -444,9 +450,14 @@ export default function StudioPage() {
             </button>
           </div>
         </form>
-      </div>
+        </div>
+        {lastAction === 'render' && renderData && <RenderResult data={renderData} />}
+        </>
+      )}
 
-      <form onSubmit={handleRewrite} className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
+      {activeTab === 'rewrite' && (
+        <>
+          <form onSubmit={handleRewrite} className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
         <h2 className="text-xl font-semibold text-slate-900">Réécriture assistée</h2>
         <p className="mt-2 text-sm text-slate-600">Uniquement les champs validés pour chaque endpoint.</p>
 
@@ -493,17 +504,23 @@ export default function StudioPage() {
               />
             </div>
             <div>
-              <label htmlFor="rewrite-existing" className="block text-sm font-medium text-slate-700">
-                Données existantes
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={rewriteForm.useStructuredCv}
+                  onChange={(event) => setRewriteForm({ ...rewriteForm, useStructuredCv: event.target.checked })}
+                  className="h-4 w-4 rounded border-slate-300 bg-white"
+                />
+                Fournir un CV déjà structuré
               </label>
-              <textarea
-                id="rewrite-existing"
-                rows="4"
-                value={rewriteForm.existing_data}
-                onChange={(event) => setRewriteForm({ ...rewriteForm, existing_data: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 font-mono text-xs text-slate-900"
-              />
-              <p className="mt-1 text-xs text-slate-500">Utilisez `null` si aucune donnée existante n’est disponible.</p>
+              {rewriteForm.useStructuredCv && (
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <CvDataForm
+                    value={rewriteForm.existing_data}
+                    onChange={(next) => setRewriteForm((current) => ({ ...current, existing_data: next }))}
+                  />
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -538,15 +555,24 @@ export default function StudioPage() {
                 className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
               />
             </div>
-            <div>
-              <label htmlFor="rewrite-cv-data" className="block text-sm font-medium text-slate-700">Données CV</label>
-              <textarea
-                id="rewrite-cv-data"
-                rows="4"
-                value={rewriteForm.cv_data}
-                onChange={(event) => setRewriteForm({ ...rewriteForm, cv_data: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 font-mono text-xs text-slate-900"
-              />
+            <div className="sm:col-span-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={rewriteForm.useStructuredCvForLetter}
+                  onChange={(event) => setRewriteForm({ ...rewriteForm, useStructuredCvForLetter: event.target.checked })}
+                  className="h-4 w-4 rounded border-slate-300 bg-white"
+                />
+                Joindre un CV déjà structuré
+              </label>
+              {rewriteForm.useStructuredCvForLetter && (
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <CvDataForm
+                    value={rewriteForm.cv_data}
+                    onChange={(next) => setRewriteForm((current) => ({ ...current, cv_data: next }))}
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -557,6 +583,7 @@ export default function StudioPage() {
             id="rewrite-raw"
             rows="6"
             required
+            minLength={1}
             value={rewriteForm.raw_text}
             onChange={(event) => setRewriteForm({ ...rewriteForm, raw_text: event.target.value })}
             className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
@@ -572,13 +599,14 @@ export default function StudioPage() {
         </button>
       </form>
 
-      {rewritten && (
-        <p role="status" className="mt-6 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
-          Réécriture terminée.
-        </p>
+          {rewritten && (
+            <p role="status" className="mt-6 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
+              Réécriture terminée.
+            </p>
+          )}
+          {lastAction === 'rewrite' && renderData && <RewriteResult data={renderData} />}
+        </>
       )}
-      {lastAction === 'rewrite' && renderData && <RewriteResult data={renderData} />}
-      {lastAction === 'render' && renderData && <RenderResult data={renderData} />}
 
       {(localError || catalogError || renderError) && (
         <p role="alert" className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">

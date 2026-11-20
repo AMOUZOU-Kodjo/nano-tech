@@ -36,6 +36,43 @@ function formatFileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`
 }
 
+function contentTypeFromName(name) {
+  const extension = name.split('.').pop()?.toLowerCase()
+  const types = {
+    pdf: 'application/pdf',
+    zip: 'application/zip',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xls: 'application/vnd.ms-excel',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ppt: 'application/vnd.ms-powerpoint',
+    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    webp: 'image/webp',
+    gif: 'image/gif',
+  }
+
+  return types[extension] ?? 'application/octet-stream'
+}
+
+function decodeFileName(value) {
+  if (typeof value !== 'string' || !value) {
+    return ''
+  }
+  if (!/[\u00c2-\u00c3][\u0080-\u00bf]/.test(value)) {
+    return value
+  }
+
+  try {
+    const bytes = Uint8Array.from(value, (character) => character.charCodeAt(0) & 0xff)
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+  } catch {
+    return value
+  }
+}
+
 function Step({ title, description, done, active }) {
   return (
     <li className="flex gap-3">
@@ -105,7 +142,7 @@ export default function ToolPage() {
 
   const { createJob, loading: creating, error: createError } = useJobsManager({ onSuccess: reload })
   const { data: job, loading: jobLoading, error: jobError, reload: reloadJob } = useJob(jobId)
-  const { data: result, loading: downloading, error: downloadError, download } = useJobDownload()
+  const { loading: downloading, error: downloadError, download } = useJobDownload()
   const { sendEvents } = useEvents()
   const reportedRef = useRef(null)
 
@@ -122,7 +159,7 @@ export default function ToolPage() {
 
   // Interroge le statut toutes les secondes jusqu'à un état terminal.
   useEffect(() => {
-    if (!jobId || status === 'done' || status === 'failed') {
+    if (!jobId || jobError || status === 'done' || status === 'failed') {
       return undefined
     }
 
@@ -131,7 +168,7 @@ export default function ToolPage() {
     }, 1000)
 
     return () => window.clearInterval(timer)
-  }, [jobId, status, reloadJob])
+  }, [jobId, jobError, status, reloadJob])
 
   // Notifie une seule fois les états terminaux du job via la route événementielle documentée.
   useEffect(() => {
@@ -211,6 +248,31 @@ export default function ToolPage() {
     setDownloadedJobId(null)
     setLocalError(null)
     reportedRef.current = null
+  }
+
+  async function handleDownloadResult() {
+    setDownloadedJobId(jobId)
+    const payload = await download(jobId)
+
+    if (!payload) {
+      return
+    }
+
+    const resultFile = job?.result?.files?.[0]
+    const fileName = decodeFileName(resultFile?.name) || `resultat-${jobId}`
+    const type = contentTypeFromName(fileName)
+    const text = String(payload)
+    const bytes = Uint8Array.from(text, (character) => character.charCodeAt(0) & 0xff)
+    const blob = payload instanceof Blob ? payload : new Blob([bytes], { type })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+
+    link.href = url
+    link.download = fileName
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 0)
   }
 
   return (
@@ -380,10 +442,7 @@ export default function ToolPage() {
                     <div className="mt-5">
                       <button
                         type="button"
-                        onClick={() => {
-                          setDownloadedJobId(jobId)
-                          download(jobId)
-                        }}
+                        onClick={handleDownloadResult}
                         disabled={downloading}
                         className="rounded-lg bg-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-sky-600 disabled:opacity-50"
                       >
@@ -394,10 +453,8 @@ export default function ToolPage() {
                           {downloadError.message}
                         </p>
                       )}
-                      {downloadedJobId === jobId && result && (
-                        <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-300">
-                          {JSON.stringify(result, null, 2)}
-                        </pre>
+                      {downloadedJobId === jobId && !downloadError && !downloading && (
+                        <p className="mt-3 text-sm text-emerald-700">Le téléchargement a été lancé.</p>
                       )}
                     </div>
                   )}

@@ -1,16 +1,70 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import logoUrl from '../../Logo NanoFile bleu et cyan.png'
+import GoogleAuthButton from '@/components/GoogleAuthButton.jsx'
 import { useLogin } from '@/hooks/useLogin.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
 
-const GOOGLE_LOGIN_URL = `${import.meta.env.VITE_API_URL ?? 'https://api.nanofile.tech/api'}/auth/google/login`
+function EyeIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+      <circle cx="12" cy="12" r="2.5" />
+    </svg>
+  )
+}
+
+function EyeOffIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M3 3l18 18" />
+      <path d="M10.6 6.2A9.9 9.9 0 0 1 12 6c6 0 9.5 6 9.5 6a16.6 16.6 0 0 1-2.4 3.1" />
+      <path d="M6.2 7.5C3.9 9 2.5 12 2.5 12s3.5 6 9.5 6a9.9 9.9 0 0 0 3-.45" />
+      <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+    </svg>
+  )
+}
+
+function PasswordField({ id, label, name, autoComplete, value, onChange }) {
+  const [visible, setVisible] = useState(false)
+
+  return (
+    <div>
+      <label htmlFor={id} className="block text-xs font-semibold text-slate-700">
+        {label}
+      </label>
+      <div className="relative mt-1">
+        <input
+          id={id}
+          name={name}
+          type={visible ? 'text' : 'password'}
+          required
+          autoComplete={autoComplete}
+          value={value}
+          onChange={onChange}
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 pr-11 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((current) => !current)}
+          aria-label={visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+          aria-pressed={visible}
+          aria-controls={id}
+          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-500 transition hover:text-slate-900 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-sky-500"
+        >
+          {visible ? <EyeOffIcon /> : <EyeIcon />}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 // Page de connexion compacte par email et mot de passe, avec accès Google.
 export default function LoginPage() {
   const navigate = useNavigate()
   const { reload } = useMeContext()
   const [form, setForm] = useState({ email: '', password: '' })
+  const [googleTermsAccepted, setGoogleTermsAccepted] = useState(false)
   const { login, loading, error } = useLogin({
     onSuccess: () => {
       reload()
@@ -30,8 +84,6 @@ export default function LoginPage() {
 
   return (
     <section className="flex min-h-[calc(100vh-4.5rem)] items-center justify-center px-4 py-6">
-      <style>{'main > footer { display: none; }'}</style>
-
       <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -42,13 +94,33 @@ export default function LoginPage() {
           <img src={logoUrl} alt="" className="h-12 w-12 shrink-0 object-contain" />
         </div>
 
-        <a
-          href={GOOGLE_LOGIN_URL}
-          className="mt-5 flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-        >
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-sky-600">G</span>
-          Continuer avec Google
-        </a>
+        <div className="mt-5 space-y-3">
+          <label className="flex items-start gap-2 text-xs text-slate-600">
+            <input
+              type="checkbox"
+              checked={googleTermsAccepted}
+              onChange={(event) => setGoogleTermsAccepted(event.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 bg-white"
+            />
+            J’accepte les conditions d’utilisation pour me connecter ou créer un compte avec Google.
+          </label>
+          <div className="flex justify-center">
+            {googleTermsAccepted ? (
+              <GoogleAuthButton
+                termsAccepted={googleTermsAccepted}
+                marketingOptIn={false}
+                onSuccess={() => {
+                  reload()
+                  navigate('/')
+                }}
+              />
+            ) : (
+              <p className="rounded-lg bg-slate-50 px-3 py-2 text-center text-xs text-slate-600">
+                Cochez les conditions d’utilisation pour continuer avec Google.
+              </p>
+            )}
+          </div>
+        </div>
 
         <div className="my-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
           <span className="h-px flex-1 bg-slate-200" />
@@ -73,21 +145,14 @@ export default function LoginPage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="login-password" className="block text-xs font-semibold text-slate-700">
-              Mot de passe
-            </label>
-            <input
-              id="login-password"
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              value={form.password}
-              onChange={handleChange}
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
-            />
-          </div>
+          <PasswordField
+            id="login-password"
+            label="Mot de passe"
+            name="password"
+            autoComplete="current-password"
+            value={form.password}
+            onChange={handleChange}
+          />
 
           <div className="flex items-center justify-between pt-1 text-xs">
             <Link to="/forgot-password" className="font-semibold text-sky-600 hover:text-sky-700">
