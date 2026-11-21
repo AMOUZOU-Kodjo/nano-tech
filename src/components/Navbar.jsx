@@ -79,8 +79,12 @@ const MOBILE_SHORTCUTS = [
 // Liens principaux affichés dans la barre de navigation.
 const MAIN_LINKS = [
   { to: '/', label: 'Accueil', icon: FiHome },
-  { to: '/dashboard', label: 'Espace', icon: FiGrid },
   { to: '/studio', label: 'Studio', icon: FiZap },
+]
+
+// Liens liés à l'activité et au compte de l'utilisateur.
+const SPACE_LINKS = [
+  { to: '/dashboard', label: 'Espace', icon: FiGrid },
   { to: '/documents', label: 'Documents', icon: FiFileText },
   { to: '/jobs', label: 'Jobs', icon: FiActivity },
 ]
@@ -162,15 +166,20 @@ export default function Navbar() {
   const { isGuest, loading } = useMeContext()
   const [menuOpen, setMenuOpen] = useState(false)
   const [toolsOpen, setToolsOpen] = useState(false)
+  const [spaceOpen, setSpaceOpen] = useState(false)
   const [menuSearch, setMenuSearch] = useState('')
   const [expandedGroups, setExpandedGroups] = useState(() => ({
     [findCurrentToolGroupId(location.pathname)]: true,
   }))
   const toolsRef = useRef(null)
+  const spaceRef = useRef(null)
   const menuButtonRef = useRef(null)
   const menuContainerRef = useRef(null)
   const menuSearchRef = useRef(null)
   const toolsActive = location.pathname.startsWith('/tools')
+  const spaceActive =
+    SPACE_LINKS.some((link) => location.pathname.startsWith(link.to)) ||
+    (!isGuest && ACCOUNT_LINKS.some((link) => location.pathname.startsWith(link.to)))
   const currentGroupId = findCurrentToolGroupId(location.pathname)
   const normalizedSearch = menuSearch.trim().toLocaleLowerCase('fr')
   const searchActive = normalizedSearch.length > 0
@@ -214,19 +223,23 @@ export default function Navbar() {
   }
 
   useEffect(() => {
-    if (!toolsOpen) {
+    if (!toolsOpen && !spaceOpen) {
       return undefined
     }
 
     function handlePointerDown(event) {
-      if (!toolsRef.current?.contains(event.target)) {
+      if (toolsOpen && !toolsRef.current?.contains(event.target)) {
         setToolsOpen(false)
+      }
+      if (spaceOpen && !spaceRef.current?.contains(event.target)) {
+        setSpaceOpen(false)
       }
     }
 
     function handleKeyDown(event) {
       if (event.key === 'Escape') {
         setToolsOpen(false)
+        setSpaceOpen(false)
       }
     }
 
@@ -236,7 +249,7 @@ export default function Navbar() {
       document.removeEventListener('pointerdown', handlePointerDown)
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [toolsOpen])
+  }, [toolsOpen, spaceOpen])
 
   useEffect(() => {
     if (!menuOpen) {
@@ -381,7 +394,76 @@ export default function Navbar() {
               </Link>
             )
           })}
-          {authLinks.map((link) => {
+          <div ref={spaceRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setSpaceOpen((open) => !open)}
+              aria-expanded={spaceOpen}
+              aria-haspopup="menu"
+              className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                spaceActive ? 'bg-sky-50 text-sky-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              <FiUser aria-hidden="true" className="h-4 w-4" />
+              Mon espace
+              <FiChevronDown
+                aria-hidden="true"
+                className={`h-4 w-4 transition ${spaceOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {spaceOpen && (
+              <div
+                role="menu"
+                aria-label="Mon espace"
+                className="absolute right-0 top-full z-50 mt-2 w-80 max-w-[calc(100vw-3rem)] rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl"
+              >
+                <p className="px-2 text-xs font-semibold uppercase tracking-wide text-sky-700">Activité</p>
+                <div className="mt-1 grid gap-0.5">
+                  {SPACE_LINKS.map((link) => {
+                    const Icon = link.icon
+                    return (
+                      <Link
+                        key={link.to}
+                        to={link.to}
+                        onClick={() => setSpaceOpen(false)}
+                        className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-sky-50 hover:text-sky-800"
+                      >
+                        <Icon aria-hidden="true" className="h-4 w-4 text-slate-400" />
+                        {link.label}
+                      </Link>
+                    )
+                  })}
+                </div>
+
+                {!isGuest && !loading && (
+                  <>
+                    <p className="mt-3 border-t border-slate-100 px-2 pt-3 text-xs font-semibold uppercase tracking-wide text-sky-700">
+                      Compte
+                    </p>
+                    <div className="mt-1 grid gap-0.5">
+                      {ACCOUNT_LINKS.map((link) => {
+                        const Icon = link.icon
+                        return (
+                          <Link
+                            key={link.to}
+                            to={link.to}
+                            onClick={() => setSpaceOpen(false)}
+                            className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-sky-50 hover:text-sky-800"
+                          >
+                            <Icon aria-hidden="true" className="h-4 w-4 text-slate-400" />
+                            {link.label}
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {isGuest && !loading && authLinks.map((link) => {
             const Icon = link.icon
             return (
               <Link key={link.to} to={link.to} className={desktopAuthLinkClass(link, location.pathname)}>
@@ -574,18 +656,19 @@ export default function Navbar() {
                 )}
               </section>
 
-              {!isGuest && authLinks.length > 0 && (
-                <section>
-                  <h2 className="px-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                    Mon compte
-                  </h2>
-                  <div className="mt-2 space-y-1">
-                    {authLinks.map((link) => (
-                      <MobileNavLink key={link.to} link={link} pathname={location.pathname} onClick={closeMenu} />
-                    ))}
-                  </div>
-                </section>
-              )}
+              <section>
+                <h2 className="px-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Mon espace
+                </h2>
+                <div className="mt-2 space-y-1">
+                  {SPACE_LINKS.map((link) => (
+                    <MobileNavLink key={link.to} link={link} pathname={location.pathname} onClick={closeMenu} />
+                  ))}
+                  {!isGuest && !loading && ACCOUNT_LINKS.map((link) => (
+                    <MobileNavLink key={link.to} link={link} pathname={location.pathname} onClick={closeMenu} />
+                  ))}
+                </div>
+              </section>
             </div>
           </div>
         </nav>

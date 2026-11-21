@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useBilling } from '@/hooks/useBilling.js'
 
 const BILLING_LABELS = {
@@ -80,6 +80,8 @@ export default function BillingPage() {
     getBillingStatus: fetchBillingStatus,
     createCheckout: startCheckout,
   } = billing
+  const checkoutInFlight = useRef(false)
+  const [checkoutPending, setCheckoutPending] = useState(false)
 
   // Diffère le chargement pour ne pas modifier l'état pendant l'effet lui-même.
   useEffect(() => {
@@ -103,6 +105,26 @@ export default function BillingPage() {
   const paywallLabel = typeof status?.paywall_enabled === 'boolean'
     ? (status.paywall_enabled ? 'Paywall actif' : 'Paywall désactivé')
     : null
+  const proPlan = Array.isArray(status?.plans)
+    ? status.plans.find((plan) => plan?.id === 'pro')
+    : null
+  const checkoutAvailable = status?.billing_enabled === true && proPlan?.checkout_available !== false
+
+  async function handleCheckout() {
+    if (checkoutInFlight.current) {
+      return
+    }
+
+    checkoutInFlight.current = true
+    setCheckoutPending(true)
+
+    try {
+      await startCheckout()
+    } finally {
+      checkoutInFlight.current = false
+      setCheckoutPending(false)
+    }
+  }
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-12">
@@ -148,12 +170,18 @@ export default function BillingPage() {
         <p className="mt-2 text-sm text-slate-600">La session est créée par l’API, sans choix de plan inventé.</p>
         <button
           type="button"
-          onClick={startCheckout}
-          disabled={loading}
+          onClick={handleCheckout}
+          disabled={loading || checkoutPending || !checkoutAvailable}
           className="mt-4 rounded-lg bg-sky-500 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50"
         >
-          Créer une session
+          {checkoutPending ? 'Création…' : 'Créer une session'}
         </button>
+
+        {status && !checkoutAvailable && (
+          <p className="mt-4 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
+            La création de session sera disponible quand la facturation sera activée côté API.
+          </p>
+        )}
 
         {checkoutLink && (
           <a

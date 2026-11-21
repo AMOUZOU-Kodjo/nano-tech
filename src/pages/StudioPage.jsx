@@ -76,8 +76,8 @@ function resolveUrl(value) {
 function RenderResult({ data }) {
   if (typeof data === 'string') {
     return (
-      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-xl font-semibold text-slate-900">Aperçu du rendu</h2>
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+        <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Aperçu du rendu</h2>
         <iframe
           srcDoc={data}
           sandbox=""
@@ -94,12 +94,12 @@ function RenderResult({ data }) {
   const hasRows = details && typeof details === 'object' && !Array.isArray(details) && Object.keys(details).length > 0
 
   return (
-    <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-semibold text-slate-900">Résultat du rendu</h2>
+    <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+      <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Résultat du rendu</h2>
       {downloadUrl ? (
         <a
           href={downloadUrl}
-          className="mt-4 inline-block rounded-lg bg-sky-500 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-600"
+          className="mt-4 inline-block w-full rounded-lg bg-sky-500 px-5 py-3 text-center text-sm font-semibold text-white hover:bg-sky-600 sm:w-auto"
         >
           {fileName ? `Télécharger ${fileName}` : 'Télécharger le document'}
         </a>
@@ -116,8 +116,8 @@ function RewriteResult({ data }) {
   const hasRows = data?.data && typeof data.data === 'object' && !Array.isArray(data.data) && Object.keys(data.data).length > 0
 
   return (
-    <div className="mt-6 rounded-2xl border border-emerald-200 bg-white p-6">
-      <h2 className="text-xl font-semibold text-slate-900">Résultat de la réécriture</h2>
+    <div className="mt-6 rounded-2xl border border-emerald-200 bg-white p-5 sm:p-6">
+      <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Résultat de la réécriture</h2>
       {hasRows && <ValueRows value={data.data} />}
       {missing.length > 0 && (
         <div className="mt-5">
@@ -289,19 +289,19 @@ export default function StudioPage() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-12">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+      <div className="flex flex-col gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Studio CV et lettres</h1>
-          <p className="mt-2 text-sm text-slate-600">Modèles, rendu et réécriture assistée documentés par l’API.</p>
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Studio CV et lettres</h1>
+          <p className="mx-auto mt-2 text-sm text-slate-600 sm:mx-0">Modèles, rendu et réécriture assistée documentés par l’API.</p>
         </div>
 
-        <div className="inline-flex self-start rounded-xl border border-slate-200 bg-slate-50 p-1 sm:self-auto">
+        <div className="grid w-full grid-cols-2 self-stretch rounded-xl border border-slate-200 bg-slate-50 p-1 sm:inline-flex sm:w-auto sm:self-auto">
           <button
             type="button"
             onClick={() => setActiveTab('studio')}
             aria-pressed={activeTab === 'studio'}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+            className={`rounded-lg px-3 py-2 text-xs font-semibold transition sm:px-4 sm:text-sm ${
               activeTab === 'studio' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
@@ -311,7 +311,7 @@ export default function StudioPage() {
             type="button"
             onClick={() => setActiveTab('rewrite')}
             aria-pressed={activeTab === 'rewrite'}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+            className={`rounded-lg px-3 py-2 text-xs font-semibold transition sm:px-4 sm:text-sm ${
               activeTab === 'rewrite' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
@@ -322,9 +322,9 @@ export default function StudioPage() {
 
       {activeTab === 'studio' && (
         <>
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h2 className="text-xl font-semibold text-slate-900">Catalogue de modèles</h2>
+        <div className="mt-6 grid gap-4 sm:gap-6 lg:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+          <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Catalogue de modèles</h2>
           <div className="mt-4 flex flex-wrap gap-3">
             <select
               value={templateKind}
@@ -332,7 +332,7 @@ export default function StudioPage() {
                 setTemplateKind(event.target.value)
                 setPreviewId('')
               }}
-              className="rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
+              className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 sm:w-auto"
             >
               <option value="cv">CV</option>
               <option value="letter">Lettre</option>
@@ -344,20 +344,20 @@ export default function StudioPage() {
 
           <div className="mt-4 space-y-2">
             {items.map((item) => (
-              <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-3">
+              <div key={item.id} className="flex flex-col items-start gap-2 rounded-lg bg-slate-50 p-3 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm text-slate-700">{item.title}</span>
-                <div className="flex gap-3">
+                <div className="flex w-full gap-3 sm:w-auto">
                   <button
                     type="button"
                     onClick={() => setRenderForm((current) => ({ ...current, template_id: item.id }))}
-                    className="text-sm text-sky-700 hover:text-sky-800"
+                    className="flex-1 text-center text-sm text-sky-700 hover:text-sky-800 sm:flex-none"
                   >
                     Utiliser
                   </button>
                   <button
                     type="button"
                     onClick={() => setPreviewId(item.id)}
-                    className="text-sm text-sky-600 hover:text-sky-700"
+                    className="flex-1 text-center text-sm text-sky-600 hover:text-sky-700 sm:flex-none"
                   >
                     Aperçu
                   </button>
@@ -378,8 +378,8 @@ export default function StudioPage() {
           )}
         </div>
 
-        <form onSubmit={handleRender} className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h2 className="text-xl font-semibold text-slate-900">Rendre un modèle</h2>
+        <form onSubmit={handleRender} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+          <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Rendre un modèle</h2>
           <div className="mt-4 space-y-4">
             <div>
               <label htmlFor="render-kind" className="block text-sm font-medium text-slate-700">Type</label>
@@ -444,7 +444,7 @@ export default function StudioPage() {
             <button
               type="submit"
               disabled={renderLoading}
-              className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50"
+              className="w-full rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50 sm:w-auto"
             >
               {renderLoading ? 'Rendu…' : 'Rendre'}
             </button>
@@ -457,8 +457,8 @@ export default function StudioPage() {
 
       {activeTab === 'rewrite' && (
         <>
-          <form onSubmit={handleRewrite} className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-xl font-semibold text-slate-900">Réécriture assistée</h2>
+          <form onSubmit={handleRewrite} className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+        <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Réécriture assistée</h2>
         <p className="mt-2 text-sm text-slate-600">Uniquement les champs validés pour chaque endpoint.</p>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -593,7 +593,7 @@ export default function StudioPage() {
         <button
           type="submit"
           disabled={renderLoading}
-          className="mt-4 rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50"
+          className="mt-4 w-full rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50 sm:w-auto"
         >
           {renderLoading ? 'Traitement…' : 'Réécrire'}
         </button>
