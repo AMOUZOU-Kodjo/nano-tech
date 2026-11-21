@@ -77,7 +77,7 @@ export default function RegisterPage() {
     setForm((previous) => ({ ...previous, [name]: type === 'checkbox' ? checked : value }))
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
     setLocalError(null)
 
@@ -90,7 +90,7 @@ export default function RegisterPage() {
       return
     }
 
-    register({
+    const payload = await register({
       email: form.email.trim(),
       password: form.password,
       password_confirmation: form.password_confirmation,
@@ -98,6 +98,44 @@ export default function RegisterPage() {
       terms_accepted: form.terms_accepted,
       marketing_opt_in: form.marketing_opt_in,
     })
+
+    if (payload) {
+      setForm((current) => ({ ...current, password: '', password_confirmation: '' }))
+    }
+  }
+
+  if (data) {
+    return (
+      <section className="flex min-h-[calc(100vh-4.5rem)] items-center justify-center px-4 py-6">
+        <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-600">NanoFile</p>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Compte créé</h1>
+            </div>
+            <img src={logoUrl} alt="" className="h-12 w-12 shrink-0 object-contain" />
+          </div>
+
+          <div role="status" className="mt-6 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
+            <p className="font-semibold">Votre inscription est enregistrée.</p>
+            <p className="mt-2">
+              Un email de vérification a été envoyé à <strong>{form.email.trim()}</strong>. Ouvrez ce lien puis
+              connectez-vous pour activer votre espace.
+            </p>
+            <p className="mt-2 text-xs text-emerald-700">
+              Pensez à vérifier vos courriers indésirables si le message n’apparaît pas.
+            </p>
+          </div>
+
+          <Link
+            to="/login"
+            className="mt-5 inline-block rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
+          >
+            Aller à la connexion
+          </Link>
+        </div>
+      </section>
+    )
   }
 
   return (
