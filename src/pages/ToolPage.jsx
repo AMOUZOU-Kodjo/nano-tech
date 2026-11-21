@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { TOOLS, TOOL_CATEGORIES } from '@/config/tools.js'
 import { useCatalog } from '@/hooks/useCatalog.js'
@@ -73,6 +73,41 @@ function decodeFileName(value) {
   }
 }
 
+function optionItems(value) {
+  const source = Array.isArray(value)
+    ? value
+    : value && typeof value === 'object'
+      ? Object.entries(value).map(([key, item]) =>
+          item && typeof item === 'object' ? { code: key, ...item } : { code: key, name: String(item) },
+        )
+      : []
+
+  return source
+    .map((item) => {
+      if (typeof item === 'string') {
+        return { value: item, label: item, documents: [] }
+      }
+      if (!item || typeof item !== 'object') {
+        return null
+      }
+
+      const code = item.code ?? item.id ?? item.name ?? item.label ?? ''
+      const rawDocuments = item.documents ?? item.document_types ?? item.types ?? []
+
+      return {
+        value: String(code),
+        label: String(item.name ?? item.label ?? item.title ?? code),
+        documents: optionItems(rawDocuments),
+      }
+    })
+    .filter((item) => item && item.value)
+}
+
+function normalizePhotoCountries(specs) {
+  const source = Array.isArray(specs) ? specs : specs?.countries ?? []
+  return optionItems(source)
+}
+
 function Step({ title, description, done, active }) {
   return (
     <li className="flex gap-3">
@@ -139,6 +174,13 @@ export default function ToolPage() {
   const [jobId, setJobId] = useState(null)
   const [downloadedJobId, setDownloadedJobId] = useState(null)
   const [localError, setLocalError] = useState(null)
+  const [photoOptions, setPhotoOptions] = useState({
+    country: '',
+    document: '',
+    background: '',
+    sheet: '',
+    maxSizeKb: '',
+  })
 
   const { createJob, loading: creating, error: createError } = useJobsManager({ onSuccess: reload })
   const { data: job, loading: jobLoading, error: jobError, reload: reloadJob } = useJob(jobId)
@@ -156,6 +198,13 @@ export default function ToolPage() {
   const categoryLabel = TOOL_CATEGORIES.find((item) => item.id === toolInfo?.category)?.label ?? toolInfo?.category
   const status = job?.status
   const progress = typeof job?.progress === 'number' ? Math.min(100, Math.max(0, job.progress)) : 0
+  const photoCountries = useMemo(() => normalizePhotoCountries(photoSpecs), [photoSpecs])
+  const selectedPhotoCountry = photoOptions.country || photoCountries[0]?.value || ''
+  const photoDocuments = useMemo(
+    () => photoCountries.find((item) => item.value === selectedPhotoCountry)?.documents ?? [],
+    [photoCountries, selectedPhotoCountry],
+  )
+  const photoSetupUnavailable = toolInfo.tool === 'photo_id' && !specsLoading && photoCountries.length === 0
 
   // Interroge le statut toutes les secondes jusqu'à un état terminal.
   useEffect(() => {
@@ -199,6 +248,16 @@ export default function ToolPage() {
     }
   }, [jobId, status, tool, toolInfo?.tool, trackEvent])
 
+  // Charge les pays disponibles dès l'ouverture de l'outil photo d'identité.
+  useEffect(() => {
+    if (tool !== 'photo_id' || photoSpecs) {
+      return undefined
+    }
+
+    getPhotoSpecs()
+    return undefined
+  }, [tool, photoSpecs, getPhotoSpecs])
+
   if (!toolInfo) {
     return (
       <section className="mx-auto max-w-3xl px-6 py-12">
@@ -225,7 +284,41 @@ export default function ToolPage() {
       return
     }
 
-    const payload = await createJob(files, toolInfo.tool, {})
+    let options = {}
+
+    if (toolInfo.tool === 'photo_id') {
+      if (specsLoading) {
+        setLocalError('Chargement des spécifications photo en cours.')
+        return
+      }
+      if (photoCountries.length === 0) {
+        setLocalError('Aucun pays disponible pour la photo d’identité.')
+        return
+      }
+      if (!selectedPhotoCountry || !photoOptions.document) {
+        setLocalError('Sélectionnez un pays et un document.')
+        return
+      }
+      if (photoOptions.maxSizeKb && !Number.isFinite(Number(photoOptions.maxSizeKb))) {
+        setLocalError('La taille cible doit être un nombre.')
+        return
+      }
+
+      options = {
+        country: selectedPhotoCountry,
+        document: photoOptions.document,
+        sheet: photoOptions.sheet || null,
+      }
+
+      if (photoOptions.background) {
+        options.background = photoOptions.background
+      }
+      if (photoOptions.maxSizeKb) {
+        options.max_size_kb = Number(photoOptions.maxSizeKb)
+      }
+    }
+
+    const payload = await createJob(files, toolInfo.tool, options)
     if (!payload?.id) {
       trackEvent('tool_run_failed', { tool: toolInfo.tool })
       setLocalError('Le job n’a pas pu être créé.')
@@ -239,6 +332,15 @@ export default function ToolPage() {
 
   function handleFiles(selected) {
     setFiles(Array.from(selected ?? []))
+    setLocalError(null)
+  }
+
+  function updatePhotoOption(field, value) {
+    setPhotoOptions((current) => ({
+      ...current,
+      [field]: value,
+      ...(field === 'country' ? { document: '' } : {}),
+    }))
     setLocalError(null)
   }
 
@@ -356,14 +458,106 @@ export default function ToolPage() {
                 </ul>
               )}
 
-              <p className="mt-4 text-xs text-slate-500">
-                Les options avancées ne sont pas exposées : le job est lancé avec la valeur par défaut.
-              </p>
+              {toolInfo.tool === 'photo_id' && (
+                <div className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <h3 className="text-sm font-semibold text-slate-900">Options photo d’identité</h3>
+                  {specsLoading && <p className="text-sm text-slate-600">Chargement des pays disponibles…</p>}
+                  {specsError && (
+                    <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                      {specsError.message}
+                    </p>
+                  )}
+                  {photoSetupUnavailable && !specsError && (
+                    <p role="alert" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+                      Aucun pays disponible pour la photo d’identité. Les spécifications doivent être configurées côté API.
+                    </p>
+                  )}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <span>Pays</span>
+                      <select
+                        value={selectedPhotoCountry}
+                        onChange={(event) => updatePhotoOption('country', event.target.value)}
+                        disabled={specsLoading || photoCountries.length === 0 || creating}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                      >
+                        {photoCountries.length === 0 && <option value="">Aucun pays disponible</option>}
+                        {photoCountries.map((item) => (
+                          <option key={item.value} value={item.value}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <span>Document</span>
+                      <select
+                        value={photoOptions.document}
+                        onChange={(event) => updatePhotoOption('document', event.target.value)}
+                        disabled={!selectedPhotoCountry || creating}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                      >
+                        <option value="">
+                          {selectedPhotoCountry ? 'Sélectionnez un document' : 'Choisissez d’abord un pays'}
+                        </option>
+                        {photoDocuments.map((item) => (
+                          <option key={item.value} value={item.value}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <span>Fond</span>
+                      <input
+                        type="text"
+                        value={photoOptions.background}
+                        onChange={(event) => updatePhotoOption('background', event.target.value)}
+                        disabled={creating}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                      />
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <span>Mise en page</span>
+                      <select
+                        value={photoOptions.sheet}
+                        onChange={(event) => updatePhotoOption('sheet', event.target.value)}
+                        disabled={creating}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                      >
+                        <option value="">Taille standard</option>
+                        <option value="10x15">10x15</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <span>Taille cible (Ko)</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={photoOptions.maxSizeKb}
+                        onChange={(event) => updatePhotoOption('maxSizeKb', event.target.value)}
+                        disabled={creating}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+              {toolInfo.tool !== 'photo_id' && (
+                <p className="mt-4 text-xs text-slate-500">
+                  Les options avancées ne sont pas exposées : le job est lancé avec la valeur par défaut.
+                </p>
+              )}
 
               <div className="mt-6 flex flex-wrap gap-3">
                 <button
                   type="submit"
-                  disabled={creating || files.length === 0}
+                  disabled={
+                    creating ||
+                    files.length === 0 ||
+                    (toolInfo.tool === 'photo_id' &&
+                      (specsLoading || photoSetupUnavailable || !selectedPhotoCountry || !photoOptions.document))
+                  }
                   className="rounded-lg bg-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {creating ? 'Création du job…' : 'Lancer le traitement'}
@@ -469,7 +663,16 @@ export default function ToolPage() {
             <h2 className="text-lg font-semibold text-slate-900">Comment ça marche</h2>
             <ol className="mt-5 space-y-5">
               <Step title="Ajoutez vos fichiers" description="Glissez vos fichiers ou sélectionnez-les depuis votre appareil." done={files.length > 0} active={files.length === 0} />
-              <Step title="Lancez le traitement" description="Le job est créé avec les options par défaut documentées." done={Boolean(jobId)} active={files.length > 0 && !jobId} />
+              <Step
+                title="Lancez le traitement"
+                description={
+                  toolInfo.tool === 'photo_id'
+                    ? 'Le job est créé avec le pays et le document sélectionnés.'
+                    : 'Le job est créé avec les options par défaut documentées.'
+                }
+                done={Boolean(jobId)}
+                active={files.length > 0 && !jobId}
+              />
               <Step title="Récupérez le résultat" description="Suivez le statut puis téléchargez le résultat quand le job est terminé." done={status === 'done'} active={Boolean(jobId) && status !== 'done' && status !== 'failed'} />
             </ol>
           </div>
