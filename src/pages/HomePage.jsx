@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom'
 export default function HomePage() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-sky-50 via-white to-slate-50 p-6 text-center shadow-sm sm:p-12 sm:text-left">
-        <div aria-hidden="true" className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-sky-100/70 blur-3xl" />
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-brand-surface via-surface to-canvas p-6 text-center shadow-sm sm:p-12 sm:text-left">
+        <div aria-hidden="true" className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-line/40 blur-3xl" />
         <div className="relative mx-auto max-w-3xl">
           <span className="inline-flex rounded-full border border-sky-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-700">
             NanoFile
@@ -58,7 +58,7 @@ export default function HomePage() {
 
         <Link
           to="/tools/compress"
-          className="mt-5 flex min-h-44 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-sky-200 bg-sky-50/60 p-5 text-center transition hover:border-sky-400 hover:bg-sky-50 sm:mt-6 sm:min-h-48 sm:p-8"
+          className="mt-5 flex min-h-44 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-sky-200 bg-brand-surface/60 p-5 text-center transition hover:border-sky-400 hover:bg-brand-surface sm:mt-6 sm:min-h-48 sm:p-8"
         >
           <span className="text-sm font-semibold text-slate-900 sm:text-base">Déposez vos fichiers ici</span>
           <span className="mt-2 text-xs text-slate-500 sm:text-sm">ou</span>
