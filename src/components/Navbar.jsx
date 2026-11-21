@@ -20,6 +20,7 @@ import {
   FiZap,
 } from 'react-icons/fi'
 import logoUrl from '../../Logo NanoFile bleu et cyan.png'
+import ThemeToggle from '@/components/ThemeToggle.jsx'
 import { TOOLS } from '@/config/tools.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
 
@@ -307,7 +308,7 @@ export default function Navbar() {
   }, [menuOpen])
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-surface/95 backdrop-blur">
       <div className="relative z-50 mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
         <Link
           to="/"
@@ -474,21 +475,24 @@ export default function Navbar() {
           })}
         </nav>
 
-        <button
-          ref={menuButtonRef}
-          type="button"
-          onClick={() => (menuOpen ? closeMenu() : openMenu())}
-          aria-expanded={menuOpen}
-          aria-controls="mobile-navigation"
-          aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-sky-300 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 lg:hidden"
-        >
-          {menuOpen ? (
-            <FiX aria-hidden="true" className="h-5 w-5" />
-          ) : (
-            <FiMenu aria-hidden="true" className="h-5 w-5" />
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            ref={menuButtonRef}
+            type="button"
+            onClick={() => (menuOpen ? closeMenu() : openMenu())}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-navigation"
+            aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-sky-300 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 lg:hidden"
+          >
+            {menuOpen ? (
+              <FiX aria-hidden="true" className="h-5 w-5" />
+            ) : (
+              <FiMenu aria-hidden="true" className="h-5 w-5" />
+            )}
+          </button>
+        </div>
       </div>
 
       {menuOpen && (
