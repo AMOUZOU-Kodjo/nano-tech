@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { MeProvider } from '@/contexts/MeContext.jsx'
 import Navbar from '@/components/Navbar.jsx'
@@ -27,6 +28,15 @@ const AUTH_ROUTES = new Set(['/login', '/register'])
 function AppLayout() {
   const location = useLocation()
   const hideFooter = AUTH_ROUTES.has(location.pathname)
+
+  // Remet la vue en haut à chaque navigation, y compris sur un même chemin.
+  useEffect(() => {
+    if (location.hash) {
+      document.getElementById(location.hash.slice(1))?.scrollIntoView()
+      return
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [location.key, location.hash])
 
   return (
     <>

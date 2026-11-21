@@ -8,6 +8,22 @@ import { useJobDownload } from '@/hooks/useJobDownload.js'
 import { useJobsManager } from '@/hooks/useJobsManager.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
 
+// Outils dont les options sont documentées dans FRONTEND.md.
+const DOCUMENTED_OPTION_TOOLS = new Set([
+  'compress',
+  'pdf_to_images',
+  'pdf_split',
+  'pdf_reorder',
+  'images_to_pdf',
+  'pdf_sign',
+  'pdf_protect',
+  'pdf_watermark',
+  'photo_id',
+])
+
+const OPTION_INPUT_CLASS =
+  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50'
+
 // Libellés français des statuts documentés pour un job.
 const STATUS_LABELS = {
   queued: 'En attente',
@@ -108,6 +124,16 @@ function normalizePhotoCountries(specs) {
   return optionItems(source)
 }
 
+function normalizePhotoExcluded(specs) {
+  const source = Array.isArray(specs?.excluded) ? specs.excluded : []
+  return source
+    .map((item) => ({
+      code: String(item?.code ?? item?.id ?? ''),
+      reason: String(item?.reason ?? ''),
+    }))
+    .filter((item) => item.code)
+}
+
 function Step({ title, description, done, active }) {
   return (
     <li className="flex gap-3">
@@ -126,41 +152,37 @@ function Step({ title, description, done, active }) {
   )
 }
 
-function formatSpecValue(value) {
-  if (value === null || value === undefined) {
-    return '—'
-  }
-  if (typeof value === 'boolean') {
-    return value ? 'oui' : 'non'
-  }
-  if (Array.isArray(value)) {
-    return value.map((item) => (item && typeof item === 'object' ? JSON.stringify(item) : String(item))).join(', ') || '—'
-  }
-  if (typeof value === 'object') {
-    return JSON.stringify(value)
-  }
-  return String(value)
-}
-
-function SpecList({ value }) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return null
-  }
-
-  const entries = Object.entries(value)
-  if (!entries.length) {
-    return <p className="mt-3 text-sm text-slate-600">Aucune spécification disponible.</p>
-  }
-
+function PhotoSpecSummary({ countries, excluded }) {
   return (
-    <dl className="mt-4 space-y-2">
-      {entries.map(([key, item]) => (
-        <div key={key} className="rounded-lg bg-slate-50 px-3 py-2">
-          <dt className="text-xs uppercase tracking-wide text-slate-500">{key}</dt>
-          <dd className="mt-1 text-sm text-slate-700">{formatSpecValue(item)}</dd>
+    <div className="mt-4 space-y-3">
+      <p className="text-sm text-slate-600">
+        {countries.length > 0
+          ? `${countries.length} pays disponible${countries.length > 1 ? 's' : ''}.`
+          : 'Aucun pays disponible pour la photo d’identité.'}
+      </p>
+      {countries.length > 0 && (
+        <ul className="flex flex-wrap gap-2">
+          {countries.map((item) => (
+            <li key={item.value} className="rounded-lg bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800">
+              {item.label}
+            </li>
+          ))}
+        </ul>
+      )}
+      {excluded.length > 0 && (
+        <div className="rounded-lg bg-amber-50 px-3 py-2">
+          <p className="text-xs font-semibold text-amber-900">Pays exclus</p>
+          <ul className="mt-1 space-y-1">
+            {excluded.map((item) => (
+              <li key={item.code} className="text-xs leading-relaxed text-amber-800">
+                <span className="font-semibold">{item.code}</span>
+                {item.reason ? ` : ${item.reason}` : ''}
+              </li>
+            ))}
+          </ul>
         </div>
-      ))}
-    </dl>
+      )}
+    </div>
   )
 }
 
@@ -181,6 +203,22 @@ export default function ToolPage() {
     sheet: '',
     maxSizeKb: '',
   })
+  const [compressOptions, setCompressOptions] = useState({
+    level: '',
+    targetSizeKb: '',
+  })
+  const [toolOptions, setToolOptions] = useState({
+    pages: 'all',
+    format: 'png',
+    dpi: '',
+    ranges: '',
+    order: '',
+    signatureText: '',
+    page: '',
+    position: 'bottom_right',
+    password: '',
+    watermark: '',
+  })
 
   const { createJob, loading: creating, error: createError } = useJobsManager({ onSuccess: reload })
   const { data: job, loading: jobLoading, error: jobError, reload: reloadJob } = useJob(jobId)
@@ -199,6 +237,7 @@ export default function ToolPage() {
   const status = job?.status
   const progress = typeof job?.progress === 'number' ? Math.min(100, Math.max(0, job.progress)) : 0
   const photoCountries = useMemo(() => normalizePhotoCountries(photoSpecs), [photoSpecs])
+  const photoExcluded = useMemo(() => normalizePhotoExcluded(photoSpecs), [photoSpecs])
   const selectedPhotoCountry = photoOptions.country || photoCountries[0]?.value || ''
   const photoDocuments = useMemo(
     () => photoCountries.find((item) => item.value === selectedPhotoCountry)?.documents ?? [],
@@ -273,8 +312,9 @@ export default function ToolPage() {
   const relatedTools = TOOLS.filter(
     (item) => item.category === toolInfo.category && item.tool !== toolInfo.tool,
   ).slice(0, 3)
+  const hasAdvancedOptions = DOCUMENTED_OPTION_TOOLS.has(toolInfo.tool)
 
-  // Crée le job avec les options par défaut documentées par l'API.
+  // Crée le job avec les options documentées selon l'outil sélectionné.
   async function handleSubmit(event) {
     event.preventDefault()
     setLocalError(null)
@@ -285,6 +325,19 @@ export default function ToolPage() {
     }
 
     let options = {}
+
+    if (toolInfo.tool === 'compress') {
+      if (compressOptions.targetSizeKb) {
+        const targetSize = Number(compressOptions.targetSizeKb)
+        if (!Number.isFinite(targetSize) || targetSize <= 0) {
+          setLocalError('La taille cible doit être un nombre positif.')
+          return
+        }
+        options.target_size_kb = targetSize
+      } else if (compressOptions.level) {
+        options.level = compressOptions.level
+      }
+    }
 
     if (toolInfo.tool === 'photo_id') {
       if (specsLoading) {
@@ -318,6 +371,65 @@ export default function ToolPage() {
       }
     }
 
+    if (toolInfo.tool === 'pdf_to_images') {
+      if (toolOptions.pages) {
+        options.pages = toolOptions.pages
+      }
+      if (toolOptions.format) {
+        options.format = toolOptions.format
+      }
+      if (toolOptions.dpi) {
+        const dpi = Number(toolOptions.dpi)
+        if (!Number.isInteger(dpi) || dpi < 72 || dpi > 600) {
+          setLocalError('La résolution doit être comprise entre 72 et 600.')
+          return
+        }
+        options.dpi = dpi
+      }
+    }
+
+    if (toolInfo.tool === 'pdf_split' && toolOptions.ranges) {
+      options.ranges = toolOptions.ranges.trim()
+    }
+
+    if (toolInfo.tool === 'pdf_reorder' && toolOptions.order) {
+      const order = parsePageOrder(toolOptions.order)
+      if (order.length === 0) {
+        setLocalError('Indiquez des numéros de pages valides, séparés par des virgules.')
+        return
+      }
+      options.order = order
+    }
+
+    if (toolInfo.tool === 'images_to_pdf') {
+      options.order = files.map((file) => file.name)
+    }
+
+    if (toolInfo.tool === 'pdf_sign') {
+      if (toolOptions.signatureText) {
+        options.signature_text = toolOptions.signatureText
+      }
+      if (toolOptions.page) {
+        const page = Number(toolOptions.page)
+        if (!Number.isInteger(page) || page < 1) {
+          setLocalError('Le numéro de page doit être un entier positif.')
+          return
+        }
+        options.page = page
+      }
+      if (toolOptions.position) {
+        options.position = toolOptions.position
+      }
+    }
+
+    if (toolInfo.tool === 'pdf_protect' && toolOptions.password) {
+      options.password = toolOptions.password
+    }
+
+    if (toolInfo.tool === 'pdf_watermark' && toolOptions.watermark) {
+      options.text = toolOptions.watermark
+    }
+
     const payload = await createJob(files, toolInfo.tool, options)
     if (!payload?.id) {
       trackEvent('tool_run_failed', { tool: toolInfo.tool })
@@ -344,11 +456,42 @@ export default function ToolPage() {
     setLocalError(null)
   }
 
+  function updateCompressOption(field, value) {
+    setCompressOptions(() => (field === 'level' ? { level: value, targetSizeKb: '' } : { level: '', targetSizeKb: value }))
+    setLocalError(null)
+  }
+
+  function updateToolOption(field, value) {
+    setToolOptions((current) => ({ ...current, [field]: value }))
+    setLocalError(null)
+  }
+
+  // Convertit une saisie « 3, 1, 2 » en liste de numéros de pages valides.
+  function parsePageOrder(value) {
+    return String(value)
+      .split(',')
+      .map((item) => Number(item.trim()))
+      .filter((item) => Number.isInteger(item) && item > 0)
+  }
+
+  function moveFile(index, direction) {
+    setFiles((current) => {
+      const target = index + direction
+      if (target < 0 || target >= current.length) return current
+      const next = [...current]
+      ;[next[index], next[target]] = [next[target], next[index]]
+      return next
+    })
+  }
+
   function resetTool() {
     setFiles([])
     setJobId(null)
     setDownloadedJobId(null)
     setLocalError(null)
+    setPhotoOptions({ country: '', document: '', background: '', sheet: '', maxSizeKb: '' })
+    setCompressOptions({ level: '', targetSizeKb: '' })
+    setToolOptions({ pages: 'all', format: 'png', dpi: '', ranges: '', order: '', signatureText: '', page: '', position: 'bottom_right', password: '', watermark: '' })
     reportedRef.current = null
   }
 
@@ -445,19 +588,218 @@ export default function ToolPage() {
                         <p className="truncate text-sm font-medium text-slate-800">{file.name}</p>
                         <p className="text-xs text-slate-500">{formatFileSize(file.size)}</p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}
-                        disabled={creating}
-                        className="shrink-0 rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-50"
-                      >
-                        Retirer
-                      </button>
+                      <div className="flex shrink-0 items-center gap-1">
+                        {toolInfo.tool === 'images_to_pdf' && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => moveFile(index, -1)}
+                              disabled={creating || index === 0}
+                              className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40"
+                            >
+                              Monter
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveFile(index, 1)}
+                              disabled={creating || index === files.length - 1}
+                              className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40"
+                            >
+                              Descendre
+                            </button>
+                          </>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}
+                          disabled={creating}
+                          className="rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-50"
+                        >
+                          Retirer
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
               )}
 
+              {toolInfo.tool === 'compress' && (
+                <div className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <h3 className="text-sm font-semibold text-slate-900">Options de compression</h3>
+                  <p className="text-xs leading-relaxed text-slate-600">
+                    Choisissez un niveau de compression ou une taille cible en Ko.
+                  </p>
+                  <p className="text-xs leading-relaxed text-slate-500">
+                    Formats acceptés : images, vidéos, PDF, Word, Excel, PowerPoint, ODF.
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <span>Niveau</span>
+                      <select
+                        value={compressOptions.level}
+                        onChange={(event) => updateCompressOption('level', event.target.value)}
+                        disabled={creating || Boolean(compressOptions.targetSizeKb)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                      >
+                        <option value="">Par défaut</option>
+                        <option value="basic">Basique</option>
+                        <option value="medium">Moyen</option>
+                        <option value="max">Maximum</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <span>Taille cible (Ko)</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={compressOptions.targetSizeKb}
+                        onChange={(event) => updateCompressOption('targetSizeKb', event.target.value)}
+                        disabled={creating || Boolean(compressOptions.level)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+              {hasAdvancedOptions && toolInfo.tool !== 'compress' && toolInfo.tool !== 'photo_id' && (
+                <div className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <h3 className="text-sm font-semibold text-slate-900">Options avancées</h3>
+                  {toolInfo.tool === 'pdf_to_images' && (
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                        <span>Pages</span>
+                        <input
+                          type="text"
+                          value={toolOptions.pages}
+                          onChange={(event) => updateToolOption('pages', event.target.value)}
+                          disabled={creating}
+                          className={OPTION_INPUT_CLASS}
+                          placeholder="all ou 1,3-5"
+                        />
+                      </label>
+                      <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                        <span>Format</span>
+                        <select
+                          value={toolOptions.format}
+                          onChange={(event) => updateToolOption('format', event.target.value)}
+                          disabled={creating}
+                          className={OPTION_INPUT_CLASS}
+                        >
+                          <option value="png">PNG</option>
+                          <option value="jpg">JPG</option>
+                        </select>
+                      </label>
+                      <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                        <span>Résolution (dpi)</span>
+                        <input
+                          type="number"
+                          min="72"
+                          max="600"
+                          value={toolOptions.dpi}
+                          onChange={(event) => updateToolOption('dpi', event.target.value)}
+                          disabled={creating}
+                          className={OPTION_INPUT_CLASS}
+                          placeholder="72 à 600"
+                        />
+                      </label>
+                    </div>
+                  )}
+                  {toolInfo.tool === 'pdf_split' && (
+                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <span>Plages de pages</span>
+                      <input
+                        type="text"
+                        value={toolOptions.ranges}
+                        onChange={(event) => updateToolOption('ranges', event.target.value)}
+                        disabled={creating}
+                        className={OPTION_INPUT_CLASS}
+                        placeholder="1-3,5"
+                      />
+                    </label>
+                  )}
+                  {toolInfo.tool === 'pdf_reorder' && (
+                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <span>Ordre des pages</span>
+                      <input
+                        type="text"
+                        value={toolOptions.order}
+                        onChange={(event) => updateToolOption('order', event.target.value)}
+                        disabled={creating}
+                        className={OPTION_INPUT_CLASS}
+                        placeholder="3,1,2"
+                      />
+                    </label>
+                  )}
+                  {toolInfo.tool === 'images_to_pdf' && (
+                    <p className="text-xs leading-relaxed text-slate-600">
+                      Les images sont assemblées dans l’ordre affiché. Utilisez les boutons Monter et Descendre pour les classer.
+                    </p>
+                  )}
+                  {toolInfo.tool === 'pdf_sign' && (
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                        <span>Texte de la signature</span>
+                        <input
+                          type="text"
+                          value={toolOptions.signatureText}
+                          onChange={(event) => updateToolOption('signatureText', event.target.value)}
+                          disabled={creating}
+                          className={OPTION_INPUT_CLASS}
+                        />
+                      </label>
+                      <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                        <span>Page</span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={toolOptions.page}
+                          onChange={(event) => updateToolOption('page', event.target.value)}
+                          disabled={creating}
+                          className={OPTION_INPUT_CLASS}
+                        />
+                      </label>
+                      <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                        <span>Position</span>
+                        <select
+                          value={toolOptions.position}
+                          onChange={(event) => updateToolOption('position', event.target.value)}
+                          disabled={creating}
+                          className={OPTION_INPUT_CLASS}
+                        >
+                          <option value="bottom_right">Bas droite</option>
+                          <option value="bottom_left">Bas gauche</option>
+                          <option value="top_right">Haut droite</option>
+                          <option value="top_left">Haut gauche</option>
+                        </select>
+                      </label>
+                    </div>
+                  )}
+                  {toolInfo.tool === 'pdf_protect' && (
+                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <span>Mot de passe</span>
+                      <input
+                        type="password"
+                        value={toolOptions.password}
+                        onChange={(event) => updateToolOption('password', event.target.value)}
+                        disabled={creating}
+                        className={OPTION_INPUT_CLASS}
+                      />
+                    </label>
+                  )}
+                  {toolInfo.tool === 'pdf_watermark' && (
+                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <span>Texte du filigrane</span>
+                      <input
+                        type="text"
+                        value={toolOptions.watermark}
+                        onChange={(event) => updateToolOption('watermark', event.target.value)}
+                        disabled={creating}
+                        className={OPTION_INPUT_CLASS}
+                      />
+                    </label>
+                  )}
+                </div>
+              )}
               {toolInfo.tool === 'photo_id' && (
                 <div className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <h3 className="text-sm font-semibold text-slate-900">Options photo d’identité</h3>
@@ -543,9 +885,9 @@ export default function ToolPage() {
                   </div>
                 </div>
               )}
-              {toolInfo.tool !== 'photo_id' && (
+              {!hasAdvancedOptions && (
                 <p className="mt-4 text-xs text-slate-500">
-                  Les options avancées ne sont pas exposées : le job est lancé avec la valeur par défaut.
+                  Cet outil n’a pas d’options avancées documentées : le job est lancé avec la valeur par défaut.
                 </p>
               )}
 
@@ -668,7 +1010,9 @@ export default function ToolPage() {
                 description={
                   toolInfo.tool === 'photo_id'
                     ? 'Le job est créé avec le pays et le document sélectionnés.'
-                    : 'Le job est créé avec les options par défaut documentées.'
+                    : hasAdvancedOptions
+                      ? 'Le job est créé avec les options choisies.'
+                      : 'Le job est créé avec les options par défaut documentées.'
                 }
                 done={Boolean(jobId)}
                 active={files.length > 0 && !jobId}
@@ -695,7 +1039,7 @@ export default function ToolPage() {
                   {specsError.message}
                 </p>
               )}
-              <SpecList value={photoSpecs} />
+              <PhotoSpecSummary countries={photoCountries} excluded={photoExcluded} />
             </div>
           )}
 

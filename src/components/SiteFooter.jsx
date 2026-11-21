@@ -1,5 +1,20 @@
 import { Link } from 'react-router-dom'
 import logoUrl from '../../Logo NanoFile bleu et cyan.png'
+import { TOOLS } from '@/config/tools.js'
+
+// Regroupements d’outils affichés directement dans le pied de page.
+const FOOTER_TOOL_GROUPS = [
+  { title: 'Optimiser', categories: ['optimize'] },
+  { title: 'Convertir', categories: ['convert'] },
+  { title: 'Organiser', categories: ['organize'] },
+  { title: 'Sécurité & Photo', categories: ['security', 'photo'] },
+].map((group) => ({
+  title: group.title,
+  links: TOOLS.filter((tool) => group.categories.includes(tool.category)).map((tool) => ({
+    to: `/tools/${tool.tool}`,
+    label: tool.name,
+  })),
+}))
 
 const FOOTER_SECTIONS = [
   {
@@ -9,8 +24,9 @@ const FOOTER_SECTIONS = [
       { to: '/catalogue', label: 'Catalogue' },
     ],
   },
+  ...FOOTER_TOOL_GROUPS,
   {
-    title: 'Outils',
+    title: 'Outils complémentaires',
     links: [
       { to: '/studio', label: 'Studio' },
       { to: '/documents', label: 'Documents' },
@@ -58,13 +74,13 @@ export default function SiteFooter() {
     <footer className="mt-12 border-t border-slate-200 bg-slate-50 sm:mt-16">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="grid gap-y-9 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:gap-x-10">
-          <div>
-            <div className="flex items-center gap-3">
-              <img src={logoUrl} alt="" className="h-11 w-11 shrink-0 object-contain sm:h-12 sm:w-12" />
-              <span className="text-lg font-bold text-slate-900">NanoFile</span>
+          <div className="text-center sm:text-left lg:flex lg:flex-col lg:justify-center lg:text-center">
+            <div className="flex items-center justify-center gap-3 sm:justify-start lg:justify-center">
+              <img src={logoUrl} alt="" className="h-20 w-20 shrink-0 object-contain sm:h-24 sm:w-24" />
+              <span className="sr-only">NanoFile</span>
             </div>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-600">
-              Une interface claire pour utiliser les outils fichiers exposés par l’API NanoFile.
+            <p className="mx-auto mt-4 max-w-xs text-sm leading-relaxed text-slate-600 sm:mx-0 lg:mx-auto">
+              Des outils simples pour compresser, convertir et organiser vos fichiers en ligne.
             </p>
           </div>
 
@@ -75,9 +91,11 @@ export default function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-2 border-t border-slate-200 pt-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <span>NanoFile — outils pour vos fichiers.</span>
-          <span>Conditions générales : version 2026-11.</span>
+        <div className="mt-10 flex flex-col items-center gap-2 border-t border-slate-200 pt-6 text-center text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:text-left">
+          <span className="font-bold">© 2026 NanoFile — Outils pour vos fichiers.</span>
+          <Link to="/terms" className="rounded font-bold text-sky-700 hover:text-sky-800 hover:underline">
+            Conditions générales — version 2026-11
+          </Link>
         </div>
       </div>
     </footer>
