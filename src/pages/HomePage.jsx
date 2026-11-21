@@ -4,27 +4,29 @@ import { Link } from 'react-router-dom'
 export default function HomePage() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-brand-surface via-surface to-canvas p-6 text-center shadow-sm sm:p-12 sm:text-left">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-surface via-surface to-canvas p-8 text-center sm:p-16 sm:text-left">
+
         <div aria-hidden="true" className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-line/40 blur-3xl" />
         <div className="relative mx-auto max-w-3xl">
-          <span className="inline-flex rounded-full border border-sky-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-700">
+          {/* <span className="inline-flex rounded-full border border-sky-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-700">
             NanoFile
-          </span>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-balance text-slate-900 sm:mt-5 sm:text-5xl">
+          </span> */}
+          <h1 className="mt-4 text-4xl font-bold tracking-tight text-balance text-slate-900 sm:mt-5 sm:text-5xl">
             Vos fichiers, traités simplement.
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0 sm:mt-5 sm:text-base">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0 sm:mt-5 sm:text-xl">
             Compressez, convertissez, organisez et sécurisez vos fichiers en quelques clics.
             Une interface claire, sans option superflue.
           </p>
 
-          <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] font-medium text-slate-600 sm:justify-start sm:text-xs">
+          <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] font-medium  text-slate-600  sm:text-sm">
+
             <li>Aucun nom ni contenu transmis aux analytics.</li>
             <li>Résultat téléchargeable dès la fin.</li>
             <li>JPG, JPEG, PNG, WEBP, BMP, TIF, TIFF, vidéos, PDF, Word, Excel, PowerPoint, ODF.</li>
           </ul>
 
-          <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:mt-8 sm:flex-row sm:items-center sm:justify-start">
+          <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:mt-8 sm:flex-row sm:items-center">
             <Link
               to="/catalogue"
               className="rounded-lg bg-sky-500 px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600"
