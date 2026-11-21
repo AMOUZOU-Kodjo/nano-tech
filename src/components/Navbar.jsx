@@ -1,5 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import {
+  FiActivity,
+  FiChevronDown,
+  FiCreditCard,
+  FiFileText,
+  FiGrid,
+  FiHome,
+  FiLayers,
+  FiLogIn,
+  FiMenu,
+  FiMinimize2,
+  FiRefreshCw,
+  FiSettings,
+  FiShield,
+  FiUser,
+  FiUserPlus,
+  FiX,
+  FiZap,
+} from 'react-icons/fi'
 import logoUrl from '../../Logo NanoFile bleu et cyan.png'
 import { TOOLS } from '@/config/tools.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
@@ -11,24 +30,28 @@ const TOOL_MENU_GROUPS = [
     title: 'Optimiser',
     description: 'Réduire la taille des fichiers.',
     categories: ['optimize'],
+    icon: FiMinimize2,
   },
   {
     id: 'convert',
     title: 'Convertir',
     description: 'Changer le format des documents.',
     categories: ['convert'],
+    icon: FiRefreshCw,
   },
   {
     id: 'organize',
     title: 'Organiser',
     description: 'Assembler, scinder ou classer.',
     categories: ['organize'],
+    icon: FiLayers,
   },
   {
     id: 'security-photo',
     title: 'Sécurité & Photo',
     description: 'Protéger et préparer les fichiers.',
     categories: ['security', 'photo'],
+    icon: FiShield,
   },
 ].map((group) => ({
   ...group,
@@ -39,6 +62,7 @@ const TOOL_MENU_GROUPS = [
 const MOBILE_TOOL_GROUPS = TOOL_MENU_GROUPS.map((group) => ({
   id: group.id,
   title: group.title,
+  icon: group.icon,
   links: group.tools.map((tool) => ({
     to: `/tools/${tool.tool}`,
     label: tool.name,
@@ -47,25 +71,25 @@ const MOBILE_TOOL_GROUPS = TOOL_MENU_GROUPS.map((group) => ({
 
 // Raccourcis mis en avant dans le menu mobile.
 const MOBILE_SHORTCUTS = [
-  { to: '/tools/compress', label: 'Compresser', hint: 'Images, PDF, vidéos' },
-  { to: '/catalogue', label: 'Catalogue', hint: 'Tous les outils' },
-  { to: '/studio', label: 'Studio', hint: 'Génération de CV' },
+  { to: '/tools/compress', label: 'Compresser', hint: 'Images, PDF, vidéos', icon: FiMinimize2 },
+  { to: '/catalogue', label: 'Catalogue', hint: 'Tous les outils', icon: FiGrid },
+  { to: '/studio', label: 'Studio', hint: 'Génération de CV', icon: FiFileText },
 ]
 
 // Liens principaux affichés dans la barre de navigation.
 const MAIN_LINKS = [
-  { to: '/', label: 'Accueil' },
-  { to: '/dashboard', label: 'Espace' },
-  { to: '/studio', label: 'Studio' },
-  { to: '/documents', label: 'Documents' },
-  { to: '/jobs', label: 'Jobs' },
+  { to: '/', label: 'Accueil', icon: FiHome },
+  { to: '/dashboard', label: 'Espace', icon: FiGrid },
+  { to: '/studio', label: 'Studio', icon: FiZap },
+  { to: '/documents', label: 'Documents', icon: FiFileText },
+  { to: '/jobs', label: 'Jobs', icon: FiActivity },
 ]
 
 // Liens de gestion de compte affichés pour un utilisateur connecté.
 const ACCOUNT_LINKS = [
-  { to: '/profile', label: 'Profil' },
-  { to: '/account', label: 'Compte' },
-  { to: '/billing', label: 'Facturation' },
+  { to: '/profile', label: 'Profil', icon: FiUser },
+  { to: '/account', label: 'Compte', icon: FiSettings },
+  { to: '/billing', label: 'Facturation', icon: FiCreditCard },
 ]
 
 function isActiveLink(path, currentPath) {
@@ -76,7 +100,7 @@ function isActiveLink(path, currentPath) {
 // Calcule une classe d'activation sans surligner toutes les routes imbriquées.
 function linkClass(path, currentPath) {
   const active = isActiveLink(path, currentPath)
-  return `rounded-lg px-3 py-2 text-sm font-medium transition ${
+  return `inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
     active ? 'bg-sky-50 text-sky-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
   }`
 }
@@ -84,7 +108,7 @@ function linkClass(path, currentPath) {
 // Met en avant l’inscription avec un fond coloré dans la navbar desktop.
 function desktopAuthLinkClass(link, currentPath) {
   if (link.to === '/register') {
-    return 'rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-sky-700'
+    return 'inline-flex items-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-sky-700'
   }
   return linkClass(link.to, currentPath)
 }
@@ -108,6 +132,7 @@ function findCurrentToolGroupId(pathname) {
 // Lien du menu mobile avec indication visuelle de la route active.
 function MobileNavLink({ link, pathname, onClick }) {
   const active = isActiveLink(link.to, pathname)
+  const Icon = link.icon
   return (
     <Link
       to={link.to}
@@ -116,10 +141,14 @@ function MobileNavLink({ link, pathname, onClick }) {
       className={mobileLinkClass(link.to, pathname)}
     >
       <span className="flex items-center gap-3">
-        <span
-          aria-hidden="true"
-          className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-sky-500' : 'bg-slate-300'}`}
-        />
+        {Icon ? (
+          <Icon aria-hidden="true" className={`h-4 w-4 ${active ? 'text-sky-600' : 'text-slate-400'}`} />
+        ) : (
+          <span
+            aria-hidden="true"
+            className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-sky-500' : 'bg-slate-300'}`}
+          />
+        )}
         {link.label}
       </span>
       {active && <span className="text-xs font-semibold text-sky-600">Actif</span>}
@@ -150,8 +179,8 @@ export default function Navbar() {
     ? []
     : isGuest
       ? [
-          { to: '/login', label: 'Connexion' },
-          { to: '/register', label: 'Inscription' },
+          { to: '/login', label: 'Connexion', icon: FiLogIn },
+          { to: '/register', label: 'Inscription', icon: FiUserPlus },
         ]
       : ACCOUNT_LINKS
 
@@ -285,6 +314,7 @@ export default function Navbar() {
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Navigation principale">
           <Link to="/" className={linkClass('/', location.pathname)}>
+            <FiHome aria-hidden="true" className="h-4 w-4" />
             Accueil
           </Link>
 
@@ -294,23 +324,16 @@ export default function Navbar() {
               onClick={() => setToolsOpen((open) => !open)}
               aria-expanded={toolsOpen}
               aria-haspopup="menu"
-              className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
+              className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
                 toolsActive ? 'bg-sky-50 text-sky-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
+              <FiGrid aria-hidden="true" className="h-4 w-4" />
               Outils
-              <svg
+              <FiChevronDown
                 aria-hidden="true"
-                viewBox="0 0 20 20"
-                fill="currentColor"
                 className={`h-4 w-4 transition ${toolsOpen ? 'rotate-180' : ''}`}
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              />
             </button>
 
             {toolsOpen && (
@@ -320,41 +343,53 @@ export default function Navbar() {
                 className="absolute left-0 top-full z-50 mt-2 w-[640px] max-w-[calc(100vw-3rem)] rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl"
               >
                 <div className="grid grid-cols-2 gap-2">
-                  {TOOL_MENU_GROUPS.map((group) => (
-                    <div key={group.id} className="rounded-xl border border-transparent p-3 hover:border-slate-200 hover:bg-slate-50">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-                        {group.title}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">{group.description}</p>
-                      <div className="mt-2 grid gap-0.5">
-                        {group.tools.map((tool) => (
-                          <Link
-                            key={tool.tool}
-                            to={`/tools/${tool.tool}`}
-                            onClick={() => setToolsOpen(false)}
-                            className="rounded-lg px-2 py-1.5 text-sm text-slate-700 hover:bg-sky-50 hover:text-sky-800"
-                          >
-                            {tool.name}
-                          </Link>
-                        ))}
+                  {TOOL_MENU_GROUPS.map((group) => {
+                    const GroupIcon = group.icon
+                    return (
+                      <div key={group.id} className="rounded-xl border border-transparent p-3 hover:border-slate-200 hover:bg-slate-50">
+                        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-sky-700">
+                          <GroupIcon aria-hidden="true" className="h-4 w-4" />
+                          {group.title}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">{group.description}</p>
+                        <div className="mt-2 grid gap-0.5">
+                          {group.tools.map((tool) => (
+                            <Link
+                              key={tool.tool}
+                              to={`/tools/${tool.tool}`}
+                              onClick={() => setToolsOpen(false)}
+                              className="rounded-lg px-2 py-1.5 text-sm text-slate-700 hover:bg-sky-50 hover:text-sky-800"
+                            >
+                              {tool.name}
+                            </Link>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}
           </div>
 
-          {MAIN_LINKS.filter((link) => link.to !== '/').map((link) => (
-            <Link key={link.to} to={link.to} className={linkClass(link.to, location.pathname)}>
-              {link.label}
-            </Link>
-          ))}
-          {authLinks.map((link) => (
-            <Link key={link.to} to={link.to} className={desktopAuthLinkClass(link, location.pathname)}>
-              {link.label}
-            </Link>
-          ))}
+          {MAIN_LINKS.filter((link) => link.to !== '/').map((link) => {
+            const Icon = link.icon
+            return (
+              <Link key={link.to} to={link.to} className={linkClass(link.to, location.pathname)}>
+                <Icon aria-hidden="true" className="h-4 w-4" />
+                {link.label}
+              </Link>
+            )
+          })}
+          {authLinks.map((link) => {
+            const Icon = link.icon
+            return (
+              <Link key={link.to} to={link.to} className={desktopAuthLinkClass(link, location.pathname)}>
+                {Icon && <Icon aria-hidden="true" className="h-4 w-4" />}
+                {link.label}
+              </Link>
+            )
+          })}
         </nav>
 
         <button
@@ -366,23 +401,11 @@ export default function Navbar() {
           aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
           className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-sky-300 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 lg:hidden"
         >
-          <span aria-hidden="true" className="relative block h-4 w-5">
-            <span
-              className={`absolute left-0 top-0 h-0.5 w-5 rounded-full bg-current transition-all ${
-                menuOpen ? 'translate-y-[7px] rotate-45' : ''
-              }`}
-            />
-            <span
-              className={`absolute left-0 top-[7px] h-0.5 w-5 rounded-full bg-current transition-all ${
-                menuOpen ? 'opacity-0' : ''
-              }`}
-            />
-            <span
-              className={`absolute left-0 top-[14px] h-0.5 w-5 rounded-full bg-current transition-all ${
-                menuOpen ? '-translate-y-[7px] -rotate-45' : ''
-              }`}
-            />
-          </span>
+          {menuOpen ? (
+            <FiX aria-hidden="true" className="h-5 w-5" />
+          ) : (
+            <FiMenu aria-hidden="true" className="h-5 w-5" />
+          )}
         </button>
       </div>
 
@@ -444,32 +467,38 @@ export default function Navbar() {
                   Accès rapide
                 </h2>
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {MOBILE_SHORTCUTS.map((item) => (
-                    <Link
-                      key={item.to}
-                      to={item.to}
-                      onClick={closeMenu}
-                      className="rounded-xl border border-slate-200 bg-white px-3 py-3 transition hover:border-sky-300 hover:bg-sky-50"
-                    >
-                      <span className="block text-sm font-semibold text-slate-900">{item.label}</span>
-                      <span className="mt-1 block text-xs text-slate-500">{item.hint}</span>
-                    </Link>
-                  ))}
+                  {MOBILE_SHORTCUTS.map((item) => {
+                    const Icon = item.icon
+                    return (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        onClick={closeMenu}
+                        className="rounded-xl border border-slate-200 bg-white px-3 py-3 transition hover:border-sky-300 hover:bg-sky-50"
+                      >
+                        <Icon aria-hidden="true" className="h-5 w-5 text-sky-600" />
+                        <span className="mt-2 block text-sm font-semibold text-slate-900">{item.label}</span>
+                        <span className="mt-1 block text-xs text-slate-500">{item.hint}</span>
+                      </Link>
+                    )
+                  })}
                 </div>
                 {isGuest && !loading && (
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <Link
                       to="/login"
                       onClick={closeMenu}
-                      className="rounded-xl bg-sky-500 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-sky-600"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-sky-600"
                     >
+                      <FiLogIn aria-hidden="true" className="h-4 w-4" />
                       Connexion
                     </Link>
                     <Link
                       to="/register"
                       onClick={closeMenu}
-                      className="rounded-xl bg-sky-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-sky-700"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-sky-700"
                     >
+                      <FiUserPlus aria-hidden="true" className="h-4 w-4" />
                       Inscription
                     </Link>
                   </div>
@@ -509,6 +538,7 @@ export default function Navbar() {
                   <div className="mt-2 space-y-2">
                     {MOBILE_TOOL_GROUPS.map((group) => {
                       const open = isGroupOpen(group)
+                      const GroupIcon = group.icon
                       return (
                         <div key={group.id} className="overflow-hidden rounded-xl border border-slate-200">
                           <button
@@ -519,23 +549,16 @@ export default function Navbar() {
                             className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50"
                           >
                             <span className="flex items-center gap-2">
+                              <GroupIcon aria-hidden="true" className="h-4 w-4 text-sky-600" />
                               <span className="text-sm font-semibold text-slate-800">{group.title}</span>
                               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
                                 {group.links.length}
                               </span>
                             </span>
-                            <svg
+                            <FiChevronDown
                               aria-hidden="true"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
                               className={`h-4 w-4 text-slate-500 transition ${open ? 'rotate-180' : ''}`}
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
+                            />
                           </button>
                           {open && (
                             <div id={`mobile-group-${group.id}`} className="border-t border-slate-100 bg-slate-50/60 px-2 py-2">
