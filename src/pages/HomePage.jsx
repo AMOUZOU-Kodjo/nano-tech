@@ -1,6 +1,23 @@
+import { FiArrowRight, FiCheck, FiFileText, FiImage, FiLayers, FiShield, FiZap } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
 import { MESSAGES } from '@/i18n/messages.js'
 import { useLocale } from '@/hooks/useLocale.js'
+
+const TEXT = {
+  badge: { fr: 'Traitement en ligne', en: 'Online processing' },
+  badgeDetail: { fr: 'Simple · clair · prévisible', en: 'Simple · clear · predictable' },
+  tryCompress: { fr: 'Essayer la compression', en: 'Try compression' },
+  seeHow: { fr: 'Voir comment ça marche', en: 'See how it works' },
+  previewTitle: { fr: 'Aperçu du traitement', en: 'Processing preview' },
+  previewFile: { fr: 'presentation.pdf', en: 'presentation.pdf' },
+  previewFileMeta: { fr: 'Document PDF', en: 'PDF document' },
+  previewStep: { fr: 'Compression en cours', en: 'Compression in progress' },
+  previewPercent: { fr: '68 %', en: '68%' },
+  previewDone: { fr: 'Prêt à télécharger', en: 'Ready to download' },
+  toolCompress: { fr: 'Compression', en: 'Compression' },
+  toolConvert: { fr: 'Conversion', en: 'Conversion' },
+  toolSecure: { fr: 'Sécurisation', en: 'Security' },
+}
 
 // Vue d'accueil : présentation concise et accès directs aux espaces principaux.
 export default function HomePage() {
@@ -8,40 +25,129 @@ export default function HomePage() {
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br   to-canvas p-8 text-center sm:p-16 sm:text-left">
+      <div className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-brand-surface/80 via-surface to-canvas p-6  sm:p-10 lg:p-12">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-brand/10 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-brand-soft/10 blur-3xl" />
 
-        <div aria-hidden="true" className="absolute -right-24 -top-24 h-72 w-72 rounded-full " />
-        <div className="relative mx-auto max-w-3xl">
-          {/* <span className="inline-flex rounded-full border border-sky-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-700">
-            NanoFile
-          </span> */}
-          <h1 className="mt-4 text-4xl font-bold tracking-tight text-balance text-slate-900 sm:mt-5 sm:text-5xl">
-            {t(MESSAGES.home.heroTitle)}
-          </h1>
-          {/* <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0 sm:mt-5 sm:text-xl"> */}
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0 sm:mt-5 sm:text-base">
-            {t(MESSAGES.home.heroTextOne)} {t(MESSAGES.home.heroTextTwo)}
-          </p>
+        <div className="relative grid items-center gap-10 lg:grid-cols-2">
+          <div>
+            <span className="inline-flex flex-wrap items-center gap-2 rounded-full border border-line bg-surface/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand backdrop-blur">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+              {t(TEXT.badge)}
+              <span className="text-ink-faint">·</span>
+              {t(TEXT.badgeDetail)}
+            </span>
 
-          <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] font-medium text-slate-600 sm:justify-start sm:text-sm">
-            <li>{t(MESSAGES.home.benefitAnalytics)}</li>
-            <li>{t(MESSAGES.home.benefitDownload)}</li>
-            <li>{t(MESSAGES.home.benefitFormats)}</li>
-          </ul>
+            <h1 className="mt-5 text-2xl text-center font-bold tracking-tight text-balance text-ink sm:text-4xl lg:text-5xl">
+              {t(MESSAGES.home.heroTitle)}
+            </h1>
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg">
+              {t(MESSAGES.home.heroTextOne)} {t(MESSAGES.home.heroTextTwo)}
+            </p>
 
-          <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:mt-8 sm:flex-row sm:items-center">
-            <Link
-              to="/catalogue"
-              className="rounded-lg bg-sky-500 px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600"
+            <ul className="mt-6 grid gap-2 text-sm text-ink-muted">
+              {[
+                MESSAGES.home.benefitAnalytics,
+                MESSAGES.home.benefitDownload,
+                MESSAGES.home.benefitFormats,
+              ].map((message) => (
+                <li key={message.fr} className="flex gap-3">
+                  <FiCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+                  <span>{t(message)}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link
+                to="/catalogue"
+                className="group inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand dark:bg-brand-soft dark:text-canvas"
+              >
+                {t(MESSAGES.home.discoverTools)}
+                <FiArrowRight aria-hidden="true" className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+              <Link
+                to="/tools/compress"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-surface px-5 py-3 text-sm font-semibold text-ink transition hover:-translate-y-0.5 hover:border-brand hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              >
+                {t(TEXT.tryCompress)}
+              </Link>
+            </div>
+
+            <a
+              href="#comment-ca-marche"
+              className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-brand transition hover:text-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
-              {t(MESSAGES.home.discoverTools)}
-            </Link>
-            <Link
-              to="/dashboard"
-              className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              {t(MESSAGES.home.userSpace)}
-            </Link>
+              {t(TEXT.seeHow)}
+              <FiArrowRight aria-hidden="true" className="h-4 w-4" />
+            </a>
+          </div>
+
+          <div className="relative mx-auto w-full max-w-md">
+            <div aria-hidden="true" className="absolute -inset-4 rounded-[2rem] bg-brand/10 blur-2xl" />
+            <div className="relative rounded-2xl border border-line bg-surface/95 p-5  backdrop-blur sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-surface text-brand">
+                    <FiLayers aria-hidden="true" className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-ink">{t(TEXT.previewTitle)}</p>
+                    <p className="text-xs text-ink-muted">{t(TEXT.previewFileMeta)}</p>
+                  </div>
+                </div>
+                <span className="rounded-full bg-brand-surface px-3 py-1 text-xs font-semibold text-brand">{t(TEXT.previewPercent)}</span>
+              </div>
+
+              <div className="mt-6 flex items-center gap-3 rounded-xl border border-line bg-surface-muted p-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-surface text-brand">
+                  <FiFileText aria-hidden="true" className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-ink">{t(TEXT.previewFile)}</p>
+                  <p className="mt-0.5 text-xs text-ink-muted">{t(TEXT.previewFileMeta)}</p>
+                </div>
+                <FiCheck aria-hidden="true" className="h-4 w-4 text-brand" />
+              </div>
+
+              <div className="mt-5">
+                <div className="flex items-center justify-between text-xs font-medium text-ink-muted">
+                  <span>{t(TEXT.previewStep)}</span>
+                  <span>{t(TEXT.previewPercent)}</span>
+                </div>
+                <div
+                  role="progressbar"
+                  aria-label={t(TEXT.previewStep)}
+                  aria-valuenow={68}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-strong"
+                >
+                  <div className="h-full w-[68%] rounded-full bg-brand" />
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-3 gap-2">
+                {[
+                  { Icon: FiZap, label: TEXT.toolCompress },
+                  { Icon: FiImage, label: TEXT.toolConvert },
+                  { Icon: FiShield, label: TEXT.toolSecure },
+                ].map(({ Icon, label }) => (
+                  <div key={label.fr} className="flex flex-col items-center gap-2 rounded-xl border border-line bg-surface p-3 text-center">
+                    <Icon aria-hidden="true" className="h-4 w-4 text-brand" />
+                    <span className="text-[11px] font-semibold text-ink-soft">{t(label)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 flex items-center justify-between gap-3 border-t border-line pt-4">
+                <span className="inline-flex items-center gap-2 text-xs font-semibold text-brand">
+                  <FiCheck aria-hidden="true" className="h-4 w-4" />
+                  {t(TEXT.previewDone)}
+                </span>
+                <span className="text-[11px] text-ink-faint">{t(TEXT.badge)}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
