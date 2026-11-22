@@ -41,7 +41,7 @@ function AppLayout() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-white text-slate-900">
+      <main key={location.pathname} className="min-h-screen bg-white text-slate-900 animate-page-in">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/catalogue" element={<CataloguePage />} />

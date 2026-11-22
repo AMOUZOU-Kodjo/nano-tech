@@ -21,6 +21,19 @@
   --color-brand-soft: #0369a1;
   --color-brand-surface: #f0f9ff;
   --color-brand-line: #bae6fd;
+
+  --animate-page-in: page-in 180ms ease-out both;
+
+  @keyframes page-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
 
 :root {
@@ -143,4 +156,10 @@ body {
 .dark .border-sky-400,
 .dark .border-sky-500 {
   border-color: var(--color-brand);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-page-in {
+    animation: none;
+  }
 }
