@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 export default function HomePage() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-      <div className="relative overflow-hidden rounded-2xl bg-linear-to-br     p-8 text-center sm:p-16 sm:text-left">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br   to-canvas p-8 text-center sm:p-16 sm:text-left">
 
         <div aria-hidden="true" className="absolute -right-24 -top-24 h-72 w-72 rounded-full " />
         <div className="relative mx-auto max-w-3xl">
@@ -15,13 +15,12 @@ export default function HomePage() {
             Vos fichiers, traités simplement.
           </h1>
           {/* <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0 sm:mt-5 sm:text-xl"> */}
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mt-5 sm:text-xl">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0 sm:mt-5 sm:text-base">
             Compressez, convertissez, organisez et sécurisez vos fichiers en quelques clics.
             Une interface claire, sans option superflue.
           </p>
 
-          <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] font-medium  text-slate-600  sm:text-sm">
-
+          <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] font-medium text-slate-600 sm:justify-start sm:text-xl">
             <li>Aucun nom ni contenu transmis aux analytics.</li>
             <li>Résultat téléchargeable dès la fin.</li>
             <li>JPG, JPEG, PNG, WEBP, BMP, TIF, TIFF, vidéos, PDF, Word, Excel, PowerPoint, ODF.</li>
