@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom'
 export default function HomePage() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-surface via-surface to-canvas p-8 text-center sm:p-16 sm:text-left">
+      <div className="relative overflow-hidden rounded-2xl bg-linear-to-br     p-8 text-center sm:p-16 sm:text-left">
 
-        <div aria-hidden="true" className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-line/40 blur-3xl" />
+        <div aria-hidden="true" className="absolute -right-24 -top-24 h-72 w-72 rounded-full " />
         <div className="relative mx-auto max-w-3xl">
           {/* <span className="inline-flex rounded-full border border-sky-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-700">
             NanoFile
@@ -43,7 +43,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:mt-10 sm:p-8">
+      <div className="mt-8 rounded-xl border border-slate-100 bg-white p-5 shadow-sm sm:mt-10 sm:p-8">
         <div className="flex flex-col gap-4 text-center sm:flex-row sm:items-start sm:justify-between sm:text-left">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Zone de traitement</p>
