@@ -14,7 +14,8 @@ export default function HomePage() {
           <h1 className="mt-4 text-4xl font-bold tracking-tight text-balance text-slate-900 sm:mt-5 sm:text-5xl">
             Vos fichiers, traités simplement.
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0 sm:mt-5 sm:text-xl">
+          {/* <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0 sm:mt-5 sm:text-xl"> */}
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mt-5 sm:text-xl">
             Compressez, convertissez, organisez et sécurisez vos fichiers en quelques clics.
             Une interface claire, sans option superflue.
           </p>
@@ -73,10 +74,10 @@ export default function HomePage() {
         </Link>
 
         <div className="mt-4 flex flex-col items-center gap-2 text-center sm:flex-row sm:justify-between sm:text-left">
-          <p className="text-xs text-slate-500">Aucun fichier choisi</p>
+          {/* <p className="text-xs text-slate-500">Aucun fichier choisi</p>
           <a href="#comment-ca-marche" className="text-xs font-semibold text-sky-700 hover:underline">
             01 / Comment ça marche
-          </a>
+          </a> */}
         </div>
       </div>
 
@@ -115,7 +116,7 @@ export default function HomePage() {
         </Link>
       </div>
 
-      <div id="comment-ca-marche" className="mt-12 scroll-mt-24 rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center sm:mt-16 sm:p-10 sm:text-left">
+      <div id="comment-ca-marche" className="mt-12 scroll-mt-24 rounded-3xl  p-6 text-center sm:mt-16 sm:p-10 sm:text-left">
         <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Comment ça marche</p>
         <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Trois étapes, sans complication.</h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0">
@@ -163,14 +164,14 @@ export default function HomePage() {
         </p>
 
         <div className="mt-6 grid gap-3 sm:mt-8 md:grid-cols-2 md:items-start">
-          <details className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" open>
+          {/* <details className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" open>
             <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
               Sur quoi repose l’interface ?
             </summary>
             <p className="mt-3 text-sm leading-relaxed text-slate-600">
               L’interface est construite avec React et Vite, stylée avec Tailwind CSS. Les appels HTTP sont centralisés pour garder un comportement identique sur tous les outils.
             </p>
-          </details>
+          </details> */}
 
           <details className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
