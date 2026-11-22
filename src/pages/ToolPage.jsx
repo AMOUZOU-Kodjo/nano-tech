@@ -32,6 +32,7 @@ const TEXT = {
     en: 'This tool is not part of the catalogue.',
   },
   backCatalogue: { fr: 'Retour au catalogue', en: 'Back to the catalogue' },
+  catalogue: { fr: 'Catalogue', en: 'Catalog' },
   breadcrumb: { fr: 'Fil d’Ariane', en: 'Breadcrumb' },
   dropFiles: { fr: 'Déposez vos fichiers ici', en: 'Drop your files here' },
   clickSelect: { fr: 'ou cliquez pour les sélectionner', en: 'or click to select them' },
@@ -679,7 +680,7 @@ export default function ToolPage() {
     <section className="mx-auto max-w-6xl px-6 py-12">
       <nav aria-label={t(TEXT.breadcrumb)} className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
         <Link to="/catalogue" className="text-sky-700 hover:text-sky-800">
-          Catalogue
+          {t(TEXT.catalogue)}
         </Link>
         <span aria-hidden="true">/</span>
         <span>{categoryLabel}</span>
