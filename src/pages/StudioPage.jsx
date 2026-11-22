@@ -2,7 +2,69 @@ import { useEffect, useState } from 'react'
 import { buildApiUrl } from '@/api/client.js'
 import CvDataForm from '@/components/CvDataForm.jsx'
 import { useCatalog } from '@/hooks/useCatalog.js'
+import { useLocale } from '@/hooks/useLocale.js'
 import { useRender } from '@/hooks/useRender.js'
+
+const TEXT = {
+  template: { fr: 'Modèle', en: 'Template' },
+  noExtraInfo: { fr: 'Aucune information supplémentaire.', en: 'No additional information.' },
+  yes: { fr: 'oui', en: 'yes' },
+  no: { fr: 'non', en: 'no' },
+  renderPreviewTitle: { fr: 'Aperçu du rendu', en: 'Render preview' },
+  renderResultTitle: { fr: 'Résultat du rendu', en: 'Render result' },
+  downloadDocument: { fr: 'Télécharger le document', en: 'Download the document' },
+  downloadNamed: (name) => ({ fr: `Télécharger ${name}`, en: `Download ${name}` }),
+  noDownloadLink: { fr: 'Aucun lien de téléchargement renvoyé.', en: 'No download link returned.' },
+  rewriteResultTitle: { fr: 'Résultat de la réécriture', en: 'Rewrite result' },
+  missingInfo: { fr: 'Informations manquantes', en: 'Missing information' },
+  question: { fr: 'Question', en: 'Question' },
+  invalidJson: (label) => ({ fr: `${label} doit être un JSON valide.`, en: `${label} must be valid JSON.` }),
+  invalidObject: (label) => ({ fr: `${label} doit être un objet JSON.`, en: `${label} must be a JSON object.` }),
+  selectTemplate: { fr: 'Sélectionnez un modèle.', en: 'Select a template.' },
+  dataRequired: { fr: 'Les données', en: 'The data' },
+  sourceRequired: { fr: 'Le texte source est obligatoire.', en: 'Source text is required.' },
+  title: { fr: 'Studio CV et lettres', en: 'CV and cover letter studio' },
+  subtitle: {
+    fr: 'Modèles, rendu et réécriture assistée documentés par l’API.',
+    en: 'Templates, rendering and assisted rewriting documented by the API.',
+  },
+  templatesTab: { fr: 'Modèles et rendu', en: 'Templates and rendering' },
+  rewriteTab: { fr: 'Réécriture assistée', en: 'Assisted rewriting' },
+  templateCatalog: { fr: 'Catalogue de modèles', en: 'Template catalog' },
+  letter: { fr: 'Lettre', en: 'Letter' },
+  loading: { fr: 'Chargement…', en: 'Loading…' },
+  noTemplate: { fr: 'Aucun modèle disponible.', en: 'No template available.' },
+  use: { fr: 'Utiliser', en: 'Use' },
+  preview: { fr: 'Aperçu', en: 'Preview' },
+  templatePreview: { fr: 'Aperçu du modèle', en: 'Template preview' },
+  templatePreviewAlt: (id) => ({ fr: `Aperçu du modèle ${id}`, en: `Preview of template ${id}` }),
+  renderTemplate: { fr: 'Rendre un modèle', en: 'Render a template' },
+  type: { fr: 'Type', en: 'Type' },
+  multipleLetters: { fr: 'Lettres multiples', en: 'Multiple letters' },
+  templateId: { fr: 'Identifiant du modèle', en: 'Template ID' },
+  format: { fr: 'Format', en: 'Format' },
+  data: { fr: 'Données', en: 'Data' },
+  rendering: { fr: 'Rendu…', en: 'Rendering…' },
+  render: { fr: 'Rendre', en: 'Render' },
+  rewritePanel: { fr: 'Réécriture assistée', en: 'Assisted rewriting' },
+  validatedFields: {
+    fr: 'Uniquement les champs validés pour chaque endpoint.',
+    en: 'Only fields validated for each endpoint.',
+  },
+  language: { fr: 'Langue', en: 'Language' },
+  french: { fr: 'Français', en: 'French' },
+  english: { fr: 'Anglais', en: 'English' },
+  targetJob: { fr: 'Poste visé', en: 'Target job' },
+  structuredCv: { fr: 'Fournir un CV déjà structuré', en: 'Provide an already structured CV' },
+  letterType: { fr: 'Type de lettre', en: 'Letter type' },
+  jobTitle: { fr: 'Intitulé du poste', en: 'Job title' },
+  company: { fr: 'Entreprise', en: 'Company' },
+  attachStructuredCv: { fr: 'Joindre un CV déjà structuré', en: 'Attach an already structured CV' },
+  sourceText: { fr: 'Texte source', en: 'Source text' },
+  processing: { fr: 'Traitement…', en: 'Processing…' },
+  rewrite: { fr: 'Réécrire', en: 'Rewrite' },
+  rewriteDone: { fr: 'Réécriture terminée.', en: 'Rewrite completed.' },
+}
 
 // Affiche une réponse API non typée sous forme JSON, sans interprétation hasardeuse.
 function JsonBlock({ value }) {
@@ -10,7 +72,7 @@ function JsonBlock({ value }) {
 }
 
 // Normalise une liste non typée pour afficher au minimum un identifiant exploitable.
-function normalizeTemplates(payload) {
+function normalizeTemplates(payload, t) {
   const raw = Array.isArray(payload) ? payload : (payload?.templates ?? payload?.data ?? [])
   if (!Array.isArray(raw)) {
     return []
@@ -22,18 +84,18 @@ function normalizeTemplates(payload) {
       const id = item.id ?? item.template_id
       return {
         id: id === undefined || id === null ? '' : String(id),
-        title: item.name ?? item.title ?? String(id ?? 'Modèle'),
+        title: item.name ?? item.title ?? String(id ?? t(TEXT.template)),
       }
     })
     .filter((item) => item.id)
 }
 
-function formatValue(value) {
+function formatValue(value, t) {
   if (value === null || value === undefined) {
     return '—'
   }
   if (typeof value === 'boolean') {
-    return value ? 'oui' : 'non'
+    return t(value ? TEXT.yes : TEXT.no)
   }
   if (Array.isArray(value)) {
     return value.length ? value.join(', ') : '—'
@@ -44,14 +106,14 @@ function formatValue(value) {
   return String(value)
 }
 
-function ValueRows({ value }) {
+function ValueRows({ value, t }) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null
   }
 
   const rows = Object.entries(value).filter(([, item]) => item !== null && item !== undefined)
   if (!rows.length) {
-    return <p className="mt-3 text-sm text-slate-600">Aucune information supplémentaire.</p>
+    return <p className="mt-3 text-sm text-slate-600">{t(TEXT.noExtraInfo)}</p>
   }
 
   return (
@@ -59,7 +121,7 @@ function ValueRows({ value }) {
       {rows.map(([key, item]) => (
         <div key={key} className="rounded-lg bg-slate-50 p-3">
           <dt className="text-xs uppercase tracking-wide text-slate-500">{key}</dt>
-          <dd className="mt-1 text-sm text-slate-700">{formatValue(item)}</dd>
+          <dd className="mt-1 text-sm text-slate-700">{formatValue(item, t)}</dd>
         </div>
       ))}
     </dl>
@@ -73,15 +135,15 @@ function resolveUrl(value) {
   return /^https?:\/\//i.test(value) ? value : buildApiUrl(value)
 }
 
-function RenderResult({ data }) {
+function RenderResult({ data, t }) {
   if (typeof data === 'string') {
     return (
       <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-        <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Aperçu du rendu</h2>
+        <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">{t(TEXT.renderPreviewTitle)}</h2>
         <iframe
           srcDoc={data}
           sandbox=""
-          title="Aperçu du rendu"
+          title={t(TEXT.renderPreviewTitle)}
           className="mt-4 h-96 w-full rounded-lg border border-slate-200 bg-white"
         />
       </div>
@@ -95,37 +157,37 @@ function RenderResult({ data }) {
 
   return (
     <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-      <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Résultat du rendu</h2>
+      <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">{t(TEXT.renderResultTitle)}</h2>
       {downloadUrl ? (
         <a
           href={downloadUrl}
           className="mt-4 inline-block w-full rounded-lg bg-sky-500 px-5 py-3 text-center text-sm font-semibold text-white hover:bg-sky-600 sm:w-auto"
         >
-          {fileName ? `Télécharger ${fileName}` : 'Télécharger le document'}
+          {fileName ? t(TEXT.downloadNamed(fileName)) : t(TEXT.downloadDocument)}
         </a>
       ) : (
-        <p className="mt-3 text-sm text-slate-600">Aucun lien de téléchargement renvoyé.</p>
+        <p className="mt-3 text-sm text-slate-600">{t(TEXT.noDownloadLink)}</p>
       )}
-      {hasRows ? <ValueRows value={details} /> : <JsonBlock value={data} />}
+      {hasRows ? <ValueRows value={details} t={t} /> : <JsonBlock value={data} />}
     </div>
   )
 }
 
-function RewriteResult({ data }) {
+function RewriteResult({ data, t }) {
   const missing = Array.isArray(data?.missing) ? data.missing : []
   const hasRows = data?.data && typeof data.data === 'object' && !Array.isArray(data.data) && Object.keys(data.data).length > 0
 
   return (
     <div className="mt-6 rounded-2xl border border-emerald-200 bg-white p-5 sm:p-6">
-      <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Résultat de la réécriture</h2>
-      {hasRows && <ValueRows value={data.data} />}
+      <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">{t(TEXT.rewriteResultTitle)}</h2>
+      {hasRows && <ValueRows value={data.data} t={t} />}
       {missing.length > 0 && (
         <div className="mt-5">
-          <h3 className="text-sm font-semibold text-slate-900">Informations manquantes</h3>
+          <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.missingInfo)}</h3>
           <ul className="mt-2 space-y-2 text-sm text-slate-600">
             {missing.map((item, index) => (
               <li key={`${item?.path ?? 'question'}-${index}`} className="rounded-lg bg-amber-50 p-3">
-                <span className="font-medium text-amber-900">{item?.path ?? 'Question'}</span>
+                <span className="font-medium text-amber-900">{item?.path ?? t(TEXT.question)}</span>
                 {item?.question ? ` — ${item.question}` : ''}
               </li>
             ))}
@@ -137,28 +199,29 @@ function RewriteResult({ data }) {
   )
 }
 
-function parseJson(value, label) {
+function parseJson(value, label, t) {
   try {
     return { value: JSON.parse(value) }
   } catch {
-    return { error: `${label} doit être un JSON valide.` }
+    return { error: t(TEXT.invalidJson(label)) }
   }
 }
 
 // Analyse un champ JSON attendu comme objet ou retourne un message d'erreur local.
-function parseRequiredObject(value, label) {
-  const parsed = parseJson(value, label)
+function parseRequiredObject(value, label, t) {
+  const parsed = parseJson(value, label, t)
   if (parsed.error) {
     return parsed
   }
   if (!parsed.value || typeof parsed.value !== 'object' || Array.isArray(parsed.value)) {
-    return { error: `${label} doit être un objet JSON.` }
+    return { error: t(TEXT.invalidObject(label)) }
   }
   return { value: parsed.value }
 }
 
 // Page studio : catalogue, rendu de modèles et assistants de réécriture documentés.
 export default function StudioPage() {
+  const { t } = useLocale()
   const catalog = useCatalog()
   const render = useRender()
   const {
@@ -215,7 +278,7 @@ export default function StudioPage() {
     }
   }, [templateKind, fetchTemplates])
 
-  const items = normalizeTemplates(templates)
+  const items = normalizeTemplates(templates, t)
   const previewUrl = previewId
     ? buildApiUrl(`/v1/templates/${encodeURIComponent(templateKind)}/${encodeURIComponent(previewId)}/preview.svg`)
     : null
@@ -225,11 +288,11 @@ export default function StudioPage() {
     setLocalError(null)
 
     if (!renderForm.template_id.trim()) {
-      setLocalError('Sélectionnez un modèle.')
+      setLocalError(t(TEXT.selectTemplate))
       return
     }
 
-    const parsed = parseRequiredObject(renderForm.data, 'Les données')
+    const parsed = parseRequiredObject(renderForm.data, t(TEXT.dataRequired), t)
     if (parsed.error) {
       setLocalError(parsed.error)
       return
@@ -256,7 +319,7 @@ export default function StudioPage() {
     setLocalError(null)
 
     if (!rewriteForm.raw_text.trim()) {
-      setLocalError('Le texte source est obligatoire.')
+      setLocalError(t(TEXT.sourceRequired))
       return
     }
 
@@ -292,8 +355,8 @@ export default function StudioPage() {
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
       <div className="flex flex-col gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Studio CV et lettres</h1>
-          <p className="mx-auto mt-2 text-sm text-slate-600 sm:mx-0">Modèles, rendu et réécriture assistée documentés par l’API.</p>
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">{t(TEXT.title)}</h1>
+          <p className="mx-auto mt-2 text-sm text-slate-600 sm:mx-0">{t(TEXT.subtitle)}</p>
         </div>
 
         <div className="grid w-full grid-cols-2 self-stretch rounded-xl border border-slate-200 bg-slate-50 p-1 sm:inline-flex sm:w-auto sm:self-auto">
@@ -305,7 +368,7 @@ export default function StudioPage() {
               activeTab === 'studio' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
-            Modèles et rendu
+            {t(TEXT.templatesTab)}
           </button>
           <button
             type="button"
@@ -315,7 +378,7 @@ export default function StudioPage() {
               activeTab === 'rewrite' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
-            Réécriture assistée
+            {t(TEXT.rewriteTab)}
           </button>
         </div>
       </div>
@@ -324,7 +387,7 @@ export default function StudioPage() {
         <>
         <div className="mt-6 grid gap-4 sm:gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-          <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Catalogue de modèles</h2>
+          <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">{t(TEXT.templateCatalog)}</h2>
           <div className="mt-4 flex flex-wrap gap-3">
             <select
               value={templateKind}
@@ -335,12 +398,12 @@ export default function StudioPage() {
               className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 sm:w-auto"
             >
               <option value="cv">CV</option>
-              <option value="letter">Lettre</option>
+              <option value="letter">{t(TEXT.letter)}</option>
             </select>
           </div>
 
-          {catalogLoading && !items.length && <p className="mt-4 text-sm text-slate-600">Chargement…</p>}
-          {!catalogLoading && !items.length && <p className="mt-4 text-sm text-slate-600">Aucun modèle disponible.</p>}
+          {catalogLoading && !items.length && <p className="mt-4 text-sm text-slate-600">{t(TEXT.loading)}</p>}
+          {!catalogLoading && !items.length && <p className="mt-4 text-sm text-slate-600">{t(TEXT.noTemplate)}</p>}
 
           <div className="mt-4 space-y-2">
             {items.map((item) => (
@@ -352,14 +415,14 @@ export default function StudioPage() {
                     onClick={() => setRenderForm((current) => ({ ...current, template_id: item.id }))}
                     className="flex-1 text-center text-sm text-sky-700 hover:text-sky-800 sm:flex-none"
                   >
-                    Utiliser
+                    {t(TEXT.use)}
                   </button>
                   <button
                     type="button"
                     onClick={() => setPreviewId(item.id)}
                     className="flex-1 text-center text-sm text-sky-600 hover:text-sky-700 sm:flex-none"
                   >
-                    Aperçu
+                    {t(TEXT.preview)}
                   </button>
                 </div>
               </div>
@@ -368,10 +431,10 @@ export default function StudioPage() {
 
           {previewUrl && (
             <div className="mt-4">
-              <p className="text-sm font-medium text-slate-700">Aperçu du modèle</p>
+              <p className="text-sm font-medium text-slate-700">{t(TEXT.templatePreview)}</p>
               <img
                 src={previewUrl}
-                alt={`Aperçu du modèle ${previewId}`}
+                alt={t(TEXT.templatePreviewAlt(previewId))}
                 className="mt-2 max-h-96 w-full rounded-lg border border-slate-200 bg-white object-contain"
               />
             </div>
@@ -379,10 +442,10 @@ export default function StudioPage() {
         </div>
 
         <form onSubmit={handleRender} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-          <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Rendre un modèle</h2>
+          <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">{t(TEXT.renderTemplate)}</h2>
           <div className="mt-4 space-y-4">
             <div>
-              <label htmlFor="render-kind" className="block text-sm font-medium text-slate-700">Type</label>
+              <label htmlFor="render-kind" className="block text-sm font-medium text-slate-700">{t(TEXT.type)}</label>
               <select
                 id="render-kind"
                 value={renderForm.kind}
@@ -390,14 +453,14 @@ export default function StudioPage() {
                 className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
               >
                 <option value="cv">CV</option>
-                <option value="letter">Lettre</option>
-                <option value="letters">Lettres multiples</option>
+                <option value="letter">{t(TEXT.letter)}</option>
+                <option value="letters">{t(TEXT.multipleLetters)}</option>
               </select>
             </div>
 
             <div>
               <label htmlFor="render-template" className="block text-sm font-medium text-slate-700">
-                Identifiant du modèle
+                {t(TEXT.templateId)}
               </label>
               <input
                 id="render-template"
@@ -416,7 +479,7 @@ export default function StudioPage() {
             </div>
 
             <div>
-              <label htmlFor="render-format" className="block text-sm font-medium text-slate-700">Format</label>
+              <label htmlFor="render-format" className="block text-sm font-medium text-slate-700">{t(TEXT.format)}</label>
               <select
                 id="render-format"
                 value={renderForm.format}
@@ -430,7 +493,7 @@ export default function StudioPage() {
             </div>
 
             <div>
-              <label htmlFor="render-data" className="block text-sm font-medium text-slate-700">Données</label>
+              <label htmlFor="render-data" className="block text-sm font-medium text-slate-700">{t(TEXT.data)}</label>
               <textarea
                 id="render-data"
                 rows="6"
@@ -446,24 +509,24 @@ export default function StudioPage() {
               disabled={renderLoading}
               className="w-full rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50 sm:w-auto"
             >
-              {renderLoading ? 'Rendu…' : 'Rendre'}
+              {t(renderLoading ? TEXT.rendering : TEXT.render)}
             </button>
           </div>
         </form>
         </div>
-        {lastAction === 'render' && renderData && <RenderResult data={renderData} />}
+        {lastAction === 'render' && renderData && <RenderResult data={renderData} t={t} />}
         </>
       )}
 
       {activeTab === 'rewrite' && (
         <>
           <form onSubmit={handleRewrite} className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-        <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Réécriture assistée</h2>
-        <p className="mt-2 text-sm text-slate-600">Uniquement les champs validés pour chaque endpoint.</p>
+        <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">{t(TEXT.rewritePanel)}</h2>
+        <p className="mt-2 text-sm text-slate-600">{t(TEXT.validatedFields)}</p>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="rewrite-kind" className="block text-sm font-medium text-slate-700">Type</label>
+            <label htmlFor="rewrite-kind" className="block text-sm font-medium text-slate-700">{t(TEXT.type)}</label>
             <select
               id="rewrite-kind"
               value={rewriteForm.kind}
@@ -471,21 +534,21 @@ export default function StudioPage() {
               className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
             >
               <option value="cv">CV</option>
-              <option value="letter">Lettre</option>
-              <option value="letters">Lettres multiples</option>
+              <option value="letter">{t(TEXT.letter)}</option>
+              <option value="letters">{t(TEXT.multipleLetters)}</option>
             </select>
           </div>
 
           <div>
-            <label htmlFor="rewrite-lang" className="block text-sm font-medium text-slate-700">Langue</label>
+            <label htmlFor="rewrite-lang" className="block text-sm font-medium text-slate-700">{t(TEXT.language)}</label>
             <select
               id="rewrite-lang"
               value={rewriteForm.lang}
               onChange={(event) => setRewriteForm({ ...rewriteForm, lang: event.target.value })}
               className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
             >
-              <option value="fr">Français</option>
-              <option value="en">Anglais</option>
+              <option value="fr">{t(TEXT.french)}</option>
+              <option value="en">{t(TEXT.english)}</option>
             </select>
           </div>
         </div>
@@ -493,7 +556,7 @@ export default function StudioPage() {
         {rewriteForm.kind === 'cv' ? (
           <div className="mt-4 space-y-4">
             <div>
-              <label htmlFor="rewrite-target" className="block text-sm font-medium text-slate-700">Poste visé</label>
+              <label htmlFor="rewrite-target" className="block text-sm font-medium text-slate-700">{t(TEXT.targetJob)}</label>
               <input
                 id="rewrite-target"
                 type="text"
@@ -511,7 +574,7 @@ export default function StudioPage() {
                   onChange={(event) => setRewriteForm({ ...rewriteForm, useStructuredCv: event.target.checked })}
                   className="h-4 w-4 rounded border-slate-300 bg-white"
                 />
-                Fournir un CV déjà structuré
+                {t(TEXT.structuredCv)}
               </label>
               {rewriteForm.useStructuredCv && (
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -526,7 +589,7 @@ export default function StudioPage() {
         ) : (
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="rewrite-letter-kind" className="block text-sm font-medium text-slate-700">Type de lettre</label>
+              <label htmlFor="rewrite-letter-kind" className="block text-sm font-medium text-slate-700">{t(TEXT.letterType)}</label>
               <input
                 id="rewrite-letter-kind"
                 type="text"
@@ -536,7 +599,7 @@ export default function StudioPage() {
               />
             </div>
             <div>
-              <label htmlFor="rewrite-job" className="block text-sm font-medium text-slate-700">Intitulé du poste</label>
+              <label htmlFor="rewrite-job" className="block text-sm font-medium text-slate-700">{t(TEXT.jobTitle)}</label>
               <input
                 id="rewrite-job"
                 type="text"
@@ -546,7 +609,7 @@ export default function StudioPage() {
               />
             </div>
             <div>
-              <label htmlFor="rewrite-company" className="block text-sm font-medium text-slate-700">Entreprise</label>
+              <label htmlFor="rewrite-company" className="block text-sm font-medium text-slate-700">{t(TEXT.company)}</label>
               <input
                 id="rewrite-company"
                 type="text"
@@ -563,7 +626,7 @@ export default function StudioPage() {
                   onChange={(event) => setRewriteForm({ ...rewriteForm, useStructuredCvForLetter: event.target.checked })}
                   className="h-4 w-4 rounded border-slate-300 bg-white"
                 />
-                Joindre un CV déjà structuré
+                {t(TEXT.attachStructuredCv)}
               </label>
               {rewriteForm.useStructuredCvForLetter && (
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -578,7 +641,7 @@ export default function StudioPage() {
         )}
 
         <div className="mt-4">
-          <label htmlFor="rewrite-raw" className="block text-sm font-medium text-slate-700">Texte source</label>
+          <label htmlFor="rewrite-raw" className="block text-sm font-medium text-slate-700">{t(TEXT.sourceText)}</label>
           <textarea
             id="rewrite-raw"
             rows="6"
@@ -595,16 +658,16 @@ export default function StudioPage() {
           disabled={renderLoading}
           className="mt-4 w-full rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50 sm:w-auto"
         >
-          {renderLoading ? 'Traitement…' : 'Réécrire'}
+          {t(renderLoading ? TEXT.processing : TEXT.rewrite)}
         </button>
       </form>
 
           {rewritten && (
             <p role="status" className="mt-6 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
-              Réécriture terminée.
+              {t(TEXT.rewriteDone)}
             </p>
           )}
-          {lastAction === 'rewrite' && renderData && <RewriteResult data={renderData} />}
+          {lastAction === 'rewrite' && renderData && <RewriteResult data={renderData} t={t} />}
         </>
       )}
 

@@ -2,7 +2,54 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import logoUrl from '../../Logo NanoFile bleu et cyan.png'
 import GoogleAuthButton from '@/components/GoogleAuthButton.jsx'
+import { useLocale } from '@/hooks/useLocale.js'
 import { useRegister } from '@/hooks/useRegister.js'
+
+const TEXT = {
+  hidePassword: { fr: 'Masquer le mot de passe', en: 'Hide password' },
+  showPassword: { fr: 'Afficher le mot de passe', en: 'Show password' },
+  passwordMismatch: { fr: 'Les mots de passe ne correspondent pas.', en: 'Passwords do not match.' },
+  termsRequired: {
+    fr: 'Vous devez accepter les conditions d’utilisation.',
+    en: 'You must accept the terms of use.',
+  },
+  accountCreated: { fr: 'Compte créé', en: 'Account created' },
+  registrationSaved: { fr: 'Votre inscription est enregistrée.', en: 'Your registration has been saved.' },
+  verificationIntro: {
+    fr: 'Un email de vérification a été envoyé à',
+    en: 'A verification email was sent to',
+  },
+  verificationOutro: {
+    fr: '. Ouvrez ce lien puis connectez-vous pour activer votre espace.',
+    en: '. Open the link, then sign in to activate your space.',
+  },
+  checkSpam: {
+    fr: 'Pensez à vérifier vos courriers indésirables si le message n’apparaît pas.',
+    en: 'Check your spam folder if the message does not appear.',
+  },
+  goToLogin: { fr: 'Aller à la connexion', en: 'Go to sign in' },
+  title: { fr: 'Créer un compte', en: 'Create an account' },
+  subtitle: { fr: 'Un email de vérification vous sera envoyé.', en: 'A verification email will be sent to you.' },
+  googleTermsRequired: {
+    fr: 'Cochez les conditions d’utilisation pour continuer avec Google.',
+    en: 'Accept the terms of use to continue with Google.',
+  },
+  orByEmail: { fr: 'ou par email', en: 'or by email' },
+  displayName: { fr: 'Nom affiché', en: 'Display name' },
+  email: { fr: 'Email', en: 'Email' },
+  password: { fr: 'Mot de passe', en: 'Password' },
+  confirmation: { fr: 'Confirmation', en: 'Confirmation' },
+  acceptTerms: { fr: 'J’accepte les conditions d’utilisation.', en: 'I accept the terms of use.' },
+  receiveNews: { fr: 'Recevoir les actualités par email.', en: 'Receive news by email.' },
+  creating: { fr: 'Création…', en: 'Creating…' },
+  createAccount: { fr: 'Créer le compte', en: 'Create the account' },
+  createdCheckEmail: {
+    fr: 'Compte créé. Vérifiez votre email avant de vous connecter.',
+    en: 'Account created. Verify your email before signing in.',
+  },
+  alreadyRegistered: { fr: 'Déjà inscrit ?', en: 'Already registered?' },
+  signIn: { fr: 'Se connecter', en: 'Sign in' },
+}
 
 function EyeIcon() {
   return (
@@ -25,6 +72,7 @@ function EyeOffIcon() {
 }
 
 function PasswordField({ id, label, name, autoComplete, value, onChange }) {
+  const { t } = useLocale()
   const [visible, setVisible] = useState(false)
 
   return (
@@ -46,7 +94,7 @@ function PasswordField({ id, label, name, autoComplete, value, onChange }) {
         <button
           type="button"
           onClick={() => setVisible((current) => !current)}
-          aria-label={visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+          aria-label={t(visible ? TEXT.hidePassword : TEXT.showPassword)}
           aria-pressed={visible}
           aria-controls={id}
           className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-500 transition hover:text-slate-900 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-sky-500"
@@ -60,6 +108,7 @@ function PasswordField({ id, label, name, autoComplete, value, onChange }) {
 
 // Page d'inscription compacte, avec cases à cocher explicites et non pré-cochées.
 export default function RegisterPage() {
+  const { t } = useLocale()
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -82,11 +131,11 @@ export default function RegisterPage() {
     setLocalError(null)
 
     if (form.password !== form.password_confirmation) {
-      setLocalError('Les mots de passe ne correspondent pas.')
+      setLocalError(t(TEXT.passwordMismatch))
       return
     }
     if (!form.terms_accepted) {
-      setLocalError('Vous devez accepter les conditions d’utilisation.')
+      setLocalError(t(TEXT.termsRequired))
       return
     }
 
@@ -111,19 +160,18 @@ export default function RegisterPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-600">NanoFile</p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Compte créé</h1>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{t(TEXT.accountCreated)}</h1>
             </div>
             <img src={logoUrl} alt="" className="h-12 w-12 shrink-0 object-contain" />
           </div>
 
           <div role="status" className="mt-6 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
-            <p className="font-semibold">Votre inscription est enregistrée.</p>
+            <p className="font-semibold">{t(TEXT.registrationSaved)}</p>
             <p className="mt-2">
-              Un email de vérification a été envoyé à <strong>{form.email.trim()}</strong>. Ouvrez ce lien puis
-              connectez-vous pour activer votre espace.
+              {t(TEXT.verificationIntro)} <strong>{form.email.trim()}</strong>{t(TEXT.verificationOutro)}
             </p>
             <p className="mt-2 text-xs text-emerald-700">
-              Pensez à vérifier vos courriers indésirables si le message n’apparaît pas.
+              {t(TEXT.checkSpam)}
             </p>
           </div>
 
@@ -131,7 +179,7 @@ export default function RegisterPage() {
             to="/login"
             className="mt-5 inline-block rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
           >
-            Aller à la connexion
+            {t(TEXT.goToLogin)}
           </Link>
         </div>
       </section>
@@ -144,8 +192,8 @@ export default function RegisterPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-600">NanoFile</p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Créer un compte</h1>
-            <p className="mt-1 text-sm text-slate-600">Un email de vérification vous sera envoyé.</p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{t(TEXT.title)}</h1>
+            <p className="mt-1 text-sm text-slate-600">{t(TEXT.subtitle)}</p>
           </div>
           <img
             src={logoUrl}
@@ -163,14 +211,14 @@ export default function RegisterPage() {
             />
           ) : (
             <p className="rounded-lg bg-slate-50 px-3 py-2 text-center text-xs text-slate-600">
-              Cochez les conditions d’utilisation pour continuer avec Google.
+              {t(TEXT.googleTermsRequired)}
             </p>
           )}
         </div>
 
         <div className="my-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
           <span className="h-px flex-1 bg-slate-200" />
-          ou par email
+          {t(TEXT.orByEmail)}
           <span className="h-px flex-1 bg-slate-200" />
         </div>
 
@@ -178,7 +226,7 @@ export default function RegisterPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="register-name" className="block text-xs font-semibold text-slate-700">
-                Nom affiché
+                {t(TEXT.displayName)}
               </label>
               <input
                 id="register-name"
@@ -193,7 +241,7 @@ export default function RegisterPage() {
 
             <div>
               <label htmlFor="register-email" className="block text-xs font-semibold text-slate-700">
-                Email
+                {t(TEXT.email)}
               </label>
               <input
                 id="register-email"
@@ -211,7 +259,7 @@ export default function RegisterPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             <PasswordField
               id="register-password"
-              label="Mot de passe"
+              label={t(TEXT.password)}
               name="password"
               autoComplete="new-password"
               value={form.password}
@@ -220,7 +268,7 @@ export default function RegisterPage() {
 
             <PasswordField
               id="register-confirmation"
-              label="Confirmation"
+              label={t(TEXT.confirmation)}
               name="password_confirmation"
               autoComplete="new-password"
               value={form.password_confirmation}
@@ -237,7 +285,7 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 className="h-4 w-4 rounded border-slate-300 bg-white"
               />
-              J’accepte les conditions d’utilisation.
+              {t(TEXT.acceptTerms)}
             </label>
 
             <label className="flex items-center gap-2">
@@ -248,7 +296,7 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 className="h-4 w-4 rounded border-slate-300 bg-white"
               />
-              Recevoir les actualités par email.
+              {t(TEXT.receiveNews)}
             </label>
           </div>
 
@@ -257,7 +305,7 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:opacity-50"
           >
-            {loading ? 'Création…' : 'Créer le compte'}
+            {t(loading ? TEXT.creating : TEXT.createAccount)}
           </button>
         </form>
 
@@ -269,14 +317,14 @@ export default function RegisterPage() {
 
         {data && (
           <p role="status" className="mt-3 rounded-lg bg-emerald-50 p-2.5 text-xs text-emerald-700">
-            Compte créé. Vérifiez votre email avant de vous connecter.
+            {t(TEXT.createdCheckEmail)}
           </p>
         )}
 
         <p className="mt-4 text-center text-xs text-slate-500">
-          Déjà inscrit ?{' '}
+          {t(TEXT.alreadyRegistered)}{' '}
           <Link to="/login" className="font-semibold text-sky-600 hover:text-sky-700">
-            Se connecter
+            {t(TEXT.signIn)}
           </Link>
         </p>
       </div>

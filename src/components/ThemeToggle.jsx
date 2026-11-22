@@ -1,4 +1,5 @@
 import { FiMonitor, FiMoon, FiSun } from 'react-icons/fi'
+import { useLocale } from '@/hooks/useLocale.js'
 import { useTheme } from '@/hooks/useTheme.js'
 
 const THEME_ICONS = {
@@ -8,9 +9,9 @@ const THEME_ICONS = {
 }
 
 const THEME_LABELS = {
-  system: 'système',
-  light: 'clair',
-  dark: 'sombre',
+  system: { fr: 'système', en: 'system' },
+  light: { fr: 'clair', en: 'light' },
+  dark: { fr: 'sombre', en: 'dark' },
 }
 
 const NEXT_THEME = {
@@ -21,8 +22,12 @@ const NEXT_THEME = {
 
 export default function ThemeToggle({ showLabel = false }) {
   const { theme, cycleTheme } = useTheme()
+  const { locale, t } = useLocale()
   const Icon = THEME_ICONS[theme] ?? FiMonitor
-  const label = `Thème ${THEME_LABELS[theme]}. Passer en mode ${THEME_LABELS[NEXT_THEME[theme]]}.`
+  const label =
+    locale === 'fr'
+      ? `Thème ${t(THEME_LABELS[theme])}. Passer en mode ${t(THEME_LABELS[NEXT_THEME[theme]])}.`
+      : `Theme ${t(THEME_LABELS[theme])}. Switch to ${t(THEME_LABELS[NEXT_THEME[theme]])} mode.`
 
   return (
     <button
@@ -35,7 +40,7 @@ export default function ThemeToggle({ showLabel = false }) {
       }`}
     >
       <Icon aria-hidden="true" className="h-5 w-5" />
-      {showLabel && <span>Thème : {THEME_LABELS[theme]}</span>}
+      {showLabel && <span>{locale === 'fr' ? 'Thème' : 'Theme'} : {t(THEME_LABELS[theme])}</span>}
     </button>
   )
 }

@@ -1,8 +1,19 @@
 import { useState } from 'react'
+import { useLocale } from '@/hooks/useLocale.js'
 import { useChangePassword } from '@/hooks/useChangePassword.js'
+
+const TEXT = {
+  title: { fr: 'Modifier le mot de passe', en: 'Change password' },
+  currentPassword: { fr: 'Mot de passe actuel', en: 'Current password' },
+  newPassword: { fr: 'Nouveau mot de passe', en: 'New password' },
+  confirmNewPassword: { fr: 'Confirmer le nouveau mot de passe', en: 'Confirm the new password' },
+  sending: { fr: 'Envoi…', en: 'Sending…' },
+  success: { fr: 'Mot de passe modifié.', en: 'Password changed.' },
+}
 
 // Formulaire de changement de mot de passe : envoie uniquement les trois champs validés.
 export default function ChangePasswordForm() {
+  const { t } = useLocale()
   const [form, setForm] = useState({
     current_password: '',
     password: '',
@@ -28,11 +39,11 @@ export default function ChangePasswordForm() {
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-900">Modifier le mot de passe</h2>
+      <h2 className="text-lg font-semibold text-slate-900">{t(TEXT.title)}</h2>
 
       <form onSubmit={handleSubmit} className="mt-4 grid gap-4">
         <label className="grid gap-2 text-sm text-slate-700">
-          Mot de passe actuel
+          {t(TEXT.currentPassword)}
           <input
             type="password"
             name="current_password"
@@ -45,7 +56,7 @@ export default function ChangePasswordForm() {
         </label>
 
         <label className="grid gap-2 text-sm text-slate-700">
-          Nouveau mot de passe
+          {t(TEXT.newPassword)}
           <input
             type="password"
             name="password"
@@ -58,7 +69,7 @@ export default function ChangePasswordForm() {
         </label>
 
         <label className="grid gap-2 text-sm text-slate-700">
-          Confirmer le nouveau mot de passe
+          {t(TEXT.confirmNewPassword)}
           <input
             type="password"
             name="password_confirmation"
@@ -75,7 +86,7 @@ export default function ChangePasswordForm() {
           disabled={loading}
           className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-medium text-white hover:bg-sky-400 disabled:opacity-60"
         >
-          {loading ? 'Envoi…' : 'Modifier le mot de passe'}
+          {t(loading ? TEXT.sending : TEXT.title)}
         </button>
       </form>
 
@@ -87,7 +98,7 @@ export default function ChangePasswordForm() {
 
       {data !== null && !error && !loading && (
         <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700" role="status">
-          Mot de passe modifié.
+          {t(TEXT.success)}
         </p>
       )}
     </section>

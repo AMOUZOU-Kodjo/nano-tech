@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { TOOLS, TOOL_CATEGORIES } from '@/config/tools.js'
+import { useLocale } from '@/hooks/useLocale.js'
 import { useCatalog } from '@/hooks/useCatalog.js'
 import { useEvents } from '@/hooks/useEvents.js'
 import { useJob } from '@/hooks/useJob.js'
@@ -24,12 +25,157 @@ const DOCUMENTED_OPTION_TOOLS = new Set([
 const OPTION_INPUT_CLASS =
   'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50'
 
-// Libellés français des statuts documentés pour un job.
+const TEXT = {
+  unknownTool: { fr: 'Outil inconnu', en: 'Unknown tool' },
+  unknownToolDescription: {
+    fr: 'Cet outil ne fait pas partie du catalogue.',
+    en: 'This tool is not part of the catalogue.',
+  },
+  backCatalogue: { fr: 'Retour au catalogue', en: 'Back to the catalogue' },
+  breadcrumb: { fr: 'Fil d’Ariane', en: 'Breadcrumb' },
+  dropFiles: { fr: 'Déposez vos fichiers ici', en: 'Drop your files here' },
+  clickSelect: { fr: 'ou cliquez pour les sélectionner', en: 'or click to select them' },
+  moveUp: { fr: 'Monter', en: 'Move up' },
+  moveDown: { fr: 'Descendre', en: 'Move down' },
+  remove: { fr: 'Retirer', en: 'Remove' },
+  compressionOptions: { fr: 'Options de compression', en: 'Compression options' },
+  compressionHelp: {
+    fr: 'Choisissez un niveau de compression ou une taille cible en Ko.',
+    en: 'Choose a compression level or a target size in KB.',
+  },
+  acceptedFormats: {
+    fr: 'Formats acceptés : images, vidéos, PDF, Word, Excel, PowerPoint, ODF.',
+    en: 'Accepted formats: images, videos, PDF, Word, Excel, PowerPoint, ODF.',
+  },
+  level: { fr: 'Niveau', en: 'Level' },
+  default: { fr: 'Par défaut', en: 'Default' },
+  basic: { fr: 'Basique', en: 'Basic' },
+  medium: { fr: 'Moyen', en: 'Medium' },
+  max: { fr: 'Maximum', en: 'Maximum' },
+  targetSizeKb: { fr: 'Taille cible (Ko)', en: 'Target size (KB)' },
+  advancedOptions: { fr: 'Options avancées', en: 'Advanced options' },
+  pages: { fr: 'Pages', en: 'Pages' },
+  format: { fr: 'Format', en: 'Format' },
+  resolution: { fr: 'Résolution (dpi)', en: 'Resolution (dpi)' },
+  resolutionPlaceholder: { fr: '72 à 600', en: '72 to 600' },
+  pageRanges: { fr: 'Plages de pages', en: 'Page ranges' },
+  pageOrder: { fr: 'Ordre des pages', en: 'Page order' },
+  imagesOrderHelp: {
+    fr: 'Les images sont assemblées dans l’ordre affiché. Utilisez les boutons Monter et Descendre pour les classer.',
+    en: 'Images are assembled in the displayed order. Use the Move up and Move down buttons to sort them.',
+  },
+  signatureText: { fr: 'Texte de la signature', en: 'Signature text' },
+  page: { fr: 'Page', en: 'Page' },
+  position: { fr: 'Position', en: 'Position' },
+  bottomRight: { fr: 'Bas droite', en: 'Bottom right' },
+  bottomLeft: { fr: 'Bas gauche', en: 'Bottom left' },
+  topRight: { fr: 'Haut droite', en: 'Top right' },
+  topLeft: { fr: 'Haut gauche', en: 'Top left' },
+  password: { fr: 'Mot de passe', en: 'Password' },
+  watermarkText: { fr: 'Texte du filigrane', en: 'Watermark text' },
+  photoOptions: { fr: 'Options photo d’identité', en: 'ID photo options' },
+  loadingCountries: { fr: 'Chargement des pays disponibles…', en: 'Loading available countries…' },
+  noCountriesConfigured: {
+    fr: 'Aucun pays disponible pour la photo d’identité. Les spécifications doivent être configurées côté API.',
+    en: 'No country available for the ID photo. Specifications must be configured on the API side.',
+  },
+  noCountries: { fr: 'Aucun pays disponible', en: 'No country available' },
+  country: { fr: 'Pays', en: 'Country' },
+  document: { fr: 'Document', en: 'Document' },
+  selectDocument: { fr: 'Sélectionnez un document', en: 'Select a document' },
+  chooseCountryFirst: { fr: 'Choisissez d’abord un pays', en: 'Choose a country first' },
+  background: { fr: 'Fond', en: 'Background' },
+  sheet: { fr: 'Mise en page', en: 'Sheet layout' },
+  standardSize: { fr: 'Taille standard', en: 'Standard size' },
+  noAdvancedOptions: {
+    fr: 'Cet outil n’a pas d’options avancées documentées : le job est lancé avec la valeur par défaut.',
+    en: 'This tool has no documented advanced options: the job starts with the default value.',
+  },
+  creating: { fr: 'Création du job…', en: 'Creating the job…' },
+  startProcessing: { fr: 'Lancer le traitement', en: 'Start processing' },
+  newProcessing: { fr: 'Nouveau traitement', en: 'New processing' },
+  jobTracking: { fr: 'Suivi du job', en: 'Job tracking' },
+  identifier: { fr: 'Identifiant', en: 'Identifier' },
+  loadingStatus: { fr: 'Chargement du statut…', en: 'Loading status…' },
+  jobProgress: { fr: 'Progression du job', en: 'Job progress' },
+  processingFailed: { fr: 'Le traitement a échoué.', en: 'Processing failed.' },
+  retry: { fr: 'Réessayer', en: 'Try again' },
+  retrieving: { fr: 'Récupération…', en: 'Retrieving…' },
+  getResult: { fr: 'Récupérer le résultat', en: 'Get the result' },
+  downloadStarted: { fr: 'Le téléchargement a été lancé.', en: 'The download has started.' },
+  howItWorks: { fr: 'Comment ça marche', en: 'How it works' },
+  step1Title: { fr: 'Ajoutez vos fichiers', en: 'Add your files' },
+  step1Description: {
+    fr: 'Glissez vos fichiers ou sélectionnez-les depuis votre appareil.',
+    en: 'Drag your files or select them from your device.',
+  },
+  step2Title: { fr: 'Lancez le traitement', en: 'Start processing' },
+  step2DescriptionPhoto: {
+    fr: 'Le job est créé avec le pays et le document sélectionnés.',
+    en: 'The job is created with the selected country and document.',
+  },
+  step2DescriptionAdvanced: {
+    fr: 'Le job est créé avec les options choisies.',
+    en: 'The job is created with the chosen options.',
+  },
+  step2DescriptionDefault: {
+    fr: 'Le job est créé avec les options par défaut documentées.',
+    en: 'The job is created with the documented default options.',
+  },
+  step3Title: { fr: 'Récupérez le résultat', en: 'Get the result' },
+  step3Description: {
+    fr: 'Suivez le statut puis téléchargez le résultat quand le job est terminé.',
+    en: 'Track the status, then download the result when the job is complete.',
+  },
+  photoSpecs: { fr: 'Spécifications photo', en: 'Photo specifications' },
+  refresh: { fr: 'Actualiser', en: 'Refresh' },
+  loading: { fr: 'Chargement…', en: 'Loading…' },
+  excludedCountries: { fr: 'Pays exclus', en: 'Excluded countries' },
+  similarTools: { fr: 'Outils similaires', en: 'Similar tools' },
+  needAnotherTool: { fr: 'Besoin d’un autre outil ?', en: 'Need another tool?' },
+  catalogueHelp: {
+    fr: 'Retrouvez tous les traitements disponibles dans le catalogue.',
+    en: 'Find all available processing tools in the catalogue.',
+  },
+  viewCatalogue: { fr: 'Voir le catalogue →', en: 'View the catalogue →' },
+  noFiles: { fr: 'Sélectionnez au moins un fichier.', en: 'Select at least one file.' },
+  positiveTargetSize: {
+    fr: 'La taille cible doit être un nombre positif.',
+    en: 'The target size must be a positive number.',
+  },
+  specsLoadingError: {
+    fr: 'Chargement des spécifications photo en cours.',
+    en: 'Photo specifications are still loading.',
+  },
+  selectCountryDocument: {
+    fr: 'Sélectionnez un pays et un document.',
+    en: 'Select a country and a document.',
+  },
+  numericTargetSize: {
+    fr: 'La taille cible doit être un nombre.',
+    en: 'The target size must be a number.',
+  },
+  dpiRange: {
+    fr: 'La résolution doit être comprise entre 72 et 600.',
+    en: 'The resolution must be between 72 and 600.',
+  },
+  invalidPageOrder: {
+    fr: 'Indiquez des numéros de pages valides, séparés par des virgules.',
+    en: 'Enter valid page numbers separated by commas.',
+  },
+  positivePage: {
+    fr: 'Le numéro de page doit être un entier positif.',
+    en: 'The page number must be a positive integer.',
+  },
+  jobNotCreated: { fr: 'Le job n’a pas pu être créé.', en: 'The job could not be created.' },
+}
+
+// Libellés des statuts documentés pour un job.
 const STATUS_LABELS = {
-  queued: 'En attente',
-  running: 'En cours',
-  done: 'Terminé',
-  failed: 'Échec',
+  queued: { fr: 'En attente', en: 'Queued' },
+  running: { fr: 'En cours', en: 'Running' },
+  done: { fr: 'Terminé', en: 'Done' },
+  failed: { fr: 'Échec', en: 'Failed' },
 }
 
 const STATUS_STYLES = {
@@ -39,17 +185,17 @@ const STATUS_STYLES = {
   failed: 'bg-red-50 text-red-700',
 }
 
-function formatFileSize(bytes) {
+function formatFileSize(bytes, locale) {
   if (!Number.isFinite(bytes)) {
     return ''
   }
   if (bytes < 1024) {
-    return `${bytes} o`
+    return `${bytes} ${locale === 'fr' ? 'o' : 'B'}`
   }
   if (bytes < 1024 * 1024) {
-    return `${Math.round(bytes / 1024)} Ko`
+    return `${Math.round(bytes / 1024)} ${locale === 'fr' ? 'Ko' : 'KB'}`
   }
-  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} ${locale === 'fr' ? 'Mo' : 'MB'}`
 }
 
 function contentTypeFromName(name) {
@@ -153,13 +299,17 @@ function Step({ title, description, done, active }) {
 }
 
 function PhotoSpecSummary({ countries, excluded }) {
+  const { locale, t } = useLocale()
+  const countriesLabel =
+    countries.length === 0
+      ? t(TEXT.noCountries)
+      : locale === 'fr'
+        ? `${countries.length} pays disponible${countries.length > 1 ? 's' : ''}.`
+        : `${countries.length} available countr${countries.length > 1 ? 'ies' : 'y'}.`
+
   return (
     <div className="mt-4 space-y-3">
-      <p className="text-sm text-slate-600">
-        {countries.length > 0
-          ? `${countries.length} pays disponible${countries.length > 1 ? 's' : ''}.`
-          : 'Aucun pays disponible pour la photo d’identité.'}
-      </p>
+      <p className="text-sm text-slate-600">{countriesLabel}</p>
       {countries.length > 0 && (
         <ul className="flex flex-wrap gap-2">
           {countries.map((item) => (
@@ -171,7 +321,7 @@ function PhotoSpecSummary({ countries, excluded }) {
       )}
       {excluded.length > 0 && (
         <div className="rounded-lg bg-amber-50 px-3 py-2">
-          <p className="text-xs font-semibold text-amber-900">Pays exclus</p>
+          <p className="text-xs font-semibold text-amber-900">{t(TEXT.excludedCountries)}</p>
           <ul className="mt-1 space-y-1">
             {excluded.map((item) => (
               <li key={item.code} className="text-xs leading-relaxed text-amber-800">
@@ -188,6 +338,7 @@ function PhotoSpecSummary({ countries, excluded }) {
 
 // Page générique : un seul écran pour lancer chacun des outils documentés.
 export default function ToolPage() {
+  const { locale, t } = useLocale()
   const { tool } = useParams()
   const { reload } = useMeContext()
   const { photoSpecs, loading: specsLoading, error: specsError, getPhotoSpecs } = useCatalog()
@@ -233,7 +384,9 @@ export default function ToolPage() {
   )
 
   const toolInfo = TOOLS.find((item) => item.tool === tool)
-  const categoryLabel = TOOL_CATEGORIES.find((item) => item.id === toolInfo?.category)?.label ?? toolInfo?.category
+  const category = TOOL_CATEGORIES.find((item) => item.id === toolInfo?.category)
+  const categoryLabel =
+    locale === 'en' ? category?.labelEn ?? toolInfo?.category : category?.label ?? toolInfo?.category
   const status = job?.status
   const progress = typeof job?.progress === 'number' ? Math.min(100, Math.max(0, job.progress)) : 0
   const photoCountries = useMemo(() => normalizePhotoCountries(photoSpecs), [photoSpecs])
@@ -243,7 +396,7 @@ export default function ToolPage() {
     () => photoCountries.find((item) => item.value === selectedPhotoCountry)?.documents ?? [],
     [photoCountries, selectedPhotoCountry],
   )
-  const photoSetupUnavailable = toolInfo.tool === 'photo_id' && !specsLoading && photoCountries.length === 0
+  const photoSetupUnavailable = toolInfo?.tool === 'photo_id' && !specsLoading && photoCountries.length === 0
 
   // Interroge le statut toutes les secondes jusqu'à un état terminal.
   useEffect(() => {
@@ -300,15 +453,17 @@ export default function ToolPage() {
   if (!toolInfo) {
     return (
       <section className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-2xl font-semibold text-slate-900">Outil inconnu</h1>
-        <p className="mt-2 text-sm text-slate-600">Cet outil ne fait pas partie du catalogue.</p>
+        <h1 className="text-2xl font-semibold text-slate-900">{t(TEXT.unknownTool)}</h1>
+        <p className="mt-2 text-sm text-slate-600">{t(TEXT.unknownToolDescription)}</p>
         <Link to="/catalogue" className="mt-6 inline-block text-sky-600 hover:text-sky-700">
-          Retour au catalogue
+          {t(TEXT.backCatalogue)}
         </Link>
       </section>
     )
   }
 
+  const toolName = locale === 'en' ? toolInfo.nameEn : toolInfo.name
+  const toolDescription = locale === 'en' ? toolInfo.descriptionEn : toolInfo.description
   const relatedTools = TOOLS.filter(
     (item) => item.category === toolInfo.category && item.tool !== toolInfo.tool,
   ).slice(0, 3)
@@ -320,7 +475,7 @@ export default function ToolPage() {
     setLocalError(null)
 
     if (files.length === 0) {
-      setLocalError('Sélectionnez au moins un fichier.')
+      setLocalError(t(TEXT.noFiles))
       return
     }
 
@@ -330,7 +485,7 @@ export default function ToolPage() {
       if (compressOptions.targetSizeKb) {
         const targetSize = Number(compressOptions.targetSizeKb)
         if (!Number.isFinite(targetSize) || targetSize <= 0) {
-          setLocalError('La taille cible doit être un nombre positif.')
+          setLocalError(t(TEXT.positiveTargetSize))
           return
         }
         options.target_size_kb = targetSize
@@ -341,19 +496,19 @@ export default function ToolPage() {
 
     if (toolInfo.tool === 'photo_id') {
       if (specsLoading) {
-        setLocalError('Chargement des spécifications photo en cours.')
+        setLocalError(t(TEXT.specsLoadingError))
         return
       }
       if (photoCountries.length === 0) {
-        setLocalError('Aucun pays disponible pour la photo d’identité.')
+        setLocalError(t(TEXT.noCountries))
         return
       }
       if (!selectedPhotoCountry || !photoOptions.document) {
-        setLocalError('Sélectionnez un pays et un document.')
+        setLocalError(t(TEXT.selectCountryDocument))
         return
       }
       if (photoOptions.maxSizeKb && !Number.isFinite(Number(photoOptions.maxSizeKb))) {
-        setLocalError('La taille cible doit être un nombre.')
+        setLocalError(t(TEXT.numericTargetSize))
         return
       }
 
@@ -381,7 +536,7 @@ export default function ToolPage() {
       if (toolOptions.dpi) {
         const dpi = Number(toolOptions.dpi)
         if (!Number.isInteger(dpi) || dpi < 72 || dpi > 600) {
-          setLocalError('La résolution doit être comprise entre 72 et 600.')
+          setLocalError(t(TEXT.dpiRange))
           return
         }
         options.dpi = dpi
@@ -395,7 +550,7 @@ export default function ToolPage() {
     if (toolInfo.tool === 'pdf_reorder' && toolOptions.order) {
       const order = parsePageOrder(toolOptions.order)
       if (order.length === 0) {
-        setLocalError('Indiquez des numéros de pages valides, séparés par des virgules.')
+        setLocalError(t(TEXT.invalidPageOrder))
         return
       }
       options.order = order
@@ -412,7 +567,7 @@ export default function ToolPage() {
       if (toolOptions.page) {
         const page = Number(toolOptions.page)
         if (!Number.isInteger(page) || page < 1) {
-          setLocalError('Le numéro de page doit être un entier positif.')
+          setLocalError(t(TEXT.positivePage))
           return
         }
         options.page = page
@@ -433,7 +588,7 @@ export default function ToolPage() {
     const payload = await createJob(files, toolInfo.tool, options)
     if (!payload?.id) {
       trackEvent('tool_run_failed', { tool: toolInfo.tool })
-      setLocalError('Le job n’a pas pu être créé.')
+      setLocalError(t(TEXT.jobNotCreated))
       return
     }
 
@@ -504,7 +659,7 @@ export default function ToolPage() {
     }
 
     const resultFile = job?.result?.files?.[0]
-    const fileName = decodeFileName(resultFile?.name) || `resultat-${jobId}`
+    const fileName = decodeFileName(resultFile?.name) || `${locale === 'fr' ? 'resultat' : 'result'}-${jobId}`
     const type = contentTypeFromName(fileName)
     const text = String(payload)
     const bytes = Uint8Array.from(text, (character) => character.charCodeAt(0) & 0xff)
@@ -522,22 +677,22 @@ export default function ToolPage() {
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-12">
-      <nav aria-label="Fil d’Ariane" className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+      <nav aria-label={t(TEXT.breadcrumb)} className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
         <Link to="/catalogue" className="text-sky-700 hover:text-sky-800">
           Catalogue
         </Link>
         <span aria-hidden="true">/</span>
         <span>{categoryLabel}</span>
         <span aria-hidden="true">/</span>
-        <span className="text-slate-700">{toolInfo.name}</span>
+        <span className="text-slate-700">{toolName}</span>
       </nav>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div>
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{categoryLabel}</p>
-            <h1 className="mt-2 text-3xl font-bold text-slate-900">{toolInfo.name}</h1>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">{toolInfo.description}</p>
+            <h1 className="mt-2 text-3xl font-bold text-slate-900">{toolName}</h1>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">{toolDescription}</p>
 
             <form onSubmit={handleSubmit} className="mt-8">
               <div
@@ -569,10 +724,10 @@ export default function ToolPage() {
                     +
                   </span>
                   <span className="mt-4 block text-sm font-semibold text-slate-900">
-                    Déposez vos fichiers ici
+                    {t(TEXT.dropFiles)}
                   </span>
                   <span className="mt-1 block text-sm text-slate-600">
-                    ou cliquez pour les sélectionner
+                    {t(TEXT.clickSelect)}
                   </span>
                 </label>
               </div>
@@ -586,7 +741,7 @@ export default function ToolPage() {
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-slate-800">{file.name}</p>
-                        <p className="text-xs text-slate-500">{formatFileSize(file.size)}</p>
+                        <p className="text-xs text-slate-500">{formatFileSize(file.size, locale)}</p>
                       </div>
                       <div className="flex shrink-0 items-center gap-1">
                         {toolInfo.tool === 'images_to_pdf' && (
@@ -597,7 +752,7 @@ export default function ToolPage() {
                               disabled={creating || index === 0}
                               className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40"
                             >
-                              Monter
+                              {t(TEXT.moveUp)}
                             </button>
                             <button
                               type="button"
@@ -605,7 +760,7 @@ export default function ToolPage() {
                               disabled={creating || index === files.length - 1}
                               className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40"
                             >
-                              Descendre
+                              {t(TEXT.moveDown)}
                             </button>
                           </>
                         )}
@@ -615,7 +770,7 @@ export default function ToolPage() {
                           disabled={creating}
                           className="rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-50"
                         >
-                          Retirer
+                          {t(TEXT.remove)}
                         </button>
                       </div>
                     </li>
@@ -625,30 +780,30 @@ export default function ToolPage() {
 
               {toolInfo.tool === 'compress' && (
                 <div className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-sm font-semibold text-slate-900">Options de compression</h3>
+                  <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.compressionOptions)}</h3>
                   <p className="text-xs leading-relaxed text-slate-600">
-                    Choisissez un niveau de compression ou une taille cible en Ko.
+                    {t(TEXT.compressionHelp)}
                   </p>
                   <p className="text-xs leading-relaxed text-slate-500">
-                    Formats acceptés : images, vidéos, PDF, Word, Excel, PowerPoint, ODF.
+                    {t(TEXT.acceptedFormats)}
                   </p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                      <span>Niveau</span>
+                      <span>{t(TEXT.level)}</span>
                       <select
                         value={compressOptions.level}
                         onChange={(event) => updateCompressOption('level', event.target.value)}
                         disabled={creating || Boolean(compressOptions.targetSizeKb)}
                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
                       >
-                        <option value="">Par défaut</option>
-                        <option value="basic">Basique</option>
-                        <option value="medium">Moyen</option>
-                        <option value="max">Maximum</option>
+                        <option value="">{t(TEXT.default)}</option>
+                        <option value="basic">{t(TEXT.basic)}</option>
+                        <option value="medium">{t(TEXT.medium)}</option>
+                        <option value="max">{t(TEXT.max)}</option>
                       </select>
                     </label>
                     <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                      <span>Taille cible (Ko)</span>
+                      <span>{t(TEXT.targetSizeKb)}</span>
                       <input
                         type="number"
                         min="1"
@@ -663,22 +818,22 @@ export default function ToolPage() {
               )}
               {hasAdvancedOptions && toolInfo.tool !== 'compress' && toolInfo.tool !== 'photo_id' && (
                 <div className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-sm font-semibold text-slate-900">Options avancées</h3>
+                  <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.advancedOptions)}</h3>
                   {toolInfo.tool === 'pdf_to_images' && (
                     <div className="grid gap-3 sm:grid-cols-3">
                       <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                        <span>Pages</span>
+                        <span>{t(TEXT.pages)}</span>
                         <input
                           type="text"
                           value={toolOptions.pages}
                           onChange={(event) => updateToolOption('pages', event.target.value)}
                           disabled={creating}
                           className={OPTION_INPUT_CLASS}
-                          placeholder="all ou 1,3-5"
+                          placeholder={locale === 'fr' ? 'all ou 1,3-5' : 'all or 1,3-5'}
                         />
                       </label>
                       <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                        <span>Format</span>
+                        <span>{t(TEXT.format)}</span>
                         <select
                           value={toolOptions.format}
                           onChange={(event) => updateToolOption('format', event.target.value)}
@@ -690,7 +845,7 @@ export default function ToolPage() {
                         </select>
                       </label>
                       <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                        <span>Résolution (dpi)</span>
+                        <span>{t(TEXT.resolution)}</span>
                         <input
                           type="number"
                           min="72"
@@ -699,14 +854,14 @@ export default function ToolPage() {
                           onChange={(event) => updateToolOption('dpi', event.target.value)}
                           disabled={creating}
                           className={OPTION_INPUT_CLASS}
-                          placeholder="72 à 600"
+                          placeholder={t(TEXT.resolutionPlaceholder)}
                         />
                       </label>
                     </div>
                   )}
                   {toolInfo.tool === 'pdf_split' && (
                     <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                      <span>Plages de pages</span>
+                      <span>{t(TEXT.pageRanges)}</span>
                       <input
                         type="text"
                         value={toolOptions.ranges}
@@ -719,7 +874,7 @@ export default function ToolPage() {
                   )}
                   {toolInfo.tool === 'pdf_reorder' && (
                     <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                      <span>Ordre des pages</span>
+                      <span>{t(TEXT.pageOrder)}</span>
                       <input
                         type="text"
                         value={toolOptions.order}
@@ -732,13 +887,13 @@ export default function ToolPage() {
                   )}
                   {toolInfo.tool === 'images_to_pdf' && (
                     <p className="text-xs leading-relaxed text-slate-600">
-                      Les images sont assemblées dans l’ordre affiché. Utilisez les boutons Monter et Descendre pour les classer.
+                      {t(TEXT.imagesOrderHelp)}
                     </p>
                   )}
                   {toolInfo.tool === 'pdf_sign' && (
                     <div className="grid gap-3 sm:grid-cols-3">
                       <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                        <span>Texte de la signature</span>
+                        <span>{t(TEXT.signatureText)}</span>
                         <input
                           type="text"
                           value={toolOptions.signatureText}
@@ -748,7 +903,7 @@ export default function ToolPage() {
                         />
                       </label>
                       <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                        <span>Page</span>
+                        <span>{t(TEXT.page)}</span>
                         <input
                           type="number"
                           min="1"
@@ -759,24 +914,24 @@ export default function ToolPage() {
                         />
                       </label>
                       <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                        <span>Position</span>
+                        <span>{t(TEXT.position)}</span>
                         <select
                           value={toolOptions.position}
                           onChange={(event) => updateToolOption('position', event.target.value)}
                           disabled={creating}
                           className={OPTION_INPUT_CLASS}
                         >
-                          <option value="bottom_right">Bas droite</option>
-                          <option value="bottom_left">Bas gauche</option>
-                          <option value="top_right">Haut droite</option>
-                          <option value="top_left">Haut gauche</option>
+                          <option value="bottom_right">{t(TEXT.bottomRight)}</option>
+                          <option value="bottom_left">{t(TEXT.bottomLeft)}</option>
+                          <option value="top_right">{t(TEXT.topRight)}</option>
+                          <option value="top_left">{t(TEXT.topLeft)}</option>
                         </select>
                       </label>
                     </div>
                   )}
                   {toolInfo.tool === 'pdf_protect' && (
                     <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                      <span>Mot de passe</span>
+                      <span>{t(TEXT.password)}</span>
                       <input
                         type="password"
                         value={toolOptions.password}
@@ -788,7 +943,7 @@ export default function ToolPage() {
                   )}
                   {toolInfo.tool === 'pdf_watermark' && (
                     <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                      <span>Texte du filigrane</span>
+                      <span>{t(TEXT.watermarkText)}</span>
                       <input
                         type="text"
                         value={toolOptions.watermark}
@@ -802,8 +957,8 @@ export default function ToolPage() {
               )}
               {toolInfo.tool === 'photo_id' && (
                 <div className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-sm font-semibold text-slate-900">Options photo d’identité</h3>
-                  {specsLoading && <p className="text-sm text-slate-600">Chargement des pays disponibles…</p>}
+                  <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.photoOptions)}</h3>
+                  {specsLoading && <p className="text-sm text-slate-600">{t(TEXT.loadingCountries)}</p>}
                   {specsError && (
                     <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
                       {specsError.message}
@@ -811,19 +966,19 @@ export default function ToolPage() {
                   )}
                   {photoSetupUnavailable && !specsError && (
                     <p role="alert" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-                      Aucun pays disponible pour la photo d’identité. Les spécifications doivent être configurées côté API.
+                      {t(TEXT.noCountriesConfigured)}
                     </p>
                   )}
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                      <span>Pays</span>
+                      <span>{t(TEXT.country)}</span>
                       <select
                         value={selectedPhotoCountry}
                         onChange={(event) => updatePhotoOption('country', event.target.value)}
                         disabled={specsLoading || photoCountries.length === 0 || creating}
                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
                       >
-                        {photoCountries.length === 0 && <option value="">Aucun pays disponible</option>}
+                        {photoCountries.length === 0 && <option value="">{t(TEXT.noCountries)}</option>}
                         {photoCountries.map((item) => (
                           <option key={item.value} value={item.value}>
                             {item.label}
@@ -832,7 +987,7 @@ export default function ToolPage() {
                       </select>
                     </label>
                     <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                      <span>Document</span>
+                      <span>{t(TEXT.document)}</span>
                       <select
                         value={photoOptions.document}
                         onChange={(event) => updatePhotoOption('document', event.target.value)}
@@ -840,7 +995,7 @@ export default function ToolPage() {
                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
                       >
                         <option value="">
-                          {selectedPhotoCountry ? 'Sélectionnez un document' : 'Choisissez d’abord un pays'}
+                          {selectedPhotoCountry ? t(TEXT.selectDocument) : t(TEXT.chooseCountryFirst)}
                         </option>
                         {photoDocuments.map((item) => (
                           <option key={item.value} value={item.value}>
@@ -850,7 +1005,7 @@ export default function ToolPage() {
                       </select>
                     </label>
                     <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                      <span>Fond</span>
+                      <span>{t(TEXT.background)}</span>
                       <input
                         type="text"
                         value={photoOptions.background}
@@ -860,19 +1015,19 @@ export default function ToolPage() {
                       />
                     </label>
                     <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                      <span>Mise en page</span>
+                      <span>{t(TEXT.sheet)}</span>
                       <select
                         value={photoOptions.sheet}
                         onChange={(event) => updatePhotoOption('sheet', event.target.value)}
                         disabled={creating}
                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
                       >
-                        <option value="">Taille standard</option>
+                        <option value="">{t(TEXT.standardSize)}</option>
                         <option value="10x15">10x15</option>
                       </select>
                     </label>
                     <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                      <span>Taille cible (Ko)</span>
+                      <span>{t(TEXT.targetSizeKb)}</span>
                       <input
                         type="number"
                         min="1"
@@ -887,7 +1042,7 @@ export default function ToolPage() {
               )}
               {!hasAdvancedOptions && (
                 <p className="mt-4 text-xs text-slate-500">
-                  Cet outil n’a pas d’options avancées documentées : le job est lancé avec la valeur par défaut.
+                  {t(TEXT.noAdvancedOptions)}
                 </p>
               )}
 
@@ -902,7 +1057,7 @@ export default function ToolPage() {
                   }
                   className="rounded-lg bg-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {creating ? 'Création du job…' : 'Lancer le traitement'}
+                  {t(creating ? TEXT.creating : TEXT.startProcessing)}
                 </button>
                 {jobId && (
                   <button
@@ -910,7 +1065,7 @@ export default function ToolPage() {
                     onClick={resetTool}
                     className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                   >
-                    Nouveau traitement
+                    {t(TEXT.newProcessing)}
                   </button>
                 )}
               </div>
@@ -926,16 +1081,16 @@ export default function ToolPage() {
           {jobId && (
             <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-xl font-semibold text-slate-900">Suivi du job</h2>
+                <h2 className="text-xl font-semibold text-slate-900">{t(TEXT.jobTracking)}</h2>
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[status] ?? 'bg-slate-100 text-slate-700'}`}>
-                  {STATUS_LABELS[status] ?? 'En attente'}
+                  {t(STATUS_LABELS[status] ?? STATUS_LABELS.queued)}
                 </span>
               </div>
               <p className="mt-2 text-sm text-slate-600">
-                Identifiant : <span className="font-mono text-slate-700">{jobId}</span>
+                {t(TEXT.identifier)} : <span className="font-mono text-slate-700">{jobId}</span>
               </p>
 
-              {jobLoading && !job && <p className="mt-4 text-sm text-slate-600">Chargement du statut…</p>}
+              {jobLoading && !job && <p className="mt-4 text-sm text-slate-600">{t(TEXT.loadingStatus)}</p>}
               {jobError && (
                 <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
                   {jobError.message}
@@ -945,12 +1100,12 @@ export default function ToolPage() {
               {job && (
                 <div className="mt-6">
                   <div className="flex justify-between text-sm text-slate-600">
-                    <span>{STATUS_LABELS[status] ?? status}</span>
+                    <span>{t(STATUS_LABELS[status] ?? status)}</span>
                     <span>{progress}%</span>
                   </div>
                   <div
                     role="progressbar"
-                    aria-label="Progression du job"
+                    aria-label={t(TEXT.jobProgress)}
                     aria-valuenow={progress}
                     aria-valuemin={0}
                     aria-valuemax={100}
@@ -962,14 +1117,14 @@ export default function ToolPage() {
                   {status === 'failed' && (
                     <div className="mt-5">
                       <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                        {job.error?.message ?? 'Le traitement a échoué.'}
+                        {job.error?.message ?? t(TEXT.processingFailed)}
                       </p>
                       <button
                         type="button"
                         onClick={resetTool}
                         className="mt-3 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                       >
-                        Réessayer
+                        {t(TEXT.retry)}
                       </button>
                     </div>
                   )}
@@ -982,7 +1137,7 @@ export default function ToolPage() {
                         disabled={downloading}
                         className="rounded-lg bg-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-sky-600 disabled:opacity-50"
                       >
-                        {downloading ? 'Récupération…' : 'Récupérer le résultat'}
+                        {t(downloading ? TEXT.retrieving : TEXT.getResult)}
                       </button>
                       {downloadedJobId === jobId && downloadError && (
                         <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
@@ -990,7 +1145,7 @@ export default function ToolPage() {
                         </p>
                       )}
                       {downloadedJobId === jobId && !downloadError && !downloading && (
-                        <p className="mt-3 text-sm text-emerald-700">Le téléchargement a été lancé.</p>
+                        <p className="mt-3 text-sm text-emerald-700">{t(TEXT.downloadStarted)}</p>
                       )}
                     </div>
                   )}
@@ -1002,36 +1157,36 @@ export default function ToolPage() {
 
         <aside className="space-y-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Comment ça marche</h2>
+            <h2 className="text-lg font-semibold text-slate-900">{t(TEXT.howItWorks)}</h2>
             <ol className="mt-5 space-y-5">
-              <Step title="Ajoutez vos fichiers" description="Glissez vos fichiers ou sélectionnez-les depuis votre appareil." done={files.length > 0} active={files.length === 0} />
+              <Step title={t(TEXT.step1Title)} description={t(TEXT.step1Description)} done={files.length > 0} active={files.length === 0} />
               <Step
-                title="Lancez le traitement"
+                title={t(TEXT.step2Title)}
                 description={
                   toolInfo.tool === 'photo_id'
-                    ? 'Le job est créé avec le pays et le document sélectionnés.'
+                    ? t(TEXT.step2DescriptionPhoto)
                     : hasAdvancedOptions
-                      ? 'Le job est créé avec les options choisies.'
-                      : 'Le job est créé avec les options par défaut documentées.'
+                      ? t(TEXT.step2DescriptionAdvanced)
+                      : t(TEXT.step2DescriptionDefault)
                 }
                 done={Boolean(jobId)}
                 active={files.length > 0 && !jobId}
               />
-              <Step title="Récupérez le résultat" description="Suivez le statut puis téléchargez le résultat quand le job est terminé." done={status === 'done'} active={Boolean(jobId) && status !== 'done' && status !== 'failed'} />
+              <Step title={t(TEXT.step3Title)} description={t(TEXT.step3Description)} done={status === 'done'} active={Boolean(jobId) && status !== 'done' && status !== 'failed'} />
             </ol>
           </div>
 
           {toolInfo.tool === 'photo_id' && (
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-slate-900">Spécifications photo</h2>
+                <h2 className="text-lg font-semibold text-slate-900">{t(TEXT.photoSpecs)}</h2>
                 <button
                   type="button"
                   onClick={getPhotoSpecs}
                   disabled={specsLoading}
                   className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                 >
-                  {specsLoading ? 'Chargement…' : 'Actualiser'}
+                  {t(specsLoading ? TEXT.loading : TEXT.refresh)}
                 </button>
               </div>
               {specsError && (
@@ -1045,7 +1200,7 @@ export default function ToolPage() {
 
           {relatedTools.length > 0 && (
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-slate-900">Outils similaires</h2>
+              <h2 className="text-lg font-semibold text-slate-900">{t(TEXT.similarTools)}</h2>
               <div className="mt-4 space-y-2">
                 {relatedTools.map((item) => (
                   <Link
@@ -1053,7 +1208,7 @@ export default function ToolPage() {
                     to={`/tools/${item.tool}`}
                     className="block rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:border-sky-300 hover:text-sky-700"
                   >
-                    {item.name}
+                    {locale === 'en' ? item.nameEn : item.name}
                   </Link>
                 ))}
               </div>
@@ -1061,12 +1216,12 @@ export default function ToolPage() {
           )}
 
           <div className="rounded-2xl border border-sky-200 bg-sky-50 p-6">
-            <h2 className="text-sm font-semibold text-sky-900">Besoin d’un autre outil ?</h2>
+            <h2 className="text-sm font-semibold text-sky-900">{t(TEXT.needAnotherTool)}</h2>
             <p className="mt-2 text-sm leading-relaxed text-sky-800">
-              Retrouvez tous les traitements disponibles dans le catalogue.
+              {t(TEXT.catalogueHelp)}
             </p>
             <Link to="/catalogue" className="mt-4 inline-block text-sm font-semibold text-sky-700 hover:text-sky-800">
-              Voir le catalogue →
+              {t(TEXT.viewCatalogue)}
             </Link>
           </div>
         </aside>

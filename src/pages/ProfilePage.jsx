@@ -2,11 +2,44 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import ChangePasswordForm from '@/components/ChangePasswordForm.jsx'
 import LogoutButton from '@/components/LogoutButton.jsx'
+import { useLocale } from '@/hooks/useLocale.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
 import { usePatchMe } from '@/hooks/usePatchMe.js'
 
+const TEXT = {
+  personalInfo: { fr: 'Informations personnelles', en: 'Personal information' },
+  editableFields: {
+    fr: 'Seuls les champs acceptés par l’API sont modifiables.',
+    en: 'Only fields accepted by the API can be changed.',
+  },
+  email: { fr: 'Email', en: 'Email' },
+  firstName: { fr: 'Prénom', en: 'First name' },
+  lastName: { fr: 'Nom', en: 'Last name' },
+  profession: { fr: 'Profession', en: 'Profession' },
+  displayName: { fr: 'Nom affiché', en: 'Display name' },
+  acceptTerms: { fr: 'J’accepte les conditions d’utilisation.', en: 'I accept the terms of use.' },
+  receiveNews: {
+    fr: 'Je souhaite recevoir les actualités par email.',
+    en: 'I would like to receive news by email.',
+  },
+  saving: { fr: 'Enregistrement…', en: 'Saving…' },
+  saveProfile: { fr: 'Enregistrer le profil', en: 'Save the profile' },
+  updated: { fr: 'Profil mis à jour.', en: 'Profile updated.' },
+  confirmEmail: {
+    fr: ' Confirmez votre nouvelle adresse par email.',
+    en: ' Confirm your new email address.',
+  },
+  title: { fr: 'Mon profil', en: 'My profile' },
+  loading: { fr: 'Chargement du profil…', en: 'Loading profile…' },
+  loadError: { fr: 'Impossible de charger le profil.', en: 'Unable to load the profile.' },
+  retry: { fr: 'Réessayer', en: 'Try again' },
+  signInToEdit: { fr: 'Connectez-vous pour modifier votre profil.', en: 'Sign in to edit your profile.' },
+  signIn: { fr: 'Se connecter', en: 'Sign in' },
+}
+
 // Formulaire interne remonté quand le profil change, sans effet de synchronisation d'état.
 function ProfileForm({ user, onSuccess }) {
+  const { t } = useLocale()
   const [form, setForm] = useState({
     email: user.email ?? '',
     first_name: user.first_name ?? '',
@@ -34,13 +67,13 @@ function ProfileForm({ user, onSuccess }) {
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-lg">
-      <h2 className="text-xl font-semibold text-slate-900">Informations personnelles</h2>
-      <p className="mt-2 text-sm text-slate-600">Seuls les champs acceptés par l’API sont modifiables.</p>
+      <h2 className="text-xl font-semibold text-slate-900">{t(TEXT.personalInfo)}</h2>
+      <p className="mt-2 text-sm text-slate-600">{t(TEXT.editableFields)}</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
           <label htmlFor="profile-email" className="block text-sm font-medium text-slate-700">
-            Email
+            {t(TEXT.email)}
           </label>
           <input
             id="profile-email"
@@ -56,7 +89,7 @@ function ProfileForm({ user, onSuccess }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="profile-first-name" className="block text-sm font-medium text-slate-700">
-              Prénom
+              {t(TEXT.firstName)}
             </label>
             <input
               id="profile-first-name"
@@ -70,7 +103,7 @@ function ProfileForm({ user, onSuccess }) {
 
           <div>
             <label htmlFor="profile-last-name" className="block text-sm font-medium text-slate-700">
-              Nom
+              {t(TEXT.lastName)}
             </label>
             <input
               id="profile-last-name"
@@ -86,7 +119,7 @@ function ProfileForm({ user, onSuccess }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="profile-profession" className="block text-sm font-medium text-slate-700">
-              Profession
+              {t(TEXT.profession)}
             </label>
             <input
               id="profile-profession"
@@ -99,7 +132,7 @@ function ProfileForm({ user, onSuccess }) {
 
           <div>
             <label htmlFor="profile-display-name" className="block text-sm font-medium text-slate-700">
-              Nom affiché
+              {t(TEXT.displayName)}
             </label>
             <input
               id="profile-display-name"
@@ -118,7 +151,7 @@ function ProfileForm({ user, onSuccess }) {
             onChange={(event) => setForm({ ...form, terms_accepted: event.target.checked })}
             className="mt-1 h-4 w-4 rounded border-slate-300 bg-white"
           />
-          <span>J’accepte les conditions d’utilisation.</span>
+          <span>{t(TEXT.acceptTerms)}</span>
         </label>
 
         <label className="flex items-start gap-3 text-sm text-slate-600">
@@ -128,7 +161,7 @@ function ProfileForm({ user, onSuccess }) {
             onChange={(event) => setForm({ ...form, marketing_opt_in: event.target.checked })}
             className="mt-1 h-4 w-4 rounded border-slate-300 bg-white"
           />
-          <span>Je souhaite recevoir les actualités par email.</span>
+          <span>{t(TEXT.receiveNews)}</span>
         </label>
 
         <button
@@ -136,7 +169,7 @@ function ProfileForm({ user, onSuccess }) {
           disabled={patch.loading}
           className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:opacity-50"
         >
-          {patch.loading ? 'Enregistrement…' : 'Enregistrer le profil'}
+          {t(patch.loading ? TEXT.saving : TEXT.saveProfile)}
         </button>
       </form>
 
@@ -148,8 +181,8 @@ function ProfileForm({ user, onSuccess }) {
 
       {patch.success && (
         <p role="status" className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
-          Profil mis à jour.
-          {patch.data?.email_verification_required ? ' Confirmez votre nouvelle adresse par email.' : ''}
+          {t(TEXT.updated)}
+          {patch.data?.email_verification_required ? t(TEXT.confirmEmail) : ''}
         </p>
       )}
     </div>
@@ -158,34 +191,35 @@ function ProfileForm({ user, onSuccess }) {
 
 // Page profil : données personnelles, mot de passe et déconnexion.
 export default function ProfilePage() {
+  const { t } = useLocale()
   const { user, loading, error, reload, isGuest } = useMeContext()
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-12">
-      <h1 className="text-3xl font-bold text-slate-900">Mon profil</h1>
+      <h1 className="text-3xl font-bold text-slate-900">{t(TEXT.title)}</h1>
 
-      {loading && <p className="mt-6 text-sm text-slate-600">Chargement du profil…</p>}
+      {loading && <p className="mt-6 text-sm text-slate-600">{t(TEXT.loading)}</p>}
 
       {!loading && error && (
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
           <p role="alert" className="text-sm text-red-700">
-            Impossible de charger le profil. {error.message}
+            {t(TEXT.loadError)} {error.message}
           </p>
           <button
             type="button"
             onClick={reload}
             className="mt-4 rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:border-slate-300"
           >
-            Réessayer
+            {t(TEXT.retry)}
           </button>
         </div>
       )}
 
       {!loading && !error && (isGuest || !user) && (
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
-          <p className="text-sm text-slate-600">Connectez-vous pour modifier votre profil.</p>
+          <p className="text-sm text-slate-600">{t(TEXT.signInToEdit)}</p>
           <Link to="/login" className="mt-4 inline-block rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400">
-            Se connecter
+            {t(TEXT.signIn)}
           </Link>
         </div>
       )}

@@ -1,7 +1,14 @@
+import { useLocale } from '@/hooks/useLocale.js'
 import { useLogout } from '@/hooks/useLogout.js'
+
+const TEXT = {
+  loading: { fr: 'Déconnexion…', en: 'Signing out…' },
+  action: { fr: 'Se déconnecter', en: 'Sign out' },
+}
 
 // Bouton de déconnexion : délègue le rafraîchissement du profil à la prop onSuccess.
 export default function LogoutButton({ onSuccess }) {
+  const { t } = useLocale()
   const { loading, error, logout } = useLogout({ onSuccess })
 
   return (
@@ -12,7 +19,7 @@ export default function LogoutButton({ onSuccess }) {
         disabled={loading}
         className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
       >
-        {loading ? 'Déconnexion…' : 'Se déconnecter'}
+        {t(loading ? TEXT.loading : TEXT.action)}
       </button>
 
       {error && (

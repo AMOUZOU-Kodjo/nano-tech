@@ -3,73 +3,139 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useMeActions } from '@/hooks/useMeActions.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
 import { useUsage } from '@/hooks/useUsage.js'
+import { useLocale } from '@/hooks/useLocale.js'
 
 // Libellés des compteurs documentés, affichés seulement quand la réponse les contient.
 const QUOTA_LABELS = {
-  plan: 'Formule',
-  credits: 'Crédits',
-  paywall_enabled: 'Paywall actif',
-  free_uses_left: 'Essais gratuits restants',
-  ai_uses_left_today: 'Rendus IA restants aujourd’hui',
-  daily_jobs_left: 'Jobs restants aujourd’hui',
-  daily_renders_left: 'Rendus restants aujourd’hui',
-  limit: 'Limite',
-  used: 'Utilisé',
-  remaining: 'Restant',
+  plan: { fr: 'Formule', en: 'Plan' },
+  credits: { fr: 'Crédits', en: 'Credits' },
+  paywall_enabled: { fr: 'Paywall actif', en: 'Paywall enabled' },
+  free_uses_left: { fr: 'Essais gratuits restants', en: 'Free trials remaining' },
+  ai_uses_left_today: { fr: 'Rendus IA restants aujourd’hui', en: 'AI renders remaining today' },
+  daily_jobs_left: { fr: 'Jobs restants aujourd’hui', en: 'Jobs remaining today' },
+  daily_renders_left: { fr: 'Rendus restants aujourd’hui', en: 'Renders remaining today' },
+  limit: { fr: 'Limite', en: 'Limit' },
+  used: { fr: 'Utilisé', en: 'Used' },
+  remaining: { fr: 'Restant', en: 'Remaining' },
 }
 
 const USAGE_LABELS = {
-  authenticated: 'Compte authentifié',
-  plan: 'Formule',
-  credits: 'Crédits',
-  paywall_enabled: 'Paywall actif',
-  free_uses_left: 'Essais gratuits restants',
-  ai_uses_left_today: 'Rendus IA restants aujourd’hui',
-  daily_jobs_left: 'Jobs restants aujourd’hui',
-  daily_renders_left: 'Rendus restants aujourd’hui',
+  authenticated: { fr: 'Compte authentifié', en: 'Authenticated account' },
+  plan: { fr: 'Formule', en: 'Plan' },
+  credits: { fr: 'Crédits', en: 'Credits' },
+  paywall_enabled: { fr: 'Paywall actif', en: 'Paywall enabled' },
+  free_uses_left: { fr: 'Essais gratuits restants', en: 'Free trials remaining' },
+  ai_uses_left_today: { fr: 'Rendus IA restants aujourd’hui', en: 'AI renders remaining today' },
+  daily_jobs_left: { fr: 'Jobs restants aujourd’hui', en: 'Jobs remaining today' },
+  daily_renders_left: { fr: 'Rendus restants aujourd’hui', en: 'Renders remaining today' },
 }
 
 const LIMIT_LABELS = {
-  tier: 'Niveau',
-  max_file_mb: 'Taille max. par fichier',
-  max_total_mb: 'Total max. par lot',
-  max_files: 'Nombre max. de fichiers',
-  max_pdf_pages: 'Pages PDF max.',
-  max_video_minutes: 'Durée vidéo max.',
-  max_documents: 'Documents max.',
-  max_document_storage_mb: 'Stockage documents max.',
+  tier: { fr: 'Niveau', en: 'Tier' },
+  max_file_mb: { fr: 'Taille max. par fichier', en: 'Max. size per file' },
+  max_total_mb: { fr: 'Total max. par lot', en: 'Max. total per batch' },
+  max_files: { fr: 'Nombre max. de fichiers', en: 'Max. number of files' },
+  max_pdf_pages: { fr: 'Pages PDF max.', en: 'Max. PDF pages' },
+  max_video_minutes: { fr: 'Durée vidéo max.', en: 'Max. video duration' },
+  max_documents: { fr: 'Documents max.', en: 'Max. documents' },
+  max_document_storage_mb: { fr: 'Stockage documents max.', en: 'Max. document storage' },
 }
 
 const AI_LABELS = {
-  limit: 'Limite quotidienne',
-  used: 'Utilisé',
-  remaining: 'Restant',
-  resets_at: 'Réinitialisation',
+  limit: { fr: 'Limite quotidienne', en: 'Daily limit' },
+  used: { fr: 'Utilisé', en: 'Used' },
+  remaining: { fr: 'Restant', en: 'Remaining' },
+  resets_at: { fr: 'Réinitialisation', en: 'Resets at' },
 }
 
 const TABS = [
-  { id: 'overview', label: 'Vue d’ensemble', description: 'Quota et consommation' },
-  { id: 'data', label: 'Données personnelles', description: 'Export et suppression' },
-  { id: 'communication', label: 'Communication', description: 'Préférences email' },
+  { id: 'overview', label: { fr: 'Vue d’ensemble', en: 'Overview' }, description: { fr: 'Quota et consommation', en: 'Quota and usage' } },
+  { id: 'data', label: { fr: 'Données personnelles', en: 'Personal data' }, description: { fr: 'Export et suppression', en: 'Export and deletion' } },
+  { id: 'communication', label: { fr: 'Communication', en: 'Communication' }, description: { fr: 'Préférences email', en: 'Email preferences' } },
 ]
 
 const OVERVIEW_TABS = [
-  { id: 'quota', label: 'Quota courant' },
-  { id: 'access', label: 'Accès et compteurs' },
-  { id: 'limits', label: 'Limites du compte' },
-  { id: 'ai', label: 'Rendus IA' },
-  { id: 'tools', label: 'Outils activés' },
+  { id: 'quota', label: { fr: 'Quota courant', en: 'Current quota' } },
+  { id: 'access', label: { fr: 'Accès et compteurs', en: 'Access and counters' } },
+  { id: 'limits', label: { fr: 'Limites du compte', en: 'Account limits' } },
+  { id: 'ai', label: { fr: 'Rendus IA', en: 'AI renders' } },
+  { id: 'tools', label: { fr: 'Outils activés', en: 'Enabled tools' } },
 ]
 
-function formatValue(key, value) {
+const TEXT = {
+  yes: { fr: 'Oui', en: 'Yes' },
+  no: { fr: 'Non', en: 'No' },
+  guest: { fr: 'Invité', en: 'Guest' },
+  signedInAccount: { fr: 'Compte connecté', en: 'Signed-in account' },
+  noData: { fr: 'Aucune donnée disponible.', en: 'No data available.' },
+  accountSections: { fr: 'Sections du compte', en: 'Account sections' },
+  overviewDetails: { fr: 'Détails de la vue d’ensemble', en: 'Overview details' },
+  rawResponse: { fr: 'Réponse brute', en: 'Raw response' },
+  deleteConfirmationRequired: { fr: 'Saisissez SUPPRIMER pour confirmer.', en: 'Type DELETE to confirm.' },
+  unsubscribeTokenRequired: {
+    fr: 'Saisissez le jeton de désinscription.',
+    en: 'Enter the unsubscribe token.',
+  },
+  userSpace: { fr: 'Espace utilisateur', en: 'User space' },
+  myAccount: { fr: 'Mon compte', en: 'My account' },
+  accountIntro: {
+    fr: 'Suivez votre quota, consultez votre consommation et gérez vos données personnelles.',
+    en: 'Track your quota, review your usage and manage your personal data.',
+  },
+  currentAccount: { fr: 'Compte courant', en: 'Current account' },
+  loading: { fr: 'Chargement…', en: 'Loading…' },
+  signedIn: { fr: 'Connecté', en: 'Signed in' },
+  editProfile: { fr: 'Modifier mon profil', en: 'Edit my profile' },
+  signIn: { fr: 'Se connecter', en: 'Sign in' },
+  navigation: { fr: 'Navigation', en: 'Navigation' },
+  detailsTitle: { fr: 'Détails du compte', en: 'Account details' },
+  detailsDescription: {
+    fr: 'Choisissez une section pour afficher les données correspondantes.',
+    en: 'Choose a section to display the corresponding data.',
+  },
+  refresh: { fr: 'Actualiser', en: 'Refresh' },
+  identity: { fr: 'Identité', en: 'Identity' },
+  availableTools: { fr: 'Outils disponibles', en: 'Available tools' },
+  exportTitle: { fr: 'Exporter mes données', en: 'Export my data' },
+  exportDescription: { fr: 'Récupère l’export RGPD prévu par l’API.', en: 'Retrieves the GDPR export provided by the API.' },
+  requestExport: { fr: 'Demander l’export', en: 'Request export' },
+  deleteTitle: { fr: 'Supprimer mes données', en: 'Delete my data' },
+  deleteDescription: {
+    fr: 'Action irréversible. La suppression du compte est optionnelle.',
+    en: 'Irreversible action. Deleting the account is optional.',
+  },
+  deleteAccountToo: { fr: 'Supprimer également le compte.', en: 'Delete the account as well.' },
+  confirmDelete: { fr: 'Confirmer la suppression', en: 'Confirm deletion' },
+  dataDeleted: { fr: 'Données supprimées.', en: 'Data deleted.' },
+  unsubscribeTitle: { fr: 'Désinscription marketing', en: 'Marketing unsubscribe' },
+  unsubscribeDescription: {
+    fr: 'Utilisez le jeton reçu dans l’email de communication.',
+    en: 'Use the token received in the marketing email.',
+  },
+  unsubscribeToken: { fr: 'Jeton de désinscription', en: 'Unsubscribe token' },
+  pasteToken: { fr: 'Collez votre jeton', en: 'Paste your token' },
+  unsubscribe: { fr: 'Se désinscrire', en: 'Unsubscribe' },
+  unsubscribed: { fr: 'Désinscription effectuée.', en: 'Unsubscribed successfully.' },
+  planStat: { fr: 'Formule', en: 'Plan' },
+  creditsStat: { fr: 'Crédits', en: 'Credits' },
+  trialsStat: { fr: 'Essais restants', en: 'Trials remaining' },
+  toolsStat: { fr: 'Outils activés', en: 'Enabled tools' },
+  currentOffer: { fr: 'Offre actuelle', en: 'Current offer' },
+  availableBalance: { fr: 'Solde disponible', en: 'Available balance' },
+  freeQuota: { fr: 'Quota gratuit', en: 'Free quota' },
+  catalogueAccess: { fr: 'Accès catalogue', en: 'Catalogue access' },
+}
+
+function formatValue(key, value, locale, t) {
   if (typeof value === 'boolean') {
-    return value ? 'Oui' : 'Non'
+    return t(value ? TEXT.yes : TEXT.no)
   }
   if (key === 'resets_at' && typeof value === 'string' && !Number.isNaN(Date.parse(value))) {
-    return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+    const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-US'
+    return new Intl.DateTimeFormat(dateLocale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
   }
   if (typeof value === 'number' && key.endsWith('_mb')) {
-    return `${value} Mo`
+    return `${value} ${locale === 'fr' ? 'Mo' : 'MB'}`
   }
   if (typeof value === 'number' && key.endsWith('_minutes')) {
     return `${value} min`
@@ -77,28 +143,32 @@ function formatValue(key, value) {
   return String(value)
 }
 
-function rowsFrom(values, labels) {
+function rowsFrom(values, labels, locale, t) {
   if (!values || typeof values !== 'object') {
     return []
   }
 
   return Object.entries(labels)
     .filter(([key]) => key in values && values[key] !== null && values[key] !== undefined)
-    .map(([key, label]) => ({ key, label, value: formatValue(key, values[key]) }))
+    .map(([key, label]) => ({
+      key,
+      label: t(label),
+      value: formatValue(key, values[key], locale, t),
+    }))
 }
 
-function quotaRows(quota) {
-  return rowsFrom(quota, QUOTA_LABELS)
+function quotaRows(quota, locale, t) {
+  return rowsFrom(quota, QUOTA_LABELS, locale, t)
 }
 
-function usageIdentity(data) {
+function usageIdentity(data, t) {
   if (!data) {
     return null
   }
   if (!data.user) {
-    return 'Invité'
+    return t(TEXT.guest)
   }
-  return data.user.email ?? data.user.id ?? 'Compte connecté'
+  return data.user.email ?? data.user.id ?? t(TEXT.signedInAccount)
 }
 
 function rowValue(rows, key) {
@@ -115,8 +185,10 @@ function initials(value) {
 }
 
 function ValueList({ rows }) {
+  const { t } = useLocale()
+
   if (!rows.length) {
-    return <p className="mt-5 text-sm text-slate-600">Aucune donnée disponible.</p>
+    return <p className="mt-5 text-sm text-slate-600">{t(TEXT.noData)}</p>
   }
 
   return (
@@ -159,10 +231,12 @@ function SectionCard({ title, description, action, children, tone = 'default' })
 }
 
 function AccountTabs({ active, onChange }) {
+  const { t } = useLocale()
+
   return (
     <div
       role="tablist"
-      aria-label="Sections du compte"
+      aria-label={t(TEXT.accountSections)}
       aria-orientation="vertical"
       className="space-y-2 lg:sticky lg:top-24"
     >
@@ -185,9 +259,9 @@ function AccountTabs({ active, onChange }) {
             }`}
           >
             <span className={`block text-sm font-semibold ${isActive ? 'text-sky-800' : 'text-slate-800'}`}>
-              {tab.label}
+              {t(tab.label)}
             </span>
-            <span className="mt-1 block text-xs text-slate-500">{tab.description}</span>
+            <span className="mt-1 block text-xs text-slate-500">{t(tab.description)}</span>
           </button>
         )
       })}
@@ -196,10 +270,12 @@ function AccountTabs({ active, onChange }) {
 }
 
 function OverviewTabs({ active, onChange }) {
+  const { t } = useLocale()
+
   return (
     <div
       role="tablist"
-      aria-label="Détails de la vue d’ensemble"
+      aria-label={t(TEXT.overviewDetails)}
       className="mt-5 flex flex-wrap gap-2 border-b border-slate-200 pb-3"
     >
       {OVERVIEW_TABS.map((tab) => {
@@ -218,7 +294,7 @@ function OverviewTabs({ active, onChange }) {
               isActive ? 'bg-sky-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            {tab.label}
+            {t(tab.label)}
           </button>
         )
       })}
@@ -228,9 +304,11 @@ function OverviewTabs({ active, onChange }) {
 
 // Affiche une réponse API non typée sous forme JSON, sans interprétation hasardeuse.
 function JsonBlock({ value }) {
+  const { t } = useLocale()
+
   return (
     <div className="mt-5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Réponse brute</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{t(TEXT.rawResponse)}</p>
       <pre className="mt-2 overflow-x-auto rounded-xl bg-slate-950 p-4 text-xs leading-relaxed text-slate-300">{JSON.stringify(value, null, 2)}</pre>
     </div>
   )
@@ -238,6 +316,7 @@ function JsonBlock({ value }) {
 
 // Page compte : quota courant, consommation détaillée et actions RGPD documentées.
 export default function AccountPage() {
+  const { locale, t } = useLocale()
   const [searchParams] = useSearchParams()
   const { user, quota, reload, isGuest, loading: meLoading } = useMeContext()
   const usage = useUsage()
@@ -274,8 +353,9 @@ export default function AccountPage() {
   function handleDelete() {
     setLocalError(null)
 
-    if (deleteConfirmation !== 'SUPPRIMER') {
-      setLocalError('Saisissez SUPPRIMER pour confirmer.')
+    const confirmation = locale === 'fr' ? 'SUPPRIMER' : 'DELETE'
+    if (deleteConfirmation !== confirmation) {
+      setLocalError(t(TEXT.deleteConfirmationRequired))
       return
     }
 
@@ -286,32 +366,32 @@ export default function AccountPage() {
     setLocalError(null)
 
     if (!token.trim()) {
-      setLocalError('Saisissez le jeton de désinscription.')
+      setLocalError(t(TEXT.unsubscribeTokenRequired))
       return
     }
 
     actions.unsubscribe(token.trim())
   }
 
-  const rows = quotaRows(quota)
+  const rows = quotaRows(quota, locale, t)
   const usageData = usage.data
-  const usageRows = rowsFrom(usageData, USAGE_LABELS)
-  const limitRows = rowsFrom(usageData?.limits, LIMIT_LABELS)
-  const aiRows = rowsFrom(usageData?.ai, AI_LABELS)
+  const usageRows = rowsFrom(usageData, USAGE_LABELS, locale, t)
+  const limitRows = rowsFrom(usageData?.limits, LIMIT_LABELS, locale, t)
+  const aiRows = rowsFrom(usageData?.ai, AI_LABELS, locale, t)
   const enabledTools = usageData?.tools_enabled && typeof usageData.tools_enabled === 'object'
     ? Object.values(usageData.tools_enabled).filter(Boolean).length
     : null
   const enabledToolsTotal = usageData?.tools_enabled && typeof usageData.tools_enabled === 'object'
     ? Object.keys(usageData.tools_enabled).length
     : null
-  const identity = isGuest ? 'Invité' : user?.email ?? user?.name ?? 'Compte connecté'
+  const identity = isGuest ? t(TEXT.guest) : user?.email ?? user?.name ?? t(TEXT.signedInAccount)
   const toolsLabel = enabledTools !== null ? `${enabledTools} / ${enabledToolsTotal}` : '—'
 
   const stats = [
-    { label: 'Formule', value: rowValue(rows, 'plan'), hint: 'Offre actuelle' },
-    { label: 'Crédits', value: rowValue(rows, 'credits'), hint: 'Solde disponible' },
-    { label: 'Essais restants', value: rowValue(rows, 'free_uses_left'), hint: 'Quota gratuit' },
-    { label: 'Outils activés', value: toolsLabel, hint: 'Accès catalogue' },
+    { key: 'plan', label: t(TEXT.planStat), value: rowValue(rows, 'plan'), hint: t(TEXT.currentOffer) },
+    { key: 'credits', label: t(TEXT.creditsStat), value: rowValue(rows, 'credits'), hint: t(TEXT.availableBalance) },
+    { key: 'trials', label: t(TEXT.trialsStat), value: rowValue(rows, 'free_uses_left'), hint: t(TEXT.freeQuota) },
+    { key: 'tools', label: t(TEXT.toolsStat), value: toolsLabel, hint: t(TEXT.catalogueAccess) },
   ]
 
   return (
@@ -319,10 +399,10 @@ export default function AccountPage() {
       <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
         <div aria-hidden="true" className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-sky-400/20 blur-3xl" />
         <div className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 px-8 py-10 text-white">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-300">Espace utilisateur</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight">Mon compte</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-300">{t(TEXT.userSpace)}</p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight">{t(TEXT.myAccount)}</h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300">
-            Suivez votre quota, consultez votre consommation et gérez vos données personnelles.
+            {t(TEXT.accountIntro)}
           </p>
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-5 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
@@ -331,8 +411,8 @@ export default function AccountPage() {
                 {meLoading ? '…' : initials(identity)}
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Compte courant</p>
-                <p className="mt-1 truncate text-base font-semibold">{meLoading ? 'Chargement…' : identity}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{t(TEXT.currentAccount)}</p>
+                <p className="mt-1 truncate text-base font-semibold">{meLoading ? t(TEXT.loading) : identity}</p>
               </div>
             </div>
 
@@ -340,14 +420,14 @@ export default function AccountPage() {
               <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
                 isGuest ? 'bg-amber-400/15 text-amber-200' : 'bg-emerald-400/15 text-emerald-200'
               }`}>
-                {isGuest ? 'Invité' : 'Connecté'}
+                {t(isGuest ? TEXT.guest : TEXT.signedIn)}
               </span>
               {!meLoading && !isGuest && (
                 <Link
                   to="/profile"
                   className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
                 >
-                  Modifier mon profil
+                  {t(TEXT.editProfile)}
                 </Link>
               )}
               {!meLoading && isGuest && (
@@ -355,7 +435,7 @@ export default function AccountPage() {
                   to="/login"
                   className="rounded-lg bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-300"
                 >
-                  Se connecter
+                  {t(TEXT.signIn)}
                 </Link>
               )}
             </div>
@@ -365,7 +445,7 @@ export default function AccountPage() {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
         <aside>
-          <p className="mb-3 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Navigation</p>
+          <p className="mb-3 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{t(TEXT.navigation)}</p>
           <AccountTabs active={activeTab} onChange={setActiveTab} />
         </aside>
 
@@ -378,12 +458,12 @@ export default function AccountPage() {
             className={activeTab === 'overview' ? 'space-y-6' : undefined}
           >
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {stats.map((stat) => <StatCard key={stat.label} {...stat} />)}
+              {stats.map((stat) => <StatCard key={stat.key} {...stat} />)}
             </div>
 
             <SectionCard
-              title="Détails du compte"
-              description="Choisissez une section pour afficher les données correspondantes."
+              title={t(TEXT.detailsTitle)}
+              description={t(TEXT.detailsDescription)}
               action={(
                 <button
                   type="button"
@@ -391,7 +471,7 @@ export default function AccountPage() {
                   disabled={usage.loading}
                   className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                 >
-                  {usage.loading ? 'Chargement…' : 'Actualiser'}
+                  {t(usage.loading ? TEXT.loading : TEXT.refresh)}
                 </button>
               )}
             >
@@ -408,7 +488,7 @@ export default function AccountPage() {
               </div>
 
               <div id="overview-panel-access" role="tabpanel" aria-labelledby="overview-tab-access" hidden={overviewTab !== 'access'}>
-                <ValueList rows={usageData ? [{ key: 'identity', label: 'Identité', value: usageIdentity(usageData) }, ...usageRows] : []} />
+                <ValueList rows={usageData ? [{ key: 'identity', label: t(TEXT.identity), value: usageIdentity(usageData, t) }, ...usageRows] : []} />
               </div>
 
               <div id="overview-panel-limits" role="tabpanel" aria-labelledby="overview-tab-limits" hidden={overviewTab !== 'limits'}>
@@ -420,7 +500,7 @@ export default function AccountPage() {
               </div>
 
               <div id="overview-panel-tools" role="tabpanel" aria-labelledby="overview-tab-tools" hidden={overviewTab !== 'tools'}>
-                <ValueList rows={enabledTools !== null ? [{ key: 'enabled', label: 'Outils disponibles', value: toolsLabel }] : []} />
+                <ValueList rows={enabledTools !== null ? [{ key: 'enabled', label: t(TEXT.availableTools), value: toolsLabel }] : []} />
               </div>
             </SectionCard>
           </div>
@@ -433,8 +513,8 @@ export default function AccountPage() {
             className={activeTab === 'data' ? 'space-y-6' : undefined}
           >
             <SectionCard
-              title="Exporter mes données"
-              description="Récupère l’export RGPD prévu par l’API."
+              title={t(TEXT.exportTitle)}
+              description={t(TEXT.exportDescription)}
               action={(
                 <button
                   type="button"
@@ -442,7 +522,7 @@ export default function AccountPage() {
                   disabled={actions.loading}
                   className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:opacity-50"
                 >
-                  Demander l’export
+                  {t(TEXT.requestExport)}
                 </button>
               )}
             >
@@ -451,8 +531,8 @@ export default function AccountPage() {
             </SectionCard>
 
             <SectionCard
-              title="Supprimer mes données"
-              description="Action irréversible. La suppression du compte est optionnelle."
+              title={t(TEXT.deleteTitle)}
+              description={t(TEXT.deleteDescription)}
               tone="danger"
             >
               <div className="mt-5 space-y-4">
@@ -463,13 +543,13 @@ export default function AccountPage() {
                     onChange={(event) => setIncludeAccount(event.target.checked)}
                     className="mt-1 h-4 w-4 rounded border-red-300 bg-white"
                   />
-                  <span>Supprimer également le compte.</span>
+                  <span>{t(TEXT.deleteAccountToo)}</span>
                 </label>
                 <input
                   type="text"
                   value={deleteConfirmation}
                   onChange={(event) => setDeleteConfirmation(event.target.value)}
-                  placeholder="Saisir SUPPRIMER"
+                  placeholder={locale === 'fr' ? 'Saisir SUPPRIMER' : 'Type DELETE'}
                   className="w-full rounded-lg border border-red-300 bg-white p-3 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500"
                 />
                 <button
@@ -478,12 +558,12 @@ export default function AccountPage() {
                   disabled={actions.loading}
                   className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
                 >
-                  Confirmer la suppression
+                  {t(TEXT.confirmDelete)}
                 </button>
               </div>
               {actions.deleted && (
                 <p role="status" className="mt-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
-                  Données supprimées.
+                  {t(TEXT.dataDeleted)}
                 </p>
               )}
             </SectionCard>
@@ -496,19 +576,19 @@ export default function AccountPage() {
             hidden={activeTab !== 'communication'}
           >
             <SectionCard
-              title="Désinscription marketing"
-              description="Utilisez le jeton reçu dans l’email de communication."
+              title={t(TEXT.unsubscribeTitle)}
+              description={t(TEXT.unsubscribeDescription)}
             >
               <div className="mt-5 max-w-xl space-y-4">
                 <label htmlFor="unsubscribe-token" className="block text-sm font-medium text-slate-700">
-                  Jeton de désinscription
+                  {t(TEXT.unsubscribeToken)}
                 </label>
                 <input
                   id="unsubscribe-token"
                   type="text"
                   value={token}
                   onChange={(event) => setToken(event.target.value)}
-                  placeholder="Collez votre jeton"
+                  placeholder={t(TEXT.pasteToken)}
                   className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
                 />
                 <button
@@ -517,12 +597,12 @@ export default function AccountPage() {
                   disabled={actions.loading}
                   className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                 >
-                  Se désinscrire
+                  {t(TEXT.unsubscribe)}
                 </button>
               </div>
               {actions.unsubscribed && (
                 <p role="status" className="mt-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
-                  Désinscription effectuée.
+                  {t(TEXT.unsubscribed)}
                 </p>
               )}
             </SectionCard>

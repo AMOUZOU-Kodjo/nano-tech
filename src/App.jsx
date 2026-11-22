@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { LocaleProvider } from '@/contexts/LocaleContext.jsx'
 import { MeProvider } from '@/contexts/MeContext.jsx'
 import Navbar from '@/components/Navbar.jsx'
 import SiteFooter from '@/components/SiteFooter.jsx'
@@ -76,10 +77,12 @@ function AppLayout() {
 
 export default function App() {
   return (
-    <MeProvider>
-      <BrowserRouter>
-        <AppLayout />
-      </BrowserRouter>
-    </MeProvider>
+    <LocaleProvider>
+      <MeProvider>
+        <BrowserRouter>
+          <AppLayout />
+        </BrowserRouter>
+      </MeProvider>
+    </LocaleProvider>
   )
 }

@@ -2,7 +2,43 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDocuments } from '@/hooks/useDocuments.js'
 import { useFiles } from '@/hooks/useFiles.js'
+import { useLocale } from '@/hooks/useLocale.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
+
+const TEXT = {
+  document: { fr: 'Document', en: 'Document' },
+  invalidJson: { fr: 'Les données doivent être un JSON valide.', en: 'Data must be valid JSON.' },
+  invalidObject: { fr: 'Les données doivent être un objet JSON.', en: 'Data must be a JSON object.' },
+  editDocument: { fr: 'Modifier le document', en: 'Edit the document' },
+  templateId: { fr: 'Identifiant du modèle', en: 'Template ID' },
+  documentData: { fr: 'Données du document', en: 'Document data' },
+  save: { fr: 'Enregistrer', en: 'Save' },
+  download: { fr: 'Télécharger', en: 'Download' },
+  sendByEmail: { fr: 'Envoyer par email', en: 'Send by email' },
+  remove: { fr: 'Supprimer', en: 'Delete' },
+  downloadFailed: { fr: 'Le document n’a pas pu être téléchargé.', en: 'The document could not be downloaded.' },
+  fileIdRequired: { fr: 'Saisissez un identifiant de fichier.', en: 'Enter a file ID.' },
+  shareTokenRequired: { fr: 'Saisissez un jeton de partage.', en: 'Enter a share token.' },
+  title: { fr: 'Documents', en: 'Documents' },
+  subtitle: { fr: 'CV et lettres générés, puis fichiers associés.', en: 'Generated CVs and letters, then associated files.' },
+  guestIntro: { fr: 'Vous consultez en invité.', en: 'You are browsing as a guest.' },
+  guestLink: { fr: 'Connectez-vous', en: 'Sign in' },
+  guestOutro: { fr: 'pour gérer vos documents.', en: 'to manage your documents.' },
+  myDocuments: { fr: 'Mes documents', en: 'My documents' },
+  loading: { fr: 'Chargement…', en: 'Loading…' },
+  noDocument: { fr: 'Aucun document disponible.', en: 'No document available.' },
+  loadingDocument: { fr: 'Chargement du document…', en: 'Loading document…' },
+  selectDocument: { fr: 'Sélectionnez un document pour l’éditer.', en: 'Select a document to edit it.' },
+  emailSent: { fr: 'Document envoyé par email.', en: 'Document sent by email.' },
+  fileById: { fr: 'Fichier par identifiant', en: 'File by ID' },
+  fileIdPlaceholder: { fr: 'Identifiant du fichier', en: 'File ID' },
+  retrieve: { fr: 'Récupérer', en: 'Retrieve' },
+  publicFileByToken: { fr: 'Fichier public par jeton', en: 'Public file by token' },
+  shareTokenPlaceholder: { fr: 'Jeton de partage', en: 'Share token' },
+  open: { fr: 'Ouvrir', en: 'Open' },
+  fileFallback: { fr: 'fichier', en: 'file' },
+  downloadRetrievedFile: { fr: 'Télécharger le fichier récupéré', en: 'Download the retrieved file' },
+}
 
 // Affiche une réponse API non typée sous forme JSON, sans invention de champs.
 function JsonBlock({ value }) {
@@ -10,7 +46,7 @@ function JsonBlock({ value }) {
 }
 
 // Normalise une liste non typée pour afficher au minimum un identifiant cliquable.
-function normalizeDocuments(payload) {
+function normalizeDocuments(payload, t) {
   const raw = Array.isArray(payload)
     ? payload
     : (payload?.documents ?? payload?.data ?? [])
@@ -25,7 +61,7 @@ function normalizeDocuments(payload) {
       const id = item.id ?? item.document_id
       return {
         id: id === undefined || id === null ? '' : String(id),
-        title: item.name ?? item.title ?? item.filename ?? String(id ?? 'Document'),
+        title: item.name ?? item.title ?? item.filename ?? String(id ?? t(TEXT.document)),
         type: item.type ?? item.kind ?? '',
       }
     })
@@ -34,6 +70,7 @@ function normalizeDocuments(payload) {
 
 // Formulaire d'édition remonté quand le document affiché change.
 function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete }) {
+  const { t } = useLocale()
   const [dataText, setDataText] = useState(JSON.stringify(detail?.data ?? {}, null, 2))
   const [templateId, setTemplateId] = useState(detail?.template_id ?? '')
   const [localError, setLocalError] = useState(null)
@@ -45,11 +82,11 @@ function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete
     try {
       parsed = JSON.parse(dataText)
     } catch {
-      setLocalError('Les données doivent être un JSON valide.')
+      setLocalError(t(TEXT.invalidJson))
       return
     }
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      setLocalError('Les données doivent être un objet JSON.')
+      setLocalError(t(TEXT.invalidObject))
       return
     }
 
@@ -62,12 +99,12 @@ function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-semibold text-slate-900">Modifier le document</h2>
+      <h2 className="text-xl font-semibold text-slate-900">{t(TEXT.editDocument)}</h2>
 
       <div className="mt-4 space-y-4">
         <div>
           <label htmlFor="document-template" className="block text-sm font-medium text-slate-700">
-            Identifiant du modèle
+            {t(TEXT.templateId)}
           </label>
           <input
             id="document-template"
@@ -80,7 +117,7 @@ function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete
 
         <div>
           <label htmlFor="document-data" className="block text-sm font-medium text-slate-700">
-            Données du document
+            {t(TEXT.documentData)}
           </label>
           <textarea
             id="document-data"
@@ -105,7 +142,7 @@ function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete
           disabled={disabled}
           className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-50"
         >
-          Enregistrer
+          {t(TEXT.save)}
         </button>
         <button
           type="button"
@@ -113,7 +150,7 @@ function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete
           disabled={disabled}
           className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:border-slate-300 disabled:opacity-50"
         >
-          Télécharger
+          {t(TEXT.download)}
         </button>
         <button
           type="button"
@@ -121,7 +158,7 @@ function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete
           disabled={disabled}
           className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:border-slate-300 disabled:opacity-50"
         >
-          Envoyer par email
+          {t(TEXT.sendByEmail)}
         </button>
         <button
           type="button"
@@ -129,7 +166,7 @@ function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete
           disabled={disabled}
           className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-50"
         >
-          Supprimer
+          {t(TEXT.remove)}
         </button>
       </div>
     </div>
@@ -138,6 +175,7 @@ function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete
 
 // Page documents : liste, édition des données, actions et accès aux fichiers.
 export default function DocumentsPage() {
+  const { t } = useLocale()
   const { isGuest, loading: meLoading } = useMeContext()
   const documents = useDocuments()
   const files = useFiles()
@@ -199,7 +237,7 @@ export default function DocumentsPage() {
     }
   }, [selected, fetchDocument, isGuest])
 
-  const items = normalizeDocuments(listed)
+  const items = normalizeDocuments(listed, t)
 
   function handleSave(changes) {
     setLocalError(null)
@@ -218,7 +256,7 @@ export default function DocumentsPage() {
 
     const payload = await downloadDocument(selected)
     if (!(payload instanceof Blob)) {
-      setLocalError('Le document n’a pas pu être téléchargé.')
+      setLocalError(t(TEXT.downloadFailed))
       return
     }
 
@@ -237,7 +275,7 @@ export default function DocumentsPage() {
   function handleGetFile() {
     setLocalError(null)
     if (!fileId.trim()) {
-      setLocalError('Saisissez un identifiant de fichier.')
+      setLocalError(t(TEXT.fileIdRequired))
       return
     }
     getFile(fileId.trim())
@@ -246,7 +284,7 @@ export default function DocumentsPage() {
   function handleDownloadByToken() {
     setLocalError(null)
     if (!shareToken.trim()) {
-      setLocalError('Saisissez un jeton de partage.')
+      setLocalError(t(TEXT.shareTokenRequired))
       return
     }
     downloadByToken(shareToken.trim())
@@ -254,20 +292,20 @@ export default function DocumentsPage() {
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-12">
-      <h1 className="text-3xl font-bold text-slate-900">Documents</h1>
-      <p className="mt-2 text-sm text-slate-600">CV et lettres générés, puis fichiers associés.</p>
+      <h1 className="text-3xl font-bold text-slate-900">{t(TEXT.title)}</h1>
+      <p className="mt-2 text-sm text-slate-600">{t(TEXT.subtitle)}</p>
 
       {!meLoading && isGuest && (
         <p className="mt-6 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
-          Vous consultez en invité. <Link to="/login" className="text-sky-600 hover:text-sky-700">Connectez-vous</Link> pour gérer vos documents.
+          {t(TEXT.guestIntro)} <Link to="/login" className="text-sky-600 hover:text-sky-700">{t(TEXT.guestLink)}</Link> {t(TEXT.guestOutro)}
         </p>
       )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h2 className="text-xl font-semibold text-slate-900">Mes documents</h2>
-          {documentsLoading && !items.length && <p className="mt-4 text-sm text-slate-600">Chargement…</p>}
-          {!documentsLoading && !items.length && <p className="mt-4 text-sm text-slate-600">Aucun document disponible.</p>}
+          <h2 className="text-xl font-semibold text-slate-900">{t(TEXT.myDocuments)}</h2>
+          {documentsLoading && !items.length && <p className="mt-4 text-sm text-slate-600">{t(TEXT.loading)}</p>}
+          {!documentsLoading && !items.length && <p className="mt-4 text-sm text-slate-600">{t(TEXT.noDocument)}</p>}
           <div className="mt-4 space-y-2">
             {items.map((item) => (
               <button
@@ -299,26 +337,26 @@ export default function DocumentsPage() {
               onDelete={handleDelete}
             />
           )}
-          {selected && !documentData && <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Chargement du document…</p>}
-          {!selected && <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Sélectionnez un document pour l’éditer.</p>}
+          {selected && !documentData && <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">{t(TEXT.loadingDocument)}</p>}
+          {!selected && <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">{t(TEXT.selectDocument)}</p>}
         </div>
       </div>
 
       {sentEmail && (
         <p role="status" className="mt-6 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
-          Document envoyé par email.
+          {t(TEXT.emailSent)}
         </p>
       )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h2 className="text-xl font-semibold text-slate-900">Fichier par identifiant</h2>
+          <h2 className="text-xl font-semibold text-slate-900">{t(TEXT.fileById)}</h2>
           <div className="mt-4 flex flex-wrap gap-3">
             <input
               type="text"
               value={fileId}
               onChange={(event) => setFileId(event.target.value)}
-              placeholder="Identifiant du fichier"
+              placeholder={t(TEXT.fileIdPlaceholder)}
               className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
             />
             <button
@@ -327,19 +365,19 @@ export default function DocumentsPage() {
               disabled={filesLoading}
               className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-50"
             >
-              Récupérer
+              {t(TEXT.retrieve)}
             </button>
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h2 className="text-xl font-semibold text-slate-900">Fichier public par jeton</h2>
+          <h2 className="text-xl font-semibold text-slate-900">{t(TEXT.publicFileByToken)}</h2>
           <div className="mt-4 flex flex-wrap gap-3">
             <input
               type="text"
               value={shareToken}
               onChange={(event) => setShareToken(event.target.value)}
-              placeholder="Jeton de partage"
+              placeholder={t(TEXT.shareTokenPlaceholder)}
               className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
             />
             <button
@@ -348,7 +386,7 @@ export default function DocumentsPage() {
               disabled={filesLoading}
               className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:border-slate-300 disabled:opacity-50"
             >
-              Ouvrir
+              {t(TEXT.open)}
             </button>
           </div>
         </div>
@@ -358,10 +396,10 @@ export default function DocumentsPage() {
       {fileData instanceof Blob && (
         <a
           href={URL.createObjectURL(fileData)}
-          download={fileData.name || 'fichier'}
+          download={fileData.name || t(TEXT.fileFallback)}
           className="mt-6 inline-block text-sm text-sky-600 hover:text-sky-700"
         >
-          Télécharger le fichier récupéré
+          {t(TEXT.downloadRetrievedFile)}
         </a>
       )}
 

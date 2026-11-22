@@ -8,10 +8,23 @@ if (!API_URL) {
 // Clé locale du jeton anonyme renvoyé par GET /me et réutilisable entre onglets.
 const ANON_ID_STORAGE_KEY = 'nanofile.anon_id'
 
+// Clé de la langue choisie dans l'interface, partagée avec LocaleContext.
+const LOCALE_STORAGE_KEY = 'nanofile.locale'
+
 // Lit le jeton anonyme déjà enregistré, sans échouer si le stockage est indisponible.
 function readStoredAnonId() {
   try {
     return globalThis.localStorage?.getItem(ANON_ID_STORAGE_KEY) || null
+  } catch {
+    return null
+  }
+}
+
+// Lit la langue persistée par le sélecteur FR/EN, si elle est valide.
+function readStoredLocale() {
+  try {
+    const stored = globalThis.localStorage?.getItem(LOCALE_STORAGE_KEY)
+    return stored === 'fr' || stored === 'en' ? stored : null
   } catch {
     return null
   }
@@ -46,8 +59,13 @@ export function clearAnonId() {
   }
 }
 
-// Détermine la langue à envoyer à l'API à partir des préférences du navigateur.
+// Détermine la langue à envoyer à l'API : choix explicite d'abord, navigateur ensuite.
 function detectLanguage() {
+  const stored = readStoredLocale()
+  if (stored) {
+    return stored
+  }
+
   const candidates =
     typeof navigator === 'undefined'
       ? []

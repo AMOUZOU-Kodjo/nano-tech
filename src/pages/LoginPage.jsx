@@ -2,8 +2,31 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import logoUrl from '../../Logo NanoFile bleu et cyan.png'
 import GoogleAuthButton from '@/components/GoogleAuthButton.jsx'
+import { useLocale } from '@/hooks/useLocale.js'
 import { useLogin } from '@/hooks/useLogin.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
+
+const TEXT = {
+  hidePassword: { fr: 'Masquer le mot de passe', en: 'Hide password' },
+  showPassword: { fr: 'Afficher le mot de passe', en: 'Show password' },
+  title: { fr: 'Connexion', en: 'Sign in' },
+  subtitle: { fr: 'Retrouvez vos outils et vos documents.', en: 'Find your tools and documents again.' },
+  googleTerms: {
+    fr: 'J’accepte les conditions d’utilisation pour me connecter ou créer un compte avec Google.',
+    en: 'I accept the terms of use to sign in or create an account with Google.',
+  },
+  googleTermsRequired: {
+    fr: 'Cochez les conditions d’utilisation pour continuer avec Google.',
+    en: 'Accept the terms of use to continue with Google.',
+  },
+  orByEmail: { fr: 'ou par email', en: 'or by email' },
+  email: { fr: 'Email', en: 'Email' },
+  password: { fr: 'Mot de passe', en: 'Password' },
+  forgotPassword: { fr: 'Mot de passe oublié ?', en: 'Forgot your password?' },
+  createAccount: { fr: 'Créer un compte', en: 'Create an account' },
+  signingIn: { fr: 'Connexion…', en: 'Signing in…' },
+  signIn: { fr: 'Se connecter', en: 'Sign in' },
+}
 
 function EyeIcon() {
   return (
@@ -26,6 +49,7 @@ function EyeOffIcon() {
 }
 
 function PasswordField({ id, label, name, autoComplete, value, onChange }) {
+  const { t } = useLocale()
   const [visible, setVisible] = useState(false)
 
   return (
@@ -47,7 +71,7 @@ function PasswordField({ id, label, name, autoComplete, value, onChange }) {
         <button
           type="button"
           onClick={() => setVisible((current) => !current)}
-          aria-label={visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+          aria-label={t(visible ? TEXT.hidePassword : TEXT.showPassword)}
           aria-pressed={visible}
           aria-controls={id}
           className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-500 transition hover:text-slate-900 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-sky-500"
@@ -61,6 +85,7 @@ function PasswordField({ id, label, name, autoComplete, value, onChange }) {
 
 // Page de connexion compacte par email et mot de passe, avec accès Google.
 export default function LoginPage() {
+  const { t } = useLocale()
   const navigate = useNavigate()
   const { reload } = useMeContext()
   const [form, setForm] = useState({ email: '', password: '' })
@@ -88,8 +113,8 @@ export default function LoginPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-600">NanoFile</p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Connexion</h1>
-            <p className="mt-1 text-sm text-slate-600">Retrouvez vos outils et vos documents.</p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{t(TEXT.title)}</h1>
+            <p className="mt-1 text-sm text-slate-600">{t(TEXT.subtitle)}</p>
           </div>
           <img src={logoUrl} alt="" className="h-12 w-12 shrink-0 object-contain" />
         </div>
@@ -102,7 +127,7 @@ export default function LoginPage() {
               onChange={(event) => setGoogleTermsAccepted(event.target.checked)}
               className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 bg-white"
             />
-            J’accepte les conditions d’utilisation pour me connecter ou créer un compte avec Google.
+            {t(TEXT.googleTerms)}
           </label>
           <div className="flex justify-center">
             {googleTermsAccepted ? (
@@ -116,7 +141,7 @@ export default function LoginPage() {
               />
             ) : (
               <p className="rounded-lg bg-slate-50 px-3 py-2 text-center text-xs text-slate-600">
-                Cochez les conditions d’utilisation pour continuer avec Google.
+                {t(TEXT.googleTermsRequired)}
               </p>
             )}
           </div>
@@ -124,14 +149,14 @@ export default function LoginPage() {
 
         <div className="my-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
           <span className="h-px flex-1 bg-slate-200" />
-          ou par email
+          {t(TEXT.orByEmail)}
           <span className="h-px flex-1 bg-slate-200" />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label htmlFor="login-email" className="block text-xs font-semibold text-slate-700">
-              Email
+              {t(TEXT.email)}
             </label>
             <input
               id="login-email"
@@ -147,7 +172,7 @@ export default function LoginPage() {
 
           <PasswordField
             id="login-password"
-            label="Mot de passe"
+            label={t(TEXT.password)}
             name="password"
             autoComplete="current-password"
             value={form.password}
@@ -156,10 +181,10 @@ export default function LoginPage() {
 
           <div className="flex items-center justify-between pt-1 text-xs">
             <Link to="/forgot-password" className="font-semibold text-sky-600 hover:text-sky-700">
-              Mot de passe oublié ?
+              {t(TEXT.forgotPassword)}
             </Link>
             <Link to="/register" className="font-semibold text-sky-600 hover:text-sky-700">
-              Créer un compte
+              {t(TEXT.createAccount)}
             </Link>
           </div>
 
@@ -168,7 +193,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:opacity-50"
           >
-            {loading ? 'Connexion…' : 'Se connecter'}
+            {t(loading ? TEXT.signingIn : TEXT.signIn)}
           </button>
         </form>
 

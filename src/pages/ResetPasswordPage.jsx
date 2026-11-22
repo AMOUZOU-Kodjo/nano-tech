@@ -1,9 +1,29 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useLocale } from '@/hooks/useLocale.js'
 import { useResetPassword } from '@/hooks/useResetPassword.js'
+
+const TEXT = {
+  missingToken: {
+    fr: 'Ce lien ne contient pas de jeton de réinitialisation.',
+    en: 'This link does not contain a reset token.',
+  },
+  passwordMismatch: { fr: 'Les mots de passe ne correspondent pas.', en: 'Passwords do not match.' },
+  title: { fr: 'Nouveau mot de passe', en: 'New password' },
+  password: { fr: 'Mot de passe', en: 'Password' },
+  confirmation: { fr: 'Confirmation du mot de passe', en: 'Password confirmation' },
+  saving: { fr: 'Enregistrement…', en: 'Saving…' },
+  savePassword: { fr: 'Enregistrer le mot de passe', en: 'Save the password' },
+  success: {
+    fr: 'Mot de passe modifié. Vous pouvez vous connecter.',
+    en: 'Password changed. You can now sign in.',
+  },
+  backToLogin: { fr: 'Retour à la connexion', en: 'Back to sign in' },
+}
 
 // Page de réinitialisation avec le token reçu dans le lien email.
 export default function ResetPasswordPage() {
+  const { t } = useLocale()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') ?? ''
   const [form, setForm] = useState({ password: '', password_confirmation: '' })
@@ -15,11 +35,11 @@ export default function ResetPasswordPage() {
     setLocalError(null)
 
     if (!token) {
-      setLocalError('Ce lien ne contient pas de jeton de réinitialisation.')
+      setLocalError(t(TEXT.missingToken))
       return
     }
     if (form.password !== form.password_confirmation) {
-      setLocalError('Les mots de passe ne correspondent pas.')
+      setLocalError(t(TEXT.passwordMismatch))
       return
     }
 
@@ -33,12 +53,12 @@ export default function ResetPasswordPage() {
   return (
     <section className="mx-auto max-w-md px-6 py-12">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-lg">
-        <h1 className="text-2xl font-bold text-slate-900">Nouveau mot de passe</h1>
+        <h1 className="text-2xl font-bold text-slate-900">{t(TEXT.title)}</h1>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <label htmlFor="reset-password" className="block text-sm font-medium text-slate-700">
-              Mot de passe
+              {t(TEXT.password)}
             </label>
             <input
               id="reset-password"
@@ -53,7 +73,7 @@ export default function ResetPasswordPage() {
 
           <div>
             <label htmlFor="reset-confirmation" className="block text-sm font-medium text-slate-700">
-              Confirmation du mot de passe
+              {t(TEXT.confirmation)}
             </label>
             <input
               id="reset-confirmation"
@@ -73,7 +93,7 @@ export default function ResetPasswordPage() {
             disabled={loading}
             className="w-full rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:opacity-50"
           >
-            {loading ? 'Enregistrement…' : 'Enregistrer le mot de passe'}
+            {t(loading ? TEXT.saving : TEXT.savePassword)}
           </button>
         </form>
 
@@ -85,12 +105,12 @@ export default function ResetPasswordPage() {
 
         {data && (
           <p role="status" className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
-            Mot de passe modifié. Vous pouvez vous connecter.
+            {t(TEXT.success)}
           </p>
         )}
 
         <Link to="/login" className="mt-6 inline-block text-sm text-sky-600 hover:text-sky-700">
-          Retour à la connexion
+          {t(TEXT.backToLogin)}
         </Link>
       </div>
     </section>

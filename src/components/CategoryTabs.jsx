@@ -1,4 +1,5 @@
 import { FiCamera, FiGrid, FiLayers, FiMinimize2, FiRefreshCw, FiShield } from 'react-icons/fi'
+import { useLocale } from '@/hooks/useLocale.js'
 
 // Icône associée à chaque catégorie affichée dans le catalogue.
 const CATEGORY_ICONS = {
@@ -10,10 +11,16 @@ const CATEGORY_ICONS = {
   photo: FiCamera,
 }
 
+const TEXT = {
+  label: { fr: 'Catégories d’outils', en: 'Tool categories' },
+}
+
 // Onglets de filtrage du catalogue ; chaque bouton contrôle la grille des outils.
 export default function CategoryTabs({ categories, activeCategory, onChange }) {
+  const { locale, t } = useLocale()
+
   return (
-    <div role="tablist" aria-label="Catégories d’outils" className="flex flex-wrap gap-2">
+    <div role="tablist" aria-label={t(TEXT.label)} className="flex flex-wrap gap-2">
       {categories.map((category) => {
         const isActive = category.id === activeCategory
         const Icon = CATEGORY_ICONS[category.id] ?? FiGrid
@@ -33,7 +40,7 @@ export default function CategoryTabs({ categories, activeCategory, onChange }) {
             }`}
           >
             <Icon aria-hidden="true" className="h-4 w-4" />
-            {category.label}
+            {locale === 'en' ? category.labelEn : category.label}
           </button>
         )
       })}

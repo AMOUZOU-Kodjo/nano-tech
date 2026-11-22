@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom'
+import { MESSAGES } from '@/i18n/messages.js'
+import { useLocale } from '@/hooks/useLocale.js'
 
 // Vue d'accueil : présentation concise et accès directs aux espaces principaux.
 export default function HomePage() {
+  const { t } = useLocale()
+
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br   to-canvas p-8 text-center sm:p-16 sm:text-left">
@@ -12,18 +16,17 @@ export default function HomePage() {
             NanoFile
           </span> */}
           <h1 className="mt-4 text-4xl font-bold tracking-tight text-balance text-slate-900 sm:mt-5 sm:text-5xl">
-            Vos fichiers, traités simplement.
+            {t(MESSAGES.home.heroTitle)}
           </h1>
           {/* <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0 sm:mt-5 sm:text-xl"> */}
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0 sm:mt-5 sm:text-base">
-            Compressez, convertissez, organisez et sécurisez vos fichiers en quelques clics.
-            Une interface claire, sans option superflue.
+            {t(MESSAGES.home.heroTextOne)} {t(MESSAGES.home.heroTextTwo)}
           </p>
 
-          <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] font-medium text-slate-600 sm:justify-start sm:text-xl">
-            <li>Aucun nom ni contenu transmis aux analytics.</li>
-            <li>Résultat téléchargeable dès la fin.</li>
-            <li>JPG, JPEG, PNG, WEBP, BMP, TIF, TIFF, vidéos, PDF, Word, Excel, PowerPoint, ODF.</li>
+          <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] font-medium text-slate-600 sm:justify-start sm:text-sm">
+            <li>{t(MESSAGES.home.benefitAnalytics)}</li>
+            <li>{t(MESSAGES.home.benefitDownload)}</li>
+            <li>{t(MESSAGES.home.benefitFormats)}</li>
           </ul>
 
           <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:mt-8 sm:flex-row sm:items-center">
@@ -31,13 +34,13 @@ export default function HomePage() {
               to="/catalogue"
               className="rounded-lg bg-sky-500 px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600"
             >
-              Découvrir les outils
+              {t(MESSAGES.home.discoverTools)}
             </Link>
             <Link
               to="/dashboard"
               className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              Espace utilisateur
+              {t(MESSAGES.home.userSpace)}
             </Link>
           </div>
         </div>
@@ -46,15 +49,15 @@ export default function HomePage() {
       <div className="mt-8 rounded-xl border border-slate-100 bg-white p-5 shadow-sm sm:mt-10 sm:p-8">
         <div className="flex flex-col gap-4 text-center sm:flex-row sm:items-start sm:justify-between sm:text-left">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Zone de traitement</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900">Compresser</h2>
-            <p className="mt-2 text-xs leading-relaxed text-slate-600 sm:text-sm">images, vidéos, PDF, Word, Excel, PowerPoint, ODF</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t(MESSAGES.home.processingZone)}</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900">{t(MESSAGES.home.compress)}</h2>
+            <p className="mt-2 text-xs leading-relaxed text-slate-600 sm:text-sm">{t(MESSAGES.home.compressFormats)}</p>
           </div>
           <Link
             to="/tools/compress"
             className="self-center rounded-lg border border-slate-300 px-4 py-2 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:self-auto"
           >
-            Ouvrir l’outil
+            {t(MESSAGES.home.openTool)}
           </Link>
         </div>
 
@@ -62,13 +65,13 @@ export default function HomePage() {
           to="/tools/compress"
           className="mt-5 flex min-h-44 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-sky-200 bg-brand-surface/60 p-5 text-center transition hover:border-sky-400 hover:bg-brand-surface sm:mt-6 sm:min-h-48 sm:p-8"
         >
-          <span className="text-sm font-semibold text-slate-900 sm:text-base">Déposez vos fichiers ici</span>
-          <span className="mt-2 text-xs text-slate-500 sm:text-sm">ou</span>
+          <span className="text-sm font-semibold text-slate-900 sm:text-base">{t(MESSAGES.home.dropFiles)}</span>
+          <span className="mt-2 text-xs text-slate-500 sm:text-sm">{t(MESSAGES.home.or)}</span>
           <span className="mt-4 rounded-lg bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white">
-            Choisir des fichiers
+            {t(MESSAGES.home.chooseFiles)}
           </span>
           <span className="mt-4 text-[11px] leading-relaxed text-slate-500 sm:mt-5 sm:text-xs">
-            Formats acceptés : images, vidéos, PDF, Word, Excel, PowerPoint, ODF
+            {t(MESSAGES.home.acceptedFormats)}
           </span>
         </Link>
 
@@ -85,82 +88,66 @@ export default function HomePage() {
           to="/catalogue"
           className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm transition hover:border-sky-300 hover:shadow-md sm:p-6 sm:text-left"
         >
-          <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Catalogue</p>
-          <h2 className="mt-2 text-lg font-bold text-slate-900">Choisir un outil</h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            Parcourez les outils par catégorie et lancez le traitement adapté à votre fichier.
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t(MESSAGES.common.catalogue)}</p>
+          <h2 className="mt-2 text-lg font-bold text-slate-900">{t(MESSAGES.home.chooseTool)}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.chooseToolText)}</p>
         </Link>
 
         <Link
           to="/studio"
           className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm transition hover:border-sky-300 hover:shadow-md sm:p-6 sm:text-left"
         >
-          <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Studio</p>
-          <h2 className="mt-2 text-lg font-bold text-slate-900">Générer un CV ou une lettre</h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            Utilisez les modèles, le rendu et la réécriture assistée documentés par l’API.
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t(MESSAGES.common.studio)}</p>
+          <h2 className="mt-2 text-lg font-bold text-slate-900">{t(MESSAGES.home.generateCv)}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.studioText)}</p>
         </Link>
 
         <Link
           to="/dashboard"
           className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm transition hover:border-sky-300 hover:shadow-md sm:p-6 sm:text-left"
         >
-          <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Espace utilisateur</p>
-          <h2 className="mt-2 text-lg font-bold text-slate-900">Suivre son activité</h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            Consultez l’état du service, votre quota, vos documents et l’historique des jobs.
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t(MESSAGES.home.userSpace)}</p>
+          <h2 className="mt-2 text-lg font-bold text-slate-900">{t(MESSAGES.home.trackActivity)}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.trackActivityText)}</p>
         </Link>
       </div>
 
       <div id="comment-ca-marche" className="mt-12 scroll-mt-24 rounded-3xl  p-6 text-center sm:mt-16 sm:p-10 sm:text-left">
-        <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Comment ça marche</p>
-        <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Trois étapes, sans complication.</h2>
-        <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0">
-          Du dépôt au téléchargement, chaque traitement suit le même parcours clair.
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t(MESSAGES.home.howItWorks)}</p>
+        <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{t(MESSAGES.home.threeSteps)}</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0">{t(MESSAGES.home.howIntro)}</p>
 
         <ol className="mt-6 grid gap-4 sm:mt-8 sm:gap-6 md:grid-cols-3">
           <li className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-6 sm:text-left">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-sky-500 text-sm font-bold text-white">
               1
             </span>
-            <h3 className="mt-4 text-lg font-bold text-slate-900">Déposez vos fichiers</h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              Sélectionnez vos images, vidéos ou documents depuis votre appareil.
-            </p>
+            <h3 className="mt-4 text-lg font-bold text-slate-900">{t(MESSAGES.home.stepOneTitle)}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.stepOneText)}</p>
           </li>
 
           <li className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-6 sm:text-left">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-sky-500 text-sm font-bold text-white">
               2
             </span>
-            <h3 className="mt-4 text-lg font-bold text-slate-900">Choisissez le traitement</h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              Compressez, convertissez, organisez ou sécurisez le fichier voulu.
-            </p>
+            <h3 className="mt-4 text-lg font-bold text-slate-900">{t(MESSAGES.home.stepTwoTitle)}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.stepTwoText)}</p>
           </li>
 
           <li className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-6 sm:text-left">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-sky-500 text-sm font-bold text-white">
               3
             </span>
-            <h3 className="mt-4 text-lg font-bold text-slate-900">Téléchargez le résultat</h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              Suivez l’avancement puis récupérez le fichier dès la fin du traitement.
-            </p>
+            <h3 className="mt-4 text-lg font-bold text-slate-900">{t(MESSAGES.home.stepThreeTitle)}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.stepThreeText)}</p>
           </li>
         </ol>
       </div>
 
       <div className="mt-12 text-center sm:mt-16 sm:text-left">
-        <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Questions fréquentes</p>
-        <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Vos questions, nos réponses.</h2>
-        <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0">
-          Les points essentiels avant de lancer un traitement sur NanoFile.
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t(MESSAGES.home.faq)}</p>
+        <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{t(MESSAGES.home.faqTitle)}</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0">{t(MESSAGES.home.faqIntro)}</p>
 
         <div className="mt-6 grid gap-3 sm:mt-8 md:grid-cols-2 md:items-start">
           {/* <details className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" open>
@@ -174,38 +161,30 @@ export default function HomePage() {
 
           <details className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
-              Comment se déroule un traitement ?
+              {t(MESSAGES.home.faqOneQuestion)}
             </summary>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              Le front crée un job, suit son statut à intervalles réguliers, puis télécharge le résultat dès que le traitement est terminé.
-            </p>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.faqOneAnswer)}</p>
           </details>
 
           <details className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
-              Mes fichiers sont-ils conservés dans le navigateur ?
+              {t(MESSAGES.home.faqTwoQuestion)}
             </summary>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              Non. Le navigateur conserve seulement un identifiant anonyme pour le suivi. Les fichiers sont envoyés au service de traitement et le résultat est récupéré sous forme de fichier téléchargeable.
-            </p>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.faqTwoAnswer)}</p>
           </details>
 
           <details className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
-              Comment sont gérés les quotas et les erreurs ?
+              {t(MESSAGES.home.faqThreeQuestion)}
             </summary>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              Le quota est affiché dans l’espace utilisateur. Les erreurs de validation, de quota ou de résultat expiré sont traduites en messages lisibles directement dans l’interface.
-            </p>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.faqThreeAnswer)}</p>
           </details>
 
           <details className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
-              Faut-il créer un compte ?
+              {t(MESSAGES.home.faqFourQuestion)}
             </summary>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              Non. Vous pouvez lancer un traitement sans compte dans la limite du quota invité. Un compte permet ensuite de retrouver vos documents et l’historique de vos jobs.
-            </p>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.faqFourAnswer)}</p>
           </details>
         </div>
       </div>

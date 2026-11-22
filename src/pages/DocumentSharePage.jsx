@@ -1,9 +1,19 @@
 import { useEffect, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useFiles } from '@/hooks/useFiles.js'
+import { useLocale } from '@/hooks/useLocale.js'
+
+const TEXT = {
+  title: { fr: 'Document partagé', en: 'Shared document' },
+  missingToken: { fr: 'Ce lien ne contient pas de jeton.', en: 'This link does not contain a token.' },
+  loading: { fr: 'Chargement du document…', en: 'Loading document…' },
+  download: { fr: 'Télécharger le document', en: 'Download the document' },
+  backHome: { fr: 'Retour à l’accueil', en: 'Back to home' },
+}
 
 // Page de réception d'un lien de document public, équivalent front de /d/{token}.
 export default function DocumentSharePage() {
+  const { t } = useLocale()
   const { token } = useParams()
   const files = useFiles()
   const { data, loading, error, downloadByToken } = files
@@ -39,9 +49,9 @@ export default function DocumentSharePage() {
   return (
     <section className="mx-auto max-w-3xl px-6 py-12">
       <div className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h1 className="text-2xl font-bold text-slate-900">Document partagé</h1>
-        {!token && <p className="mt-4 text-sm text-red-700">Ce lien ne contient pas de jeton.</p>}
-        {token && loading && <p className="mt-4 text-sm text-slate-600">Chargement du document…</p>}
+        <h1 className="text-2xl font-bold text-slate-900">{t(TEXT.title)}</h1>
+        {!token && <p className="mt-4 text-sm text-red-700">{t(TEXT.missingToken)}</p>}
+        {token && loading && <p className="mt-4 text-sm text-slate-600">{t(TEXT.loading)}</p>}
         {token && error && (
           <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
             {error.message}
@@ -54,7 +64,7 @@ export default function DocumentSharePage() {
               download={data.name || `document-${token}`}
               className="inline-flex rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600"
             >
-              Télécharger le document
+              {t(TEXT.download)}
             </a>
           </div>
         )}
@@ -64,7 +74,7 @@ export default function DocumentSharePage() {
           </pre>
         )}
         <Link to="/" className="mt-6 inline-block text-sm text-sky-600 hover:text-sky-700">
-          Retour à l’accueil
+          {t(TEXT.backHome)}
         </Link>
       </div>
     </section>

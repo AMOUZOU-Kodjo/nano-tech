@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useLocale } from '@/hooks/useLocale.js'
 import {
   FiArchive,
   FiCamera,
@@ -31,6 +32,7 @@ const TOOL_ICONS = {
 
 // Carte d'outil : lien vers la page générique correspondant à l'outil documenté.
 export default function ToolCard({ tool }) {
+  const { locale } = useLocale()
   const Icon = TOOL_ICONS[tool.tool] ?? FiFileText
 
   return (
@@ -46,8 +48,12 @@ export default function ToolCard({ tool }) {
           <Icon className="h-5 w-5" />
         </span>
         <div>
-          <h3 className="font-semibold text-slate-900">{tool.name}</h3>
-          <p className="mt-1 text-sm leading-relaxed text-slate-600">{tool.description}</p>
+          <h3 className="font-semibold text-slate-900">
+            {locale === 'en' ? tool.nameEn : tool.name}
+          </h3>
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">
+            {locale === 'en' ? tool.descriptionEn : tool.description}
+          </p>
         </div>
       </div>
     </Link>

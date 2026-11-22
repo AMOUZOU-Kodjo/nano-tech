@@ -1,13 +1,31 @@
+import { useLocale } from '@/hooks/useLocale.js'
 import { useHealth } from '@/hooks/useHealth.js'
+
+const TEXT = {
+  checking: { fr: 'Vérification de l’API…', en: 'Checking the API…' },
+  unavailable: { fr: 'API indisponible.', en: 'API unavailable.' },
+  retry: { fr: 'Réessayer', en: 'Try again' },
+  degraded: { fr: 'API dégradée', en: 'API degraded' },
+  available: { fr: 'API disponible', en: 'API available' },
+  degradedMessage: {
+    fr: 'Le service répond mais signale un problème.',
+    en: 'The service responds but reports a problem.',
+  },
+  availableMessage: { fr: 'Le service répond correctement.', en: 'The service responds correctly.' },
+  refresh: { fr: 'Actualiser', en: 'Refresh' },
+  yes: { fr: 'oui', en: 'yes' },
+  no: { fr: 'non', en: 'no' },
+}
 
 // Composant de santé : affiche la disponibilité de l'API, ses capacités et permet de relancer le contrôle.
 export default function HealthStatus() {
+  const { t } = useLocale()
   const { ok, capabilities, loading, error, reload } = useHealth()
 
   if (loading) {
     return (
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-slate-600">Vérification de l’API…</p>
+        <p className="text-sm text-slate-600">{t(TEXT.checking)}</p>
       </section>
     )
   }
@@ -15,14 +33,14 @@ export default function HealthStatus() {
   if (error) {
     return (
       <section className="rounded-2xl border border-red-200 bg-red-50 p-6 shadow-sm">
-        <p className="font-medium text-red-700">API indisponible.</p>
+        <p className="font-medium text-red-700">{t(TEXT.unavailable)}</p>
         <p className="mt-1 text-sm text-red-700">{error.message}</p>
         <button
           type="button"
           onClick={reload}
           className="mt-4 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
-          Réessayer
+          {t(TEXT.retry)}
         </button>
       </section>
     )
@@ -40,10 +58,10 @@ export default function HealthStatus() {
           />
           <div>
             <h2 className="font-semibold text-slate-900">
-              {degraded ? 'API dégradée' : 'API disponible'}
+              {t(degraded ? TEXT.degraded : TEXT.available)}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              {degraded ? 'Le service répond mais signale un problème.' : 'Le service répond correctement.'}
+              {t(degraded ? TEXT.degradedMessage : TEXT.availableMessage)}
             </p>
           </div>
         </div>
@@ -52,7 +70,7 @@ export default function HealthStatus() {
           onClick={reload}
           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
-          Actualiser
+          {t(TEXT.refresh)}
         </button>
       </div>
 
@@ -62,7 +80,7 @@ export default function HealthStatus() {
             <div key={name} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
               <dt className="text-xs uppercase tracking-wide text-slate-500">{name}</dt>
               <dd className={`mt-1 text-sm font-medium ${enabled ? 'text-emerald-700' : 'text-red-700'}`}>
-                {enabled ? 'oui' : 'non'}
+                {t(enabled ? TEXT.yes : TEXT.no)}
               </dd>
             </div>
           ))}

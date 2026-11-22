@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { googleAuth } from '@/api/authApi.js'
+import { useLocale } from '@/hooks/useLocale.js'
 
 const GOOGLE_CLIENT_ID =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ??
   '223256695224-7vgdsrm6h2rjfhbj1qjku2m0o1j955n6.apps.googleusercontent.com'
 
-function loadGoogleIdentityServices() {
+const TEXT = {
+  unavailable: { fr: 'Google Identity Services indisponible.', en: 'Google Identity Services unavailable.' },
+  loading: { fr: 'Connexion Google en cours…', en: 'Signing in with Google…' },
+}
+
+function loadGoogleIdentityServices(unavailableMessage) {
   if (globalThis.google?.accounts?.oauth2) {
     return Promise.resolve(globalThis.google)
   }
@@ -15,7 +21,7 @@ function loadGoogleIdentityServices() {
 
     if (existing) {
       existing.addEventListener('load', () => resolve(globalThis.google), { once: true })
-      existing.addEventListener('error', () => reject(new Error('Google Identity Services indisponible.')), { once: true })
+      existing.addEventListener('error', () => reject(new Error(unavailableMessage)), { once: true })
       return
     }
 
@@ -25,7 +31,7 @@ function loadGoogleIdentityServices() {
     script.async = true
     script.defer = true
     script.onload = () => resolve(globalThis.google)
-    script.onerror = () => reject(new Error('Google Identity Services indisponible.'))
+    script.onerror = () => reject(new Error(unavailableMessage))
     document.head.appendChild(script)
   })
 }
@@ -36,6 +42,7 @@ export default function GoogleAuthButton({
   onSuccess,
   onError,
 }) {
+  const { locale, t } = useLocale()
   const buttonRef = useRef(null)
   const callbackRef = useRef(null)
   const [loading, setLoading] = useState(false)
@@ -70,7 +77,7 @@ export default function GoogleAuthButton({
   useEffect(() => {
     let cancelled = false
 
-    loadGoogleIdentityServices()
+    loadGoogleIdentityServices(t(TEXT.unavailable))
       .then((google) => {
         if (cancelled || !buttonRef.current) {
           return
@@ -86,6 +93,7 @@ export default function GoogleAuthButton({
           shape: 'pill',
           text: 'continue_with',
           width: 360,
+          locale: locale === 'fr' ? 'fr' : 'en',
         })
       })
       .catch((error) => setLocalError(error.message))
@@ -93,14 +101,14 @@ export default function GoogleAuthButton({
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [locale, t])
 
   return (
     <div>
       <div ref={buttonRef} aria-busy={loading} className="flex min-h-11 items-center justify-center" />
       {(loading || localError) && (
         <p className={`mt-2 text-xs ${localError ? 'text-red-700' : 'text-slate-500'}`} role={localError ? 'alert' : 'status'}>
-          {localError ?? 'Connexion Google en cours…'}
+          {localError ?? t(TEXT.loading)}
         </p>
       )}
     </div>
