@@ -25,9 +25,9 @@ export default function HomePage() {
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-      <div className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-brand-surface/80 via-surface to-canvas p-6  sm:p-10 lg:p-12">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-brand/10 blur-3xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-brand-soft/10 blur-3xl" />
+      <div className="relative overflow-hidden rounded-3xl border border-line  p-6  sm:p-10 lg:p-12">
+        {/* <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-brand/10 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-brand-soft/10 blur-3xl" /> */}
 
         <div className="relative grid items-center gap-10 lg:grid-cols-2">
           <div>
