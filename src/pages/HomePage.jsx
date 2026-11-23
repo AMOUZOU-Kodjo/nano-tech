@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from 'react'
 import { FiArrowRight, FiCheck, FiFileText, FiImage, FiLayers, FiShield, FiZap } from 'react-icons/fi'
+import heroLogo from '../../Logo NanoFile bleu et cyan.png'
 import { Link } from 'react-router-dom'
 import { MESSAGES } from '@/i18n/messages.js'
 import { useLocale } from '@/hooks/useLocale.js'
@@ -9,28 +11,94 @@ const TEXT = {
   tryCompress: { fr: 'Essayer la compression', en: 'Try compression' },
   seeHow: { fr: 'Voir comment ça marche', en: 'See how it works' },
   previewTitle: { fr: 'Aperçu du traitement', en: 'Processing preview' },
+  previewSimulation: { fr: 'Simulation', en: 'Demo' },
   previewFile: { fr: 'presentation.pdf', en: 'presentation.pdf' },
   previewFileMeta: { fr: 'Document PDF', en: 'PDF document' },
   previewStep: { fr: 'Compression en cours', en: 'Compression in progress' },
-  previewPercent: { fr: '68 %', en: '68%' },
   previewDone: { fr: 'Prêt à télécharger', en: 'Ready to download' },
   toolCompress: { fr: 'Compression', en: 'Compression' },
   toolConvert: { fr: 'Conversion', en: 'Conversion' },
   toolSecure: { fr: 'Sécurisation', en: 'Security' },
 }
 
+function Reveal({ as: Element = 'div', children, className = '', delay = 0, ...props }) {
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(
+    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  )
+
+  useEffect(() => {
+    if (visible || !ref.current) return undefined
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -32px 0px' },
+    )
+
+    observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [visible])
+
+  return (
+    <Element
+      ref={ref}
+      {...props}
+      className={`${className} transition-[opacity,transform] duration-700 ease-out ${
+        visible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+      }`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </Element>
+  )
+}
+
 // Vue d'accueil : présentation concise et accès directs aux espaces principaux.
 export default function HomePage() {
-  const { t } = useLocale()
+  const { locale, t } = useLocale()
+  const [progress, setProgress] = useState(() =>
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 68 : 8,
+  )
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return undefined
+    }
+
+    let frame
+    const start = performance.now()
+    const animate = (time) => {
+      const cycle = ((time - start) % 3200) / 3200
+      const ratio = cycle < 0.5 ? cycle * 2 : (1 - cycle) * 2
+      const next = 8 + Math.round(ratio * 60)
+      setProgress((current) => (current === next ? current : next))
+      frame = requestAnimationFrame(animate)
+    }
+
+    frame = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  const progressLabel = locale === 'fr' ? `${progress} %` : `${progress}%`
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-      <div className="relative overflow-hidden rounded-3xl border border-line  p-6  sm:p-10 lg:p-12">
-        {/* <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-brand/10 blur-3xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-brand-soft/10 blur-3xl" /> */}
+      <div className="relative overflow-hidden rounded-3xl border border-line p-6 sm:p-10 lg:p-12">
+        <img
+          src={heroLogo}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full scale-[1.6] select-none object-contain opacity-[0.06] dark:opacity-[0.12]"
+        />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-r from-surface via-surface/80 to-transparent" />
 
         <div className="relative grid items-center gap-10 lg:grid-cols-2">
-          <div>
+          <Reveal>
             <span className="inline-flex flex-wrap items-center gap-2 rounded-full border border-line bg-surface/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand backdrop-blur">
               <span className="h-1.5 w-1.5 rounded-full bg-brand" />
               {t(TEXT.badge)}
@@ -38,16 +106,20 @@ export default function HomePage() {
               {t(TEXT.badgeDetail)}
             </span>
 
-            <h1 className="mt-5 text-2xl text-center font-bold tracking-tight text-balance text-ink sm:text-4xl lg:text-5xl">
+            <h1 className="mt-5 text-2xl text-left font-bold tracking-tight text-balance text-ink sm:text-4xl lg:text-5xl">
               {t(MESSAGES.home.heroTitle)}
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg">
               {t(MESSAGES.home.heroTextOne)} {t(MESSAGES.home.heroTextTwo)}
             </p>
 
-            <ul className="mt-6 grid gap-2 text-sm text-ink-muted">
+            <div className="mt-5 inline-flex max-w-full items-center gap-2 rounded-xl border border-brand/20 bg-brand-surface px-3 py-2 text-xs font-semibold text-brand">
+              <FiShield aria-hidden="true" className="h-4 w-4 shrink-0" />
+              {t(MESSAGES.home.benefitAnalytics)}
+            </div>
+
+            <ul className="mt-4 grid gap-2 text-sm text-ink-muted">
               {[
-                MESSAGES.home.benefitAnalytics,
                 MESSAGES.home.benefitDownload,
                 MESSAGES.home.benefitFormats,
               ].map((message) => (
@@ -81,9 +153,9 @@ export default function HomePage() {
               {t(TEXT.seeHow)}
               <FiArrowRight aria-hidden="true" className="h-4 w-4" />
             </a>
-          </div>
+          </Reveal>
 
-          <div className="relative mx-auto w-full max-w-md">
+          <Reveal className="relative mx-auto w-full max-w-md" delay={90}>
             <div aria-hidden="true" className="absolute -inset-4 rounded-[2rem] bg-brand/10 blur-2xl" />
             <div className="relative rounded-2xl border border-line bg-surface/95 p-5  backdrop-blur sm:p-6">
               <div className="flex items-center justify-between gap-3">
@@ -92,11 +164,16 @@ export default function HomePage() {
                     <FiLayers aria-hidden="true" className="h-5 w-5" />
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-ink">{t(TEXT.previewTitle)}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-ink">{t(TEXT.previewTitle)}</p>
+                      <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-faint">
+                        {t(TEXT.previewSimulation)}
+                      </span>
+                    </div>
                     <p className="text-xs text-ink-muted">{t(TEXT.previewFileMeta)}</p>
                   </div>
                 </div>
-                <span className="rounded-full bg-brand-surface px-3 py-1 text-xs font-semibold text-brand">{t(TEXT.previewPercent)}</span>
+                <span className="rounded-full bg-brand-surface px-3 py-1 text-xs font-semibold text-brand">{progressLabel}</span>
               </div>
 
               <div className="mt-6 flex items-center gap-3 rounded-xl border border-line bg-surface-muted p-3">
@@ -113,17 +190,17 @@ export default function HomePage() {
               <div className="mt-5">
                 <div className="flex items-center justify-between text-xs font-medium text-ink-muted">
                   <span>{t(TEXT.previewStep)}</span>
-                  <span>{t(TEXT.previewPercent)}</span>
+                  <span>{progressLabel}</span>
                 </div>
                 <div
                   role="progressbar"
                   aria-label={t(TEXT.previewStep)}
-                  aria-valuenow={68}
+                  aria-valuenow={progress}
                   aria-valuemin={0}
                   aria-valuemax={100}
                   className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-strong"
                 >
-                  <div className="h-full w-[68%] rounded-full bg-brand" />
+                  <div className="h-full rounded-full bg-brand transition-[width] duration-200 ease-out" style={{ width: `${progress}%` }} />
                 </div>
               </div>
 
@@ -148,11 +225,11 @@ export default function HomePage() {
                 <span className="text-[11px] text-ink-faint">{t(TEXT.badge)}</span>
               </div>
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
 
-      <div className="mt-8 rounded-xl border border-slate-100 bg-white p-5 shadow-sm sm:mt-10 sm:p-8">
+      <Reveal className="mt-8 rounded-xl border border-slate-100 bg-white p-5 shadow-sm sm:mt-10 sm:p-8">
         <div className="flex flex-col gap-4 text-center sm:flex-row sm:items-start sm:justify-between sm:text-left">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t(MESSAGES.home.processingZone)}</p>
@@ -187,12 +264,12 @@ export default function HomePage() {
             01 / Comment ça marche
           </a> */}
         </div>
-      </div>
+      </Reveal>
 
       <div className="mt-10 grid gap-4 sm:mt-14 sm:grid-cols-2 sm:gap-6 md:grid-cols-3">
         <Link
           to="/catalogue"
-          className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm transition hover:border-sky-300 hover:shadow-md sm:p-6 sm:text-left"
+          className="h-full rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm transition hover:border-sky-300 hover:shadow-md sm:p-6 sm:text-left"
         >
           <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t(MESSAGES.common.catalogue)}</p>
           <h2 className="mt-2 text-lg font-bold text-slate-900">{t(MESSAGES.home.chooseTool)}</h2>
@@ -201,7 +278,7 @@ export default function HomePage() {
 
         <Link
           to="/studio"
-          className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm transition hover:border-sky-300 hover:shadow-md sm:p-6 sm:text-left"
+          className="h-full rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm transition hover:border-sky-300 hover:shadow-md sm:p-6 sm:text-left"
         >
           <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t(MESSAGES.common.studio)}</p>
           <h2 className="mt-2 text-lg font-bold text-slate-900">{t(MESSAGES.home.generateCv)}</h2>
@@ -210,7 +287,7 @@ export default function HomePage() {
 
         <Link
           to="/dashboard"
-          className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm transition hover:border-sky-300 hover:shadow-md sm:p-6 sm:text-left"
+          className="h-full rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm transition hover:border-sky-300 hover:shadow-md sm:p-6 sm:text-left"
         >
           <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t(MESSAGES.home.userSpace)}</p>
           <h2 className="mt-2 text-lg font-bold text-slate-900">{t(MESSAGES.home.trackActivity)}</h2>
@@ -218,45 +295,45 @@ export default function HomePage() {
         </Link>
       </div>
 
-      <div id="comment-ca-marche" className="mt-12 scroll-mt-24 rounded-3xl  p-6 text-center sm:mt-16 sm:p-10 sm:text-left">
+      <Reveal id="comment-ca-marche" className="mt-12 scroll-mt-24 rounded-3xl p-6 text-center sm:mt-16 sm:p-10 sm:text-left">
         <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t(MESSAGES.home.howItWorks)}</p>
         <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{t(MESSAGES.home.threeSteps)}</h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0">{t(MESSAGES.home.howIntro)}</p>
 
         <ol className="mt-6 grid gap-4 sm:mt-8 sm:gap-6 md:grid-cols-3">
-          <li className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-6 sm:text-left">
+          <Reveal as="li" className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-6 sm:text-left" delay={0}>
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-sky-500 text-sm font-bold text-white">
               1
             </span>
             <h3 className="mt-4 text-lg font-bold text-slate-900">{t(MESSAGES.home.stepOneTitle)}</h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.stepOneText)}</p>
-          </li>
+          </Reveal>
 
-          <li className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-6 sm:text-left">
+          <Reveal as="li" className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-6 sm:text-left" delay={90}>
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-sky-500 text-sm font-bold text-white">
               2
             </span>
             <h3 className="mt-4 text-lg font-bold text-slate-900">{t(MESSAGES.home.stepTwoTitle)}</h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.stepTwoText)}</p>
-          </li>
+          </Reveal>
 
-          <li className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-6 sm:text-left">
+          <Reveal as="li" className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-6 sm:text-left" delay={180}>
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-sky-500 text-sm font-bold text-white">
               3
             </span>
             <h3 className="mt-4 text-lg font-bold text-slate-900">{t(MESSAGES.home.stepThreeTitle)}</h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.stepThreeText)}</p>
-          </li>
+          </Reveal>
         </ol>
-      </div>
+      </Reveal>
 
-      <div className="mt-12 text-center sm:mt-16 sm:text-left">
+      <Reveal className="mt-12 text-center sm:mt-16 sm:text-left">
         <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t(MESSAGES.home.faq)}</p>
         <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{t(MESSAGES.home.faqTitle)}</h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0">{t(MESSAGES.home.faqIntro)}</p>
 
         <div className="mt-6 grid gap-3 sm:mt-8 md:grid-cols-2 md:items-start">
-          {/* <details className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" open>
+          {/* <details className="group h-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" open>
             <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
               Sur quoi repose l’interface ?
             </summary>
@@ -265,35 +342,43 @@ export default function HomePage() {
             </p>
           </details> */}
 
-          <details className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
-              {t(MESSAGES.home.faqOneQuestion)}
-            </summary>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.faqOneAnswer)}</p>
-          </details>
+          <Reveal className="h-full" delay={0}>
+            <details className="group h-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
+                {t(MESSAGES.home.faqOneQuestion)}
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.faqOneAnswer)}</p>
+            </details>
+          </Reveal>
 
-          <details className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
-              {t(MESSAGES.home.faqTwoQuestion)}
-            </summary>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.faqTwoAnswer)}</p>
-          </details>
+          <Reveal className="h-full" delay={80}>
+            <details className="group h-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
+                {t(MESSAGES.home.faqTwoQuestion)}
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.faqTwoAnswer)}</p>
+            </details>
+          </Reveal>
 
-          <details className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
-              {t(MESSAGES.home.faqThreeQuestion)}
-            </summary>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.faqThreeAnswer)}</p>
-          </details>
+          <Reveal className="h-full" delay={160}>
+            <details className="group h-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
+                {t(MESSAGES.home.faqThreeQuestion)}
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.faqThreeAnswer)}</p>
+            </details>
+          </Reveal>
 
-          <details className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
-              {t(MESSAGES.home.faqFourQuestion)}
-            </summary>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.faqFourAnswer)}</p>
-          </details>
+          <Reveal className="h-full" delay={240}>
+            <details className="group h-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
+                {t(MESSAGES.home.faqFourQuestion)}
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">{t(MESSAGES.home.faqFourAnswer)}</p>
+            </details>
+          </Reveal>
         </div>
-      </div>
+      </Reveal>
     </section>
   )
 }
