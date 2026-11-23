@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { FiArrowRight, FiCheck, FiFileText, FiImage, FiLayers, FiShield, FiZap } from 'react-icons/fi'
-import heroLogo from '../../Logo NanoFile bleu et cyan.png'
+import heroIllustration from '@/assets/auth-illustration.svg'
 import { Link } from 'react-router-dom'
 import { MESSAGES } from '@/i18n/messages.js'
 import { useLocale } from '@/hooks/useLocale.js'
@@ -58,6 +58,18 @@ function Reveal({ as: Element = 'div', children, className = '', delay = 0, ...p
   )
 }
 
+function DocumentBadge({ label, color, tint }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
+        <path d="M6 2h8l4 4v16H6z" fill={tint} stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+        <path d="M14 2v4h4" fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+      </svg>
+      {label}
+    </span>
+  )
+}
+
 // Vue d'accueil : présentation concise et accès directs aux espaces principaux.
 export default function HomePage() {
   const { locale, t } = useLocale()
@@ -88,25 +100,30 @@ export default function HomePage() {
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-      <div className="relative overflow-hidden rounded-3xl border border-line p-6 sm:p-10 lg:p-12">
+      <div className="relative overflow-hidden py-6 sm:py-10 lg:py-12">
         <img
-          src={heroLogo}
+          src={heroIllustration}
           alt=""
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 h-full w-full scale-[1.6] select-none object-contain opacity-[0.06] dark:opacity-[0.12]"
+          className="pointer-events-none absolute inset-y-0 left-0 h-full w-1/2 select-none object-contain object-left opacity-[0.26] dark:opacity-[0.26]"
         />
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-r from-surface via-surface/80 to-transparent" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-r from-surface/25 via-surface/50 to-surface" />
 
-        <div className="relative grid items-center gap-10 lg:grid-cols-2">
+        <div className="relative flex flex-wrap items-center justify-center gap-2">
+          <DocumentBadge label="PDF" color="#ef4444" tint="#fee2e2" />
+          <DocumentBadge label="XLS" color="#16a34a" tint="#dcfce7" />
+          <DocumentBadge label="TXT" color="#0284c7" tint="#e0f2fe" />
+          <DocumentBadge label="DOC" color="#2563eb" tint="#dbeafe" />
+          <DocumentBadge label="JPG" color="#8b5cf6" tint="#ede9fe" />
+          <DocumentBadge label="PNG" color="#0ea5e9" tint="#cffafe" />
+          <DocumentBadge label="CSV" color="#059669" tint="#d1fae5" />
+          <DocumentBadge label="PPT" color="#ea580c" tint="#ffedd5" />
+          <DocumentBadge label="ZIP" color="#64748b" tint="#e2e8f0" />
+        </div>
+
+        <div className="relative mt-6 grid items-center gap-10 lg:grid-cols-2">
           <Reveal>
-            {/* <span className="inline-flex flex-wrap items-center gap-2 rounded-full border border-line bg-surface/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand backdrop-blur">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-              {t(TEXT.badge)}
-              <span className="text-ink-faint">·</span>
-              {t(TEXT.badgeDetail)}
-            </span> */}
-
-            <h1 className="mt-5 text-2xl text-left font-bold tracking-tight text-balance text-ink sm:text-4xl lg:text-5xl">
+            <h1 className="text-2xl text-left font-bold tracking-tight text-balance text-ink sm:text-4xl lg:text-5xl">
               {t(MESSAGES.home.heroTitle)}
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg">
@@ -156,8 +173,7 @@ export default function HomePage() {
           </Reveal>
 
           <Reveal className="relative mx-auto w-full max-w-md" delay={90}>
-            <div aria-hidden="true" className="absolute -inset-4 rounded-[2rem] bg-brand/10 blur-2xl" />
-            <div className="relative rounded-2xl border border-line bg-surface/95 p-5  backdrop-blur sm:p-6">
+            <div className="relative py-2 sm:py-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-surface text-brand">
@@ -176,7 +192,7 @@ export default function HomePage() {
                 <span className="rounded-full bg-brand-surface px-3 py-1 text-xs font-semibold text-brand">{progressLabel}</span>
               </div>
 
-              <div className="mt-6 flex items-center gap-3 rounded-xl border border-line bg-surface-muted p-3">
+              <div className="mt-6 flex items-center gap-3">
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-surface text-brand">
                   <FiFileText aria-hidden="true" className="h-5 w-5" />
                 </span>
@@ -210,14 +226,14 @@ export default function HomePage() {
                   { Icon: FiImage, label: TEXT.toolConvert },
                   { Icon: FiShield, label: TEXT.toolSecure },
                 ].map(({ Icon, label }) => (
-                  <div key={label.fr} className="flex flex-col items-center gap-2 rounded-xl border border-line bg-surface p-3 text-center">
+                  <div key={label.fr} className="flex flex-col items-center gap-2 p-2 text-center">
                     <Icon aria-hidden="true" className="h-4 w-4 text-brand" />
                     <span className="text-[11px] font-semibold text-ink-soft">{t(label)}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-6 flex items-center justify-between gap-3 border-t border-line pt-4">
+              <div className="mt-6 flex items-center justify-between gap-3">
                 <span className="inline-flex items-center gap-2 text-xs font-semibold text-brand">
                   <FiCheck aria-hidden="true" className="h-4 w-4" />
                   {t(TEXT.previewDone)}

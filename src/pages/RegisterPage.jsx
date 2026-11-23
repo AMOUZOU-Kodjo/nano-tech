@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { FiArrowRight, FiCheck, FiClock, FiShield } from 'react-icons/fi'
 import { Link, useNavigate } from 'react-router-dom'
+import authIllustration from '@/assets/auth-illustration.svg'
 import logoUrl from '../../Logo NanoFile bleu et cyan.png'
 import GoogleAuthButton from '@/components/GoogleAuthButton.jsx'
+import { MESSAGES } from '@/i18n/messages.js'
 import { useLocale } from '@/hooks/useLocale.js'
 import { useRegister } from '@/hooks/useRegister.js'
 
@@ -30,6 +33,11 @@ const TEXT = {
   goToLogin: { fr: 'Aller à la connexion', en: 'Go to sign in' },
   title: { fr: 'Créer un compte', en: 'Create an account' },
   subtitle: { fr: 'Un email de vérification vous sera envoyé.', en: 'A verification email will be sent to you.' },
+  panelTitle: { fr: 'Créez votre espace NanoFile.', en: 'Create your NanoFile space.' },
+  panelText: {
+    fr: 'Compressez, convertissez, organisez et sécurisez vos fichiers depuis un espace unique.',
+    en: 'Compress, convert, organize and secure your files from one place.',
+  },
   googleTermsRequired: {
     fr: 'Cochez les conditions d’utilisation pour continuer avec Google.',
     en: 'Accept the terms of use to continue with Google.',
@@ -106,7 +114,7 @@ function PasswordField({ id, label, name, autoComplete, value, onChange }) {
   )
 }
 
-// Page d'inscription compacte, avec cases à cocher explicites et non pré-cochées.
+// Page d'inscription en deux colonnes, avec cases à cocher explicites et non pré-cochées.
 export default function RegisterPage() {
   const { t } = useLocale()
   const [form, setForm] = useState({
@@ -155,17 +163,17 @@ export default function RegisterPage() {
 
   if (data) {
     return (
-      <section className="flex min-h-[calc(100vh-4.5rem)] items-center justify-center px-4 py-6">
-        <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60">
+      <section className="flex min-h-[calc(100dvh-4.5rem)] items-center justify-center px-4 py-6 lg:h-[calc(100dvh-4.5rem)] lg:overflow-hidden lg:py-4">
+        <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 lg:max-h-full lg:overflow-y-auto lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-600">NanoFile</p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{t(TEXT.accountCreated)}</h1>
+              <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{t(TEXT.accountCreated)}</h1>
             </div>
             <img src={logoUrl} alt="" className="h-12 w-12 shrink-0 object-contain" />
           </div>
 
-          <div role="status" className="mt-6 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
+          <div role="status" className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
             <p className="font-semibold">{t(TEXT.registrationSaved)}</p>
             <p className="mt-2">
               {t(TEXT.verificationIntro)} <strong>{form.email.trim()}</strong>{t(TEXT.verificationOutro)}
@@ -177,7 +185,7 @@ export default function RegisterPage() {
 
           <Link
             to="/login"
-            className="mt-5 inline-block rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
+            className="mt-4 inline-block rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
           >
             {t(TEXT.goToLogin)}
           </Link>
@@ -187,12 +195,58 @@ export default function RegisterPage() {
   }
 
   return (
-    <section className="flex min-h-[calc(100vh-4.5rem)] items-center justify-center px-4 py-6">
-      <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60">
-        <div className="flex items-start justify-between gap-4">
+    <section className="min-h-[calc(100dvh-4.5rem)] bg-white lg:h-[calc(100dvh-4.5rem)] lg:overflow-hidden">
+      <div className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-7xl lg:h-full lg:min-h-0 lg:grid-cols-2">
+        <aside
+          style={{ backgroundImage: `url(${authIllustration})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+          className="relative overflow-hidden border-b border-line bg-brand-surface bg-no-repeat p-5 sm:p-8 lg:min-h-0 lg:border-b-0 lg:border-r lg:p-10"
+        >
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand-surface/75 via-brand-surface/55 to-brand-surface/30" />
+          <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-brand/10 blur-3xl" />
+          <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-brand-soft/10 blur-3xl" />
+
+          <div className="relative flex flex-col justify-between gap-6 lg:h-full lg:min-h-0">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand">NanoFile</p>
+              <h2 className="mt-2 max-w-md text-xl font-bold tracking-tight text-ink sm:text-2xl lg:text-3xl">
+                {t(TEXT.panelTitle)}
+              </h2>
+              <p className="mt-2 max-w-md text-xs leading-relaxed text-ink-soft sm:text-sm">
+                {t(TEXT.panelText)}
+              </p>
+
+              <ul className="mt-4 grid gap-2">
+                {[
+                  { Icon: FiShield, message: MESSAGES.home.benefitAnalytics },
+                  { Icon: FiCheck, message: MESSAGES.home.benefitDownload },
+                  { Icon: FiClock, message: MESSAGES.home.trackActivityText },
+                ].map(({ Icon, message }) => (
+                  <li key={message.fr} className="flex items-start gap-2 text-[11px] leading-relaxed text-ink-muted sm:text-xs">
+                    <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-surface/80 text-brand">
+                      <Icon aria-hidden="true" className="h-3.5 w-3.5" />
+                    </span>
+                    <span>{t(message)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <Link
+              to="/catalogue"
+              className="group inline-flex w-fit shrink-0 items-center gap-2 text-xs font-semibold text-brand transition hover:text-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              {t(MESSAGES.home.discoverTools)}
+              <FiArrowRight aria-hidden="true" className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+        </aside>
+
+        <div className="flex items-center justify-center px-4 py-6 sm:px-8 lg:min-h-0 lg:px-10 lg:py-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 lg:max-h-full lg:overflow-y-auto lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden">
+            <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-600">NanoFile</p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{t(TEXT.title)}</h1>
+            <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{t(TEXT.title)}</h1>
             <p className="mt-1 text-sm text-slate-600">{t(TEXT.subtitle)}</p>
           </div>
           <img
@@ -202,7 +256,7 @@ export default function RegisterPage() {
           />
         </div>
 
-        <div className="mt-5 flex justify-center">
+        <div className="mt-3 flex justify-center">
           {form.terms_accepted ? (
             <GoogleAuthButton
               termsAccepted={form.terms_accepted}
@@ -216,14 +270,14 @@ export default function RegisterPage() {
           )}
         </div>
 
-        <div className="my-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+        <div className="my-3 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
           <span className="h-px flex-1 bg-slate-200" />
           {t(TEXT.orByEmail)}
           <span className="h-px flex-1 bg-slate-200" />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2">
+        <form onSubmit={handleSubmit} className="space-y-2.5">
+          <div className="grid gap-2.5 sm:grid-cols-2">
             <div>
               <label htmlFor="register-name" className="block text-xs font-semibold text-slate-700">
                 {t(TEXT.displayName)}
@@ -256,7 +310,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2.5 sm:grid-cols-2">
             <PasswordField
               id="register-password"
               label={t(TEXT.password)}
@@ -276,7 +330,7 @@ export default function RegisterPage() {
             />
           </div>
 
-          <div className="flex flex-wrap gap-x-5 gap-y-2 pt-1 text-xs text-slate-600">
+          <div className="flex flex-wrap gap-x-5 gap-y-2 pt-0.5 text-xs text-slate-600">
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -303,30 +357,32 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:opacity-50"
+            className="w-full rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:opacity-50"
           >
             {t(loading ? TEXT.creating : TEXT.createAccount)}
           </button>
         </form>
 
         {(localError || error) && (
-          <p role="alert" className="mt-3 rounded-lg bg-red-50 p-2.5 text-xs text-red-700">
+          <p role="alert" className="mt-2 rounded-lg bg-red-50 p-2 text-xs text-red-700">
             {localError ?? error.message}
           </p>
         )}
 
         {data && (
-          <p role="status" className="mt-3 rounded-lg bg-emerald-50 p-2.5 text-xs text-emerald-700">
+          <p role="status" className="mt-2 rounded-lg bg-emerald-50 p-2 text-xs text-emerald-700">
             {t(TEXT.createdCheckEmail)}
           </p>
         )}
 
-        <p className="mt-4 text-center text-xs text-slate-500">
-          {t(TEXT.alreadyRegistered)}{' '}
-          <Link to="/login" className="font-semibold text-sky-600 hover:text-sky-700">
-            {t(TEXT.signIn)}
-          </Link>
-        </p>
+            <p className="mt-3 text-center text-xs text-slate-500">
+              {t(TEXT.alreadyRegistered)}{' '}
+              <Link to="/login" className="font-semibold text-sky-600 hover:text-sky-700">
+                {t(TEXT.signIn)}
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   )

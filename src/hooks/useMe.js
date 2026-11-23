@@ -25,7 +25,7 @@ export function useMe() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Recharge le profil ; un utilisateur null est un invité, jamais une erreur.
+  // Recharge le profil ; un utilisateur null n'est un invité que si la réponse est fiable.
   const reload = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -70,6 +70,8 @@ export function useMe() {
     }
   }, [])
 
+  const isResolved = !loading && !error
+
   return {
     data,
     user,
@@ -77,6 +79,8 @@ export function useMe() {
     loading,
     error,
     reload,
-    isGuest: !loading && user === null,
+    isResolved,
+    isUnknown: !loading && !isResolved,
+    isGuest: isResolved && user === null,
   }
 }

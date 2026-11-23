@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { FiArrowRight, FiCheck, FiFileText, FiShield } from 'react-icons/fi'
 import { Link, useNavigate } from 'react-router-dom'
+import authIllustration from '@/assets/auth-illustration.svg'
 import logoUrl from '../../Logo NanoFile bleu et cyan.png'
 import GoogleAuthButton from '@/components/GoogleAuthButton.jsx'
+import { MESSAGES } from '@/i18n/messages.js'
 import { useLocale } from '@/hooks/useLocale.js'
 import { useLogin } from '@/hooks/useLogin.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
@@ -83,7 +86,7 @@ function PasswordField({ id, label, name, autoComplete, value, onChange }) {
   )
 }
 
-// Page de connexion compacte par email et mot de passe, avec accès Google.
+// Page de connexion en deux colonnes : présentation de la marque et formulaire.
 export default function LoginPage() {
   const { t } = useLocale()
   const navigate = useNavigate()
@@ -108,18 +111,64 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="flex min-h-[calc(100vh-4.5rem)] items-center justify-center px-4 py-6">
-      <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60">
-        <div className="flex items-start justify-between gap-4">
+    <section className="min-h-[calc(100dvh-4.5rem)] bg-white lg:h-[calc(100dvh-4.5rem)] lg:overflow-hidden">
+      <div className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-7xl lg:h-full lg:min-h-0 lg:grid-cols-2">
+        <aside
+          style={{ backgroundImage: `url(${authIllustration})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+          className="relative overflow-hidden border-b border-line bg-brand-surface bg-no-repeat p-5 sm:p-8 lg:min-h-0 lg:border-b-0 lg:border-r lg:p-10"
+        >
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand-surface/75 via-brand-surface/55 to-brand-surface/30" />
+          <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-brand/10 blur-3xl" />
+          <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-brand-soft/10 blur-3xl" />
+
+          <div className="relative flex flex-col justify-between gap-6 lg:h-full lg:min-h-0">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand">NanoFile</p>
+              <h2 className="mt-2 max-w-md text-xl font-bold tracking-tight text-ink sm:text-2xl lg:text-3xl">
+                {t(MESSAGES.home.heroTitle)}
+              </h2>
+              <p className="mt-2 max-w-md text-xs leading-relaxed text-ink-soft sm:text-sm">
+                {t(MESSAGES.home.heroTextOne)}
+              </p>
+
+              <ul className="mt-4 grid gap-2">
+                {[
+                  { Icon: FiShield, message: MESSAGES.home.benefitAnalytics },
+                  { Icon: FiCheck, message: MESSAGES.home.benefitDownload },
+                  { Icon: FiFileText, message: MESSAGES.home.benefitFormats },
+                ].map(({ Icon, message }) => (
+                  <li key={message.fr} className="flex items-start gap-2 text-[11px] leading-relaxed text-ink-muted sm:text-xs">
+                    <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-surface/80 text-brand">
+                      <Icon aria-hidden="true" className="h-3.5 w-3.5" />
+                    </span>
+                    <span>{t(message)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <Link
+              to="/catalogue"
+              className="group inline-flex w-fit shrink-0 items-center gap-2 text-xs font-semibold text-brand transition hover:text-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              {t(MESSAGES.home.discoverTools)}
+              <FiArrowRight aria-hidden="true" className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+        </aside>
+
+        <div className="flex items-center justify-center px-4 py-6 sm:px-8 lg:min-h-0 lg:px-10 lg:py-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 lg:max-h-full lg:overflow-y-auto lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden">
+            <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-600">NanoFile</p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{t(TEXT.title)}</h1>
+            <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{t(TEXT.title)}</h1>
             <p className="mt-1 text-sm text-slate-600">{t(TEXT.subtitle)}</p>
           </div>
           <img src={logoUrl} alt="" className="h-12 w-12 shrink-0 object-contain" />
         </div>
 
-        <div className="mt-5 space-y-3">
+        <div className="mt-3 space-y-2.5">
           <label className="flex items-start gap-2 text-xs text-slate-600">
             <input
               type="checkbox"
@@ -147,13 +196,13 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="my-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+        <div className="my-3 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
           <span className="h-px flex-1 bg-slate-200" />
           {t(TEXT.orByEmail)}
           <span className="h-px flex-1 bg-slate-200" />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-2.5">
           <div>
             <label htmlFor="login-email" className="block text-xs font-semibold text-slate-700">
               {t(TEXT.email)}
@@ -179,7 +228,7 @@ export default function LoginPage() {
             onChange={handleChange}
           />
 
-          <div className="flex items-center justify-between pt-1 text-xs">
+          <div className="flex items-center justify-between pt-0.5 text-xs">
             <Link to="/forgot-password" className="font-semibold text-sky-600 hover:text-sky-700">
               {t(TEXT.forgotPassword)}
             </Link>
@@ -191,17 +240,19 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:opacity-50"
+            className="w-full rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:opacity-50"
           >
             {t(loading ? TEXT.signingIn : TEXT.signIn)}
           </button>
         </form>
 
-        {error && (
-          <p role="alert" className="mt-3 rounded-lg bg-red-50 p-2.5 text-xs text-red-700">
-            {error.message}
-          </p>
-        )}
+            {error && (
+              <p role="alert" className="mt-2 rounded-lg bg-red-50 p-2 text-xs text-red-700">
+                {error.message}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     </section>
   )

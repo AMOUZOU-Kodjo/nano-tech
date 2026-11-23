@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { clearAnonId } from '@/api/client.js'
 import { logout as logoutRequest } from '@/api/authApi.js'
 
 // Hook métier : déconnecte l'utilisateur puis laisse l'appelant rafraîchir son profil.
@@ -13,6 +14,7 @@ export function useLogout({ onSuccess } = {}) {
 
     try {
       const result = await logoutRequest()
+      clearAnonId()
       onSuccess?.()
       return result
     } catch (caughtError) {
