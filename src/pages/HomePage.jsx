@@ -99,12 +99,12 @@ export default function HomePage() {
 
         <div className="relative grid items-center gap-10 lg:grid-cols-2">
           <Reveal>
-            <span className="inline-flex flex-wrap items-center gap-2 rounded-full border border-line bg-surface/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand backdrop-blur">
+            {/* <span className="inline-flex flex-wrap items-center gap-2 rounded-full border border-line bg-surface/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand backdrop-blur">
               <span className="h-1.5 w-1.5 rounded-full bg-brand" />
               {t(TEXT.badge)}
               <span className="text-ink-faint">·</span>
               {t(TEXT.badgeDetail)}
-            </span>
+            </span> */}
 
             <h1 className="mt-5 text-2xl text-left font-bold tracking-tight text-balance text-ink sm:text-4xl lg:text-5xl">
               {t(MESSAGES.home.heroTitle)}
