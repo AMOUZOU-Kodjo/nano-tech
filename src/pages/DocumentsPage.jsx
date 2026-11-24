@@ -318,7 +318,7 @@ export default function DocumentsPage() {
                     : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300'
                 }`}
               >
-                <span className="block font-medium">{item.title}</span>
+                <span className="block break-all font-medium">{item.title}</span>
                 {item.type && <span className="mt-1 block text-xs text-slate-500">{item.type}</span>}
               </button>
             ))}

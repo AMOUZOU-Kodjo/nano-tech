@@ -738,7 +738,7 @@ export default function ToolPage() {
                   {files.map((file, index) => (
                     <li
                       key={`${file.name}-${index}`}
-                      className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2"
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2"
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-slate-800">{file.name}</p>
@@ -1088,7 +1088,7 @@ export default function ToolPage() {
                 </span>
               </div>
               <p className="mt-2 text-sm text-slate-600">
-                {t(TEXT.identifier)} : <span className="font-mono text-slate-700">{jobId}</span>
+                {t(TEXT.identifier)} : <span className="break-all font-mono text-slate-700">{jobId}</span>
               </p>
 
               {jobLoading && !job && <p className="mt-4 text-sm text-slate-600">{t(TEXT.loadingStatus)}</p>}

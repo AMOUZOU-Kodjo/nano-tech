@@ -176,7 +176,7 @@ export default function RegisterPage() {
           <div role="status" className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
             <p className="font-semibold">{t(TEXT.registrationSaved)}</p>
             <p className="mt-2">
-              {t(TEXT.verificationIntro)} <strong>{form.email.trim()}</strong>{t(TEXT.verificationOutro)}
+              {t(TEXT.verificationIntro)} <strong className="break-all">{form.email.trim()}</strong>{t(TEXT.verificationOutro)}
             </p>
             <p className="mt-2 text-xs text-emerald-700">
               {t(TEXT.checkSpam)}

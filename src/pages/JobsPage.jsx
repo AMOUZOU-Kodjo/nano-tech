@@ -241,8 +241,8 @@ export default function JobsPage() {
                     : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300'
                 }`}
               >
-                <span className="block font-medium">{item.tool || item.id}</span>
-                <span className="mt-1 block text-xs text-slate-500">
+                <span className="block break-all font-medium">{item.tool || item.id}</span>
+                <span className="mt-1 block break-all text-xs text-slate-500">
                   {item.id}
                   {item.status ? ` · ${item.status}` : ''}
                 </span>
@@ -296,9 +296,9 @@ export default function JobsPage() {
           {selected && job.data && (
             <div className="mt-4 space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-semibold text-slate-900">{job.data.tool || t(TEXT.unknownTool)}</p>
-                  <p className="mt-1 font-mono text-xs text-slate-500">{job.data.id || selected}</p>
+                  <p className="mt-1 break-all font-mono text-xs text-slate-500">{job.data.id || selected}</p>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[job.data.status] ?? STATUS_STYLES.queued}`}>
                   {statusLabel(job.data.status, t)}

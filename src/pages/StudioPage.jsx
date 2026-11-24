@@ -120,8 +120,8 @@ function ValueRows({ value, t }) {
     <dl className="mt-3 grid gap-3 sm:grid-cols-2">
       {rows.map(([key, item]) => (
         <div key={key} className="rounded-lg bg-slate-50 p-3">
-          <dt className="text-xs uppercase tracking-wide text-slate-500">{key}</dt>
-          <dd className="mt-1 text-sm text-slate-700">{formatValue(item, t)}</dd>
+          <dt className="break-all text-xs uppercase tracking-wide text-slate-500">{key}</dt>
+          <dd className="mt-1 break-all text-sm text-slate-700">{formatValue(item, t)}</dd>
         </div>
       ))}
     </dl>
@@ -364,7 +364,7 @@ export default function StudioPage() {
             type="button"
             onClick={() => setActiveTab('studio')}
             aria-pressed={activeTab === 'studio'}
-            className={`rounded-lg px-3 py-2 text-xs font-semibold transition sm:px-4 sm:text-sm ${
+            className={`rounded-lg px-2 py-2 text-[11px] font-semibold transition sm:px-4 sm:text-sm ${
               activeTab === 'studio' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
@@ -374,7 +374,7 @@ export default function StudioPage() {
             type="button"
             onClick={() => setActiveTab('rewrite')}
             aria-pressed={activeTab === 'rewrite'}
-            className={`rounded-lg px-3 py-2 text-xs font-semibold transition sm:px-4 sm:text-sm ${
+            className={`rounded-lg px-2 py-2 text-[11px] font-semibold transition sm:px-4 sm:text-sm ${
               activeTab === 'rewrite' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
             }`}
           >

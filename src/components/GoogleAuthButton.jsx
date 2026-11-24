@@ -47,6 +47,7 @@ export default function GoogleAuthButton({
   const callbackRef = useRef(null)
   const [loading, setLoading] = useState(false)
   const [localError, setLocalError] = useState(null)
+  const [buttonWidth, setButtonWidth] = useState(360)
 
   const handleCredential = useCallback(
     async (credential) => {
@@ -75,6 +76,28 @@ export default function GoogleAuthButton({
   }, [handleCredential])
 
   useEffect(() => {
+    const element = buttonRef.current
+    if (!element) {
+      return undefined
+    }
+
+    const updateWidth = () => {
+      const available = (element.parentElement?.clientWidth ?? element.clientWidth) - 8
+      setButtonWidth(Math.max(200, Math.min(360, available || 360)))
+    }
+
+    updateWidth()
+
+    if (typeof ResizeObserver === 'undefined') {
+      return undefined
+    }
+
+    const observer = new ResizeObserver(updateWidth)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
     let cancelled = false
 
     loadGoogleIdentityServices(t(TEXT.unavailable))
@@ -92,7 +115,7 @@ export default function GoogleAuthButton({
           size: 'large',
           shape: 'pill',
           text: 'continue_with',
-          width: 360,
+          width: buttonWidth,
           locale: locale === 'fr' ? 'fr' : 'en',
         })
       })
@@ -101,11 +124,15 @@ export default function GoogleAuthButton({
     return () => {
       cancelled = true
     }
-  }, [locale, t])
+  }, [buttonWidth, locale, t])
 
   return (
-    <div>
-      <div ref={buttonRef} aria-busy={loading} className="flex min-h-11 items-center justify-center" />
+    <div className="w-full min-w-0 max-w-full transform-gpu overflow-hidden [&_iframe]:max-w-full">
+      <div
+        ref={buttonRef}
+        aria-busy={loading}
+        className="flex min-h-11 w-full max-w-full items-center justify-center overflow-hidden"
+      />
       {(loading || localError) && (
         <p className={`mt-2 text-xs ${localError ? 'text-red-700' : 'text-slate-500'}`} role={localError ? 'alert' : 'status'}>
           {localError ?? t(TEXT.loading)}

@@ -99,7 +99,7 @@ function ValueList({ rows }) {
       {rows.map((row) => (
         <div key={row.key} className="rounded-lg bg-slate-50 p-3">
           <dt className="text-xs uppercase tracking-wide text-slate-500">{row.label}</dt>
-          <dd className="mt-1 text-sm text-slate-700">{row.value}</dd>
+          <dd className="mt-1 break-all text-sm text-slate-700">{row.value}</dd>
         </div>
       ))}
     </dl>

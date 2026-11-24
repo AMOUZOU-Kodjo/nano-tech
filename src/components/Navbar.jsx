@@ -577,11 +577,11 @@ export default function Navbar() {
                         key={item.to}
                         to={item.to}
                         onClick={closeMenu}
-                        className="rounded-xl border border-slate-200 bg-white px-3 py-3 transition hover:border-sky-300 hover:bg-sky-50"
+                        className="min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-3 transition hover:border-sky-300 hover:bg-sky-50"
                       >
                         <Icon aria-hidden="true" className="h-5 w-5 text-sky-600" />
-                        <span className="mt-2 block text-sm font-semibold text-slate-900">{t(item.label)}</span>
-                        <span className="mt-1 block text-xs text-slate-500">{t(item.hint)}</span>
+                        <span className="mt-2 block break-words text-sm font-semibold text-slate-900">{t(item.label)}</span>
+                        <span className="mt-1 block break-words text-[11px] text-slate-500 sm:text-xs">{t(item.hint)}</span>
                       </Link>
                     )
                   })}
@@ -633,7 +633,7 @@ export default function Navbar() {
                       )}
                     </div>
                   ) : (
-                    <p className="mt-2 px-4 py-3 text-sm text-slate-500">
+                    <p className="mt-2 break-all px-4 py-3 text-sm text-slate-500">
                       {locale === 'fr'
                         ? `Aucun outil trouvé pour « ${menuSearch.trim()} ».`
                         : `No tool found for “${menuSearch.trim()}”.`}
