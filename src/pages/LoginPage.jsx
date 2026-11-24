@@ -8,6 +8,8 @@ import { useLocale } from '@/hooks/useLocale.js'
 import { useLogin } from '@/hooks/useLogin.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
 
+const GOOGLE_LOGIN_URL = `${import.meta.env.VITE_API_URL.replace(/\/+$/, '')}/auth/google/login`
+
 const TEXT = {
   hidePassword: { fr: 'Masquer le mot de passe', en: 'Hide password' },
   showPassword: { fr: 'Afficher le mot de passe', en: 'Show password' },
@@ -172,7 +174,7 @@ export default function LoginPage() {
 
         <div className="mt-3">
           <a
-            href={`${import.meta.env.VITE_API_URL}/auth/google/login`}
+            href={GOOGLE_LOGIN_URL}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-sky-400 hover:bg-sky-50 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
           >
             <GoogleIcon />
