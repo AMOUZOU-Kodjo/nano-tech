@@ -1055,7 +1055,50 @@ export default function ToolPage() {
             )}
           </div>
 
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
+        </div>
+
+        <aside className="space-y-4 lg:space-y-3">
+          {toolInfo.tool === 'compress' && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
+              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:p-3">
+                <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.compressionOptions)}</h3>
+                <p className="text-xs leading-relaxed text-slate-600">
+                  {t(TEXT.compressionHelp)}
+                </p>
+                <p className="text-xs leading-relaxed text-slate-500">
+                  {t(TEXT.acceptedFormats)}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                  <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                    <span>{t(TEXT.level)}</span>
+                    <select
+                      value={compressOptions.level}
+                      onChange={(event) => updateCompressOption('level', event.target.value)}
+                      disabled={creating || Boolean(compressOptions.targetSizeKb)}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                    >
+                      <option value="">{t(TEXT.default)}</option>
+                      <option value="basic">{t(TEXT.basic)}</option>
+                      <option value="medium">{t(TEXT.medium)}</option>
+                      <option value="max">{t(TEXT.max)}</option>
+                    </select>
+                  </label>
+                  <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                    <span>{t(TEXT.targetSizeKb)}</span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={compressOptions.targetSizeKb}
+                      onChange={(event) => updateCompressOption('targetSizeKb', event.target.value)}
+                      disabled={creating || Boolean(compressOptions.level)}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-lg font-semibold text-slate-900">{t(TEXT.liveTracking)}</h2>
               {jobId && (
@@ -1142,49 +1185,6 @@ export default function ToolPage() {
               />
             </ol>
           </div>
-        </div>
-
-        <aside className="space-y-4 lg:space-y-3">
-          {toolInfo.tool === 'compress' && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
-              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:p-3">
-                <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.compressionOptions)}</h3>
-                <p className="text-xs leading-relaxed text-slate-600">
-                  {t(TEXT.compressionHelp)}
-                </p>
-                <p className="text-xs leading-relaxed text-slate-500">
-                  {t(TEXT.acceptedFormats)}
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                  <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                    <span>{t(TEXT.level)}</span>
-                    <select
-                      value={compressOptions.level}
-                      onChange={(event) => updateCompressOption('level', event.target.value)}
-                      disabled={creating || Boolean(compressOptions.targetSizeKb)}
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
-                    >
-                      <option value="">{t(TEXT.default)}</option>
-                      <option value="basic">{t(TEXT.basic)}</option>
-                      <option value="medium">{t(TEXT.medium)}</option>
-                      <option value="max">{t(TEXT.max)}</option>
-                    </select>
-                  </label>
-                  <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                    <span>{t(TEXT.targetSizeKb)}</span>
-                    <input
-                      type="number"
-                      min="1"
-                      value={compressOptions.targetSizeKb}
-                      onChange={(event) => updateCompressOption('targetSizeKb', event.target.value)}
-                      disabled={creating || Boolean(compressOptions.level)}
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
-          )}
           {job && (status === 'failed' || status === 'done') && (
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
               {status === 'failed' && (
