@@ -110,11 +110,13 @@ export default function GoogleAuthButton({
           client_id: GOOGLE_CLIENT_ID,
           callback: (response) => callbackRef.current?.(response.credential),
         })
+        const compact = buttonWidth < 340
+
         google.accounts.id.renderButton(buttonRef.current, {
           theme: 'outline',
-          size: 'large',
+          size: compact ? 'medium' : 'large',
           shape: 'pill',
-          text: 'continue_with',
+          text: compact ? 'signin_with' : 'continue_with',
           width: buttonWidth,
           locale: locale === 'fr' ? 'fr' : 'en',
         })
