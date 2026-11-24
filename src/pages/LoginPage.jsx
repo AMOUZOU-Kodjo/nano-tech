@@ -3,7 +3,6 @@ import { FiArrowRight, FiCheck, FiFileText, FiShield } from 'react-icons/fi'
 import { Link, useNavigate } from 'react-router-dom'
 import authIllustration from '@/assets/auth-illustration.svg'
 import logoUrl from '../../Logo NanoFile bleu et cyan.png'
-import GoogleAuthButton from '@/components/GoogleAuthButton.jsx'
 import { MESSAGES } from '@/i18n/messages.js'
 import { useLocale } from '@/hooks/useLocale.js'
 import { useLogin } from '@/hooks/useLogin.js'
@@ -14,14 +13,7 @@ const TEXT = {
   showPassword: { fr: 'Afficher le mot de passe', en: 'Show password' },
   title: { fr: 'Connexion', en: 'Sign in' },
   subtitle: { fr: 'Retrouvez vos outils et vos documents.', en: 'Find your tools and documents again.' },
-  googleTerms: {
-    fr: 'J’accepte les conditions d’utilisation pour me connecter ou créer un compte avec Google.',
-    en: 'I accept the terms of use to sign in or create an account with Google.',
-  },
-  googleTermsRequired: {
-    fr: 'Cochez les conditions d’utilisation pour continuer avec Google.',
-    en: 'Accept the terms of use to continue with Google.',
-  },
+  googleSignIn: { fr: 'Continuer avec Google', en: 'Continue with Google' },
   orByEmail: { fr: 'ou par email', en: 'or by email' },
   email: { fr: 'Email', en: 'Email' },
   password: { fr: 'Mot de passe', en: 'Password' },
@@ -47,6 +39,17 @@ function EyeOffIcon() {
       <path d="M10.6 6.2A9.9 9.9 0 0 1 12 6c6 0 9.5 6 9.5 6a16.6 16.6 0 0 1-2.4 3.1" />
       <path d="M6.2 7.5C3.9 9 2.5 12 2.5 12s3.5 6 9.5 6a9.9 9.9 0 0 0 3-.45" />
       <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+    </svg>
+  )
+}
+
+function GoogleIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 shrink-0">
+      <path fill="#4285F4" d="M21.6 12.23c0-.68-.06-1.34-.18-1.97H12v3.73h5.38a4.6 4.6 0 0 1-2 3.02v2.5h3.23c1.89-1.74 2.99-4.3 2.99-7.28Z" />
+      <path fill="#34A853" d="M12 22c2.7 0 4.97-.9 6.62-2.43l-3.23-2.5c-.9.6-2.05.96-3.39.96a5.94 5.94 0 0 1-5.59-4.11H3.07v2.58A10 10 0 0 0 12 22Z" />
+      <path fill="#FBBC05" d="M6.41 13.92a6 6 0 0 1 0-3.84V7.5H3.07a10 10 0 0 0 0 9l3.34-2.58Z" />
+      <path fill="#EA4335" d="M12 5.98c1.47 0 2.79.51 3.83 1.5l2.87-2.87A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.93 5.5l3.34 2.58A5.94 5.94 0 0 1 12 5.98Z" />
     </svg>
   )
 }
@@ -92,7 +95,6 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { reload } = useMeContext()
   const [form, setForm] = useState({ email: '', password: '' })
-  const [googleTermsAccepted, setGoogleTermsAccepted] = useState(false)
   const { login, loading, error } = useLogin({
     onSuccess: () => {
       reload()
@@ -168,32 +170,14 @@ export default function LoginPage() {
           <img src={logoUrl} alt="" className="h-12 w-12 shrink-0 object-contain" />
         </div>
 
-        <div className="mt-3 space-y-2.5">
-          <label className="flex items-start gap-2 text-xs text-slate-600">
-            <input
-              type="checkbox"
-              checked={googleTermsAccepted}
-              onChange={(event) => setGoogleTermsAccepted(event.target.checked)}
-              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 bg-white"
-            />
-            {t(TEXT.googleTerms)}
-          </label>
-          <div className="flex justify-center">
-            {googleTermsAccepted ? (
-              <GoogleAuthButton
-                termsAccepted={googleTermsAccepted}
-                marketingOptIn={false}
-                onSuccess={() => {
-                  reload()
-                  navigate('/')
-                }}
-              />
-            ) : (
-              <p className="rounded-lg bg-slate-50 px-3 py-2 text-center text-xs text-slate-600">
-                {t(TEXT.googleTermsRequired)}
-              </p>
-            )}
-          </div>
+        <div className="mt-3">
+          <a
+            href={`${import.meta.env.VITE_API_URL}/auth/google/login`}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-sky-400 hover:bg-sky-50 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
+          >
+            <GoogleIcon />
+            {t(TEXT.googleSignIn)}
+          </a>
         </div>
 
         <div className="my-3 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">

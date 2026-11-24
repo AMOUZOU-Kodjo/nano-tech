@@ -1,13 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiArrowRight, FiCheck, FiShield } from 'react-icons/fi'
+import { FiArrowRight, FiCheck, FiShield, FiX } from 'react-icons/fi'
 import heroIllustration from '@/assets/auth-illustration.svg'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { MESSAGES } from '@/i18n/messages.js'
 import { useLocale } from '@/hooks/useLocale.js'
 
 const TEXT = {
   tryCompress: { fr: 'Essayer la compression', en: 'Try compression' },
   seeHow: { fr: 'Voir comment ça marche', en: 'See how it works' },
+  googleFailed: {
+    fr: 'La connexion avec Google a échoué. Veuillez réessayer.',
+    en: 'Google sign-in failed. Please try again.',
+  },
+  retrySignIn: { fr: 'Aller à la connexion', en: 'Go to sign in' },
+  dismiss: { fr: 'Fermer le message', en: 'Dismiss message' },
 }
 
 function Reveal({ as: Element = 'div', children, className = '', delay = 0, ...props }) {
@@ -62,9 +68,32 @@ function DocumentBadge({ label, color, tint }) {
 // Vue d'accueil : présentation concise et accès directs aux espaces principaux.
 export default function HomePage() {
   const { t } = useLocale()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const googleFailed = searchParams.get('auth_error') === 'google_failed'
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-6">
+      {googleFailed && (
+        <div
+          role="alert"
+          className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
+          <span>{t(TEXT.googleFailed)}</span>
+          <div className="flex items-center gap-3">
+            <Link to="/login" className="font-semibold text-red-700 underline underline-offset-2 hover:text-red-900">
+              {t(TEXT.retrySignIn)}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setSearchParams({}, { replace: true })}
+              aria-label={t(TEXT.dismiss)}
+              className="grid h-7 w-7 place-items-center rounded-lg text-red-500 transition hover:bg-red-100 hover:text-red-800"
+            >
+              <FiX aria-hidden="true" className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
       <div className="relative overflow-hidden py-2 sm:py-4 lg:py-6">
         <img
           src={heroIllustration}

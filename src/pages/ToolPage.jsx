@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import {
+  FiAlertCircle,
+  FiArrowRight,
+  FiCheckCircle,
+  FiClock,
+  FiCpu,
+  FiDownload,
+  FiFile,
+  FiRefreshCw,
+  FiShield,
+  FiUploadCloud,
+  FiX,
+} from 'react-icons/fi'
 import { TOOLS, TOOL_CATEGORIES } from '@/config/tools.js'
 import { useLocale } from '@/hooks/useLocale.js'
 import { useCatalog } from '@/hooks/useCatalog.js'
@@ -34,6 +47,17 @@ const TEXT = {
   backCatalogue: { fr: 'Retour au catalogue', en: 'Back to the catalogue' },
   catalogue: { fr: 'Catalogue', en: 'Catalog' },
   breadcrumb: { fr: 'Fil d’Ariane', en: 'Breadcrumb' },
+  workspace: { fr: 'Espace de travail', en: 'Workspace' },
+  secured: { fr: 'Traitement sécurisé', en: 'Secure processing' },
+  uploadHint: { fr: 'Glissez vos fichiers ou parcourez votre appareil', en: 'Drag your files or browse your device' },
+  levelHelp: { fr: 'Choisissez le niveau de compression souhaité.', en: 'Select the compression level you want.' },
+  hintAuto: { fr: 'Réglage automatique', en: 'Automatic' },
+  hintFast: { fr: 'Traitement rapide', en: 'Fast processing' },
+  hintBalanced: { fr: 'Qualité équilibrée', en: 'Balanced quality' },
+  hintOptimal: { fr: 'Gain maximal', en: 'Maximum gain' },
+  targetHelp: { fr: 'Ou fixez une taille cible en Ko.', en: 'Or set a target size in KB.' },
+  resultReady: { fr: 'Votre fichier est prêt', en: 'Your file is ready' },
+  download: { fr: 'Télécharger le fichier', en: 'Download the file' },
   dropFiles: { fr: 'Déposez vos fichiers ici', en: 'Drop your files here' },
   clickSelect: { fr: 'ou cliquez pour les sélectionner', en: 'or click to select them' },
   moveUp: { fr: 'Monter', en: 'Move up' },
@@ -269,17 +293,35 @@ function normalizePhotoExcluded(specs) {
 
 function Step({ title, description, done, active, className = '' }) {
   return (
-    <li className={`flex gap-3 ${className}`}>
+    <li
+      className={`flex gap-2.5 rounded-xl border p-2.5 transition ${
+        done
+          ? 'border-emerald-200 bg-emerald-50/70'
+          : active
+            ? 'border-sky-200 bg-sky-50/70 shadow-sm'
+            : 'border-slate-200 bg-white'
+      } ${className}`}
+    >
       <span
-        className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ${
-          done ? 'bg-emerald-500 text-white' : active ? 'bg-sky-500 text-white' : 'bg-slate-100 text-slate-500'
+        className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-bold ring-2 ring-white ${
+          done ? 'bg-emerald-500 text-white' : active ? 'bg-sky-500 text-white' : 'bg-slate-100 text-slate-400'
         }`}
       >
-        {done ? '✓' : active ? '•' : ''}
+        {done ? (
+          <FiCheckCircle aria-hidden="true" className="h-4 w-4" />
+        ) : (
+          <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-white' : 'bg-slate-300'}`} />
+        )}
       </span>
-      <div>
-        <p className="text-sm font-semibold text-slate-900">{title}</p>
-        <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{description}</p>
+      <div className="min-w-0">
+        <p
+          className={`text-xs font-semibold ${
+            done ? 'text-emerald-800' : active ? 'text-sky-800' : 'text-slate-600'
+          }`}
+        >
+          {title}
+        </p>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">{description}</p>
       </div>
     </li>
   )
@@ -376,6 +418,7 @@ export default function ToolPage() {
     locale === 'en' ? category?.labelEn ?? toolInfo?.category : category?.label ?? toolInfo?.category
   const status = job?.status
   const progress = typeof job?.progress === 'number' ? Math.min(100, Math.max(0, job.progress)) : 0
+  const totalSize = files.reduce((sum, file) => sum + file.size, 0)
   const processingDescription = !jobId
     ? t(TEXT.notStarted)
     : [
@@ -695,103 +738,133 @@ export default function ToolPage() {
 
       <div className="mt-4 grid gap-5 lg:grid-cols-2">
         <div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-5">
-            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{categoryLabel}</p>
-            <h1 className="mt-1 text-2xl font-bold text-slate-900 lg:text-3xl">{toolName}</h1>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">{toolDescription}</p>
-
-            <form onSubmit={handleSubmit} className="mt-5">
-              <div
-                onDragOver={(event) => {
-                  event.preventDefault()
-                  setIsDragging(true)
-                }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(event) => {
-                  event.preventDefault()
-                  setIsDragging(false)
-                  handleFiles(event.dataTransfer.files)
-                }}
-                className={`rounded-2xl border-2 border-dashed p-6 text-center transition lg:p-4 ${
-                  isDragging
-                    ? 'border-sky-400 bg-sky-50'
-                    : 'border-slate-300 bg-slate-50 hover:border-sky-300'
-                }`}
-              >
-                <input
-                  id="job-files"
-                  type="file"
-                  multiple
-                  onChange={(event) => handleFiles(event.target.files)}
-                  className="sr-only"
-                />
-                <label htmlFor="job-files" className="cursor-pointer">
-                  <span className="mx-auto grid h-10 w-10 place-items-center rounded-xl bg-white text-sm font-bold text-sky-700 shadow-sm ring-1 ring-slate-200 lg:h-9 lg:w-9">
-                    +
+          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="h-1 w-full bg-gradient-to-r from-sky-400 via-cyan-400 to-sky-600" />
+            <div className="p-5 lg:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-sky-700 ring-1 ring-sky-100">
+                    <FiCpu aria-hidden="true" className="h-3.5 w-3.5" />
+                    {categoryLabel}
                   </span>
-                  <span className="mt-2 block text-sm font-semibold text-slate-900">
-                    {t(TEXT.dropFiles)}
-                  </span>
-                  <span className="mt-1 block text-sm text-slate-600">
-                    {t(TEXT.clickSelect)}
-                  </span>
-                </label>
+                  <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">{toolName}</h1>
+                  <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">{toolDescription}</p>
+                </div>
+                <span className="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100 sm:inline-flex">
+                  <FiShield aria-hidden="true" className="h-3.5 w-3.5" />
+                  {t(TEXT.secured)}
+                </span>
               </div>
 
-              {files.length > 0 && (
-                <ul className="mt-4 space-y-2">
-                  {files.map((file, index) => (
-                    <li
-                      key={`${file.name}-${index}`}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2"
+              <form onSubmit={handleSubmit} className="mt-6">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">{t(TEXT.workspace)}</h2>
+                  {files.length > 0 && (
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                      {files.length}{' '}
+                      {locale === 'fr'
+                        ? files.length > 1 ? 'fichiers' : 'fichier'
+                        : files.length > 1 ? 'files' : 'file'}{' '}
+                      · {formatFileSize(totalSize, locale)}
+                    </span>
+                  )}
+                </div>
+                <div
+                  onDragOver={(event) => {
+                    event.preventDefault()
+                    setIsDragging(true)
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(event) => {
+                    event.preventDefault()
+                    setIsDragging(false)
+                    handleFiles(event.dataTransfer.files)
+                  }}
+                  className={`group relative mt-3 overflow-hidden rounded-2xl border-2 border-dashed p-7 text-center transition-all duration-200 ${
+                    isDragging
+                      ? 'scale-[1.01] border-sky-500 bg-gradient-to-br from-sky-50 to-cyan-50 shadow-lg shadow-sky-100'
+                      : 'border-slate-300 bg-slate-50/70 hover:border-sky-400 hover:bg-sky-50/60'
+                  }`}
+                >
+                  <input
+                    id="job-files"
+                    type="file"
+                    multiple
+                    onChange={(event) => handleFiles(event.target.files)}
+                    className="sr-only"
+                  />
+                  <label htmlFor="job-files" className="flex cursor-pointer flex-col items-center">
+                    <span
+                      className={`grid h-14 w-14 place-items-center rounded-2xl bg-white shadow-md ring-1 ring-slate-200 transition duration-200 group-hover:scale-105 ${
+                        isDragging ? 'text-sky-600' : 'text-sky-500'
+                      }`}
                     >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-slate-100 text-[10px] font-bold text-slate-500">
-                          {previews[index] ? (
-                            <img src={previews[index]} alt="" className="h-full w-full object-cover" />
-                          ) : (
-                            file.name.split('.').pop()?.toUpperCase().slice(0, 4)
-                          )}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-slate-800">{file.name}</p>
-                          <p className="text-xs text-slate-500">{formatFileSize(file.size, locale)}</p>
+                      <FiUploadCloud aria-hidden="true" className="h-7 w-7" />
+                    </span>
+                    <span className="mt-4 text-sm font-semibold text-slate-900">{t(TEXT.dropFiles)}</span>
+                    <span className="mt-1 text-xs text-slate-500">{t(TEXT.uploadHint)}</span>
+                    <span className="mt-4 inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition group-hover:bg-sky-700">
+                      {t(TEXT.clickSelect)}
+                      <FiArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
+                    </span>
+                  </label>
+                </div>
+
+                {files.length > 0 && (
+                  <ul className="mt-3 space-y-2">
+                    {files.map((file, index) => (
+                      <li
+                        key={`${file.name}-${index}`}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition hover:border-sky-200 hover:shadow-sm"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100 text-[10px] font-bold text-slate-500 ring-1 ring-slate-200/70">
+                            {previews[index] ? (
+                              <img src={previews[index]} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <FiFile aria-hidden="true" className="h-5 w-5 text-slate-400" />
+                            )}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-slate-800">{file.name}</p>
+                            <p className="mt-0.5 text-xs text-slate-500">{formatFileSize(file.size, locale)}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1">
-                        {toolInfo.tool === 'images_to_pdf' && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => moveFile(index, -1)}
-                              disabled={creating || index === 0}
-                              className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40"
-                            >
-                              {t(TEXT.moveUp)}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => moveFile(index, 1)}
-                              disabled={creating || index === files.length - 1}
-                              className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40"
-                            >
-                              {t(TEXT.moveDown)}
-                            </button>
-                          </>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}
-                          disabled={creating}
-                          className="rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-50"
-                        >
-                          {t(TEXT.remove)}
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                        <div className="flex shrink-0 items-center gap-1">
+                          {toolInfo.tool === 'images_to_pdf' && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => moveFile(index, -1)}
+                                disabled={creating || index === 0}
+                                className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40"
+                              >
+                                {t(TEXT.moveUp)}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => moveFile(index, 1)}
+                                disabled={creating || index === files.length - 1}
+                                className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40"
+                              >
+                                {t(TEXT.moveDown)}
+                              </button>
+                            </>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}
+                            disabled={creating}
+                            aria-label={t(TEXT.remove)}
+                            className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                          >
+                            <FiX aria-hidden="true" className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
 
               {hasAdvancedOptions && toolInfo.tool !== 'compress' && toolInfo.tool !== 'photo_id' && (
                 <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:p-3">
@@ -1032,16 +1105,18 @@ export default function ToolPage() {
                     (toolInfo.tool === 'photo_id' &&
                       (specsLoading || photoSetupUnavailable || !selectedPhotoCountry || !photoOptions.document))
                   }
-                  className="rounded-lg bg-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
                 >
                   {t(creating ? TEXT.creating : TEXT.startProcessing)}
+                  <FiArrowRight aria-hidden="true" className="h-4 w-4" />
                 </button>
                 {jobId && (
                   <button
                     type="button"
                     onClick={resetTool}
-                    className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
+                    <FiRefreshCw aria-hidden="true" className="h-4 w-4" />
                     {t(TEXT.newProcessing)}
                   </button>
                 )}
@@ -1053,6 +1128,7 @@ export default function ToolPage() {
                 {localError ?? createError.message}
               </p>
             )}
+            </div>
           </div>
 
         </div>
@@ -1060,62 +1136,98 @@ export default function ToolPage() {
         <aside className="space-y-4 lg:space-y-3">
           {toolInfo.tool === 'compress' && (
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
-              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:p-3">
-                <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.compressionOptions)}</h3>
-                <p className="text-xs leading-relaxed text-slate-600">
-                  {t(TEXT.compressionHelp)}
-                </p>
-                <p className="text-xs leading-relaxed text-slate-500">
-                  {t(TEXT.acceptedFormats)}
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                  <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                    <span>{t(TEXT.level)}</span>
-                    <select
-                      value={compressOptions.level}
-                      onChange={(event) => updateCompressOption('level', event.target.value)}
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-800">
+                  {t(TEXT.compressionOptions)}
+                </h2>
+                <FiCpu aria-hidden="true" className="h-4 w-4 text-sky-500" />
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-slate-600">{t(TEXT.levelHelp)}</p>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {[
+                  { value: '', label: t(TEXT.default), hint: t(TEXT.hintAuto) },
+                  { value: 'basic', label: t(TEXT.basic), hint: t(TEXT.hintFast) },
+                  { value: 'medium', label: t(TEXT.medium), hint: t(TEXT.hintBalanced) },
+                  { value: 'max', label: t(TEXT.max), hint: t(TEXT.hintOptimal) },
+                ].map((option) => {
+                  const active = compressOptions.level === option.value
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
                       disabled={creating || Boolean(compressOptions.targetSizeKb)}
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                      onClick={() => updateCompressOption('level', option.value)}
+                      className={`rounded-xl border px-3 py-2.5 text-left transition disabled:opacity-50 ${
+                        active
+                          ? 'border-sky-500 bg-sky-50 shadow-sm ring-1 ring-sky-200'
+                          : 'border-slate-200 bg-white hover:border-sky-300 hover:bg-slate-50'
+                      }`}
                     >
-                      <option value="">{t(TEXT.default)}</option>
-                      <option value="basic">{t(TEXT.basic)}</option>
-                      <option value="medium">{t(TEXT.medium)}</option>
-                      <option value="max">{t(TEXT.max)}</option>
-                    </select>
-                  </label>
-                  <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                    <span>{t(TEXT.targetSizeKb)}</span>
-                    <input
-                      type="number"
-                      min="1"
-                      value={compressOptions.targetSizeKb}
-                      onChange={(event) => updateCompressOption('targetSizeKb', event.target.value)}
-                      disabled={creating || Boolean(compressOptions.level)}
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
-                    />
-                  </label>
+                      <span className={`block text-xs font-semibold ${active ? 'text-sky-700' : 'text-slate-700'}`}>
+                        {option.label}
+                      </span>
+                      <span className="mt-0.5 block text-[10px] text-slate-500">{option.hint}</span>
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="mt-4 border-t border-slate-100 pt-4">
+                <p className="text-xs font-semibold text-slate-700">{t(TEXT.targetSizeKb)}</p>
+                <p className="mt-1 text-[11px] text-slate-500">{t(TEXT.targetHelp)}</p>
+                <div className="relative mt-2">
+                  <input
+                    type="number"
+                    min="1"
+                    value={compressOptions.targetSizeKb}
+                    onChange={(event) => updateCompressOption('targetSizeKb', event.target.value)}
+                    disabled={creating || Boolean(compressOptions.level)}
+                    className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-3 pr-12 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                    placeholder="500"
+                  />
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+                    Ko
+                  </span>
                 </div>
               </div>
+              <p className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
+                {t(TEXT.acceptedFormats)}
+              </p>
             </div>
           )}
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold text-slate-900">{t(TEXT.liveTracking)}</h2>
+              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-slate-800">
+                <FiCpu aria-hidden="true" className="h-4 w-4 text-sky-500" />
+                {t(TEXT.liveTracking)}
+              </h2>
               {jobId && (
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[status] ?? 'bg-slate-100 text-slate-700'}`}>
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${STATUS_STYLES[status] ?? 'bg-slate-100 text-slate-700'}`}>
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      status === 'done'
+                        ? 'bg-emerald-500'
+                        : status === 'failed'
+                          ? 'bg-red-500'
+                          : status === 'running'
+                            ? 'animate-pulse bg-sky-500'
+                            : 'bg-slate-400'
+                    }`}
+                  />
                   {t(STATUS_LABELS[status] ?? STATUS_LABELS.queued)}
                 </span>
               )}
             </div>
             {jobId && (
               <>
-                <p className="mt-2 text-sm text-slate-600">
-                  {t(TEXT.identifier)} : <span className="break-all font-mono text-slate-700">{jobId}</span>
+                <p className="mt-3 truncate rounded-lg bg-slate-50 px-3 py-2 font-mono text-[11px] text-slate-500">
+                  {t(TEXT.identifier)} · {jobId}
                 </p>
-                <div className="mt-3">
-                  <div className="flex justify-between text-xs text-slate-600">
-                    <span>{t(TEXT.jobProgress)}</span>
-                    <span>{progress}%</span>
+                <div className="mt-4">
+                  <div className="flex items-end justify-between">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      {t(TEXT.jobProgress)}
+                    </span>
+                    <span className="text-lg font-bold tabular-nums text-slate-900">{progress}%</span>
                   </div>
                   <div
                     role="progressbar"
@@ -1123,22 +1235,25 @@ export default function ToolPage() {
                     aria-valuenow={progress}
                     aria-valuemin={0}
                     aria-valuemax={100}
-                    className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200"
+                    className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200/70"
                   >
-                    <div className="h-full rounded-full bg-sky-500" style={{ width: `${progress}%` }} />
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-400 shadow-[0_0_12px_rgba(14,165,233,0.5)] transition-[width] duration-500 ease-out"
+                      style={{ width: `${progress}%` }}
+                    />
                   </div>
                   {((job?.stage) || (typeof job?.eta_seconds === 'number' && job.eta_seconds > 0)) && (
-                    <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-600">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       {job.stage && (
-                        <span>
-                          <span className="font-semibold text-slate-700">{t(TEXT.stage)} : </span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-medium text-sky-700 ring-1 ring-sky-100">
+                          <FiCpu aria-hidden="true" className="h-3 w-3" />
                           {job.stage}
                         </span>
                       )}
                       {typeof job.eta_seconds === 'number' && job.eta_seconds > 0 && (
-                        <span>
-                          <span className="font-semibold text-slate-700">{t(TEXT.eta)} : </span>
-                          {job.eta_seconds} {t(TEXT.seconds)}
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                          <FiClock aria-hidden="true" className="h-3 w-3" />
+                          {t(TEXT.eta)} {job.eta_seconds} {t(TEXT.seconds)}
                         </span>
                       )}
                     </div>
@@ -1186,38 +1301,66 @@ export default function ToolPage() {
             </ol>
           </div>
           {job && (status === 'failed' || status === 'done') && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
+            <div
+              className={`rounded-2xl border p-5 shadow-sm lg:p-4 ${
+                status === 'done'
+                  ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-white'
+                  : 'border-red-200 bg-gradient-to-br from-red-50 to-white'
+              }`}
+            >
               {status === 'failed' && (
                 <div>
-                  <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                  <div className="flex items-center gap-2">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-red-100 text-red-600">
+                      <FiAlertCircle aria-hidden="true" className="h-5 w-5" />
+                    </span>
+                    <p className="text-sm font-bold text-red-800">{t(TEXT.resultFailed)}</p>
+                  </div>
+                  <p
+                    role="alert"
+                    className="mt-3 rounded-lg bg-white/80 p-3 text-xs leading-relaxed text-red-700 ring-1 ring-red-100"
+                  >
                     {job.error?.message ?? t(TEXT.processingFailed)}
                   </p>
                   <button
                     type="button"
                     onClick={resetTool}
-                    className="mt-3 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50"
                   >
+                    <FiRefreshCw aria-hidden="true" className="h-3.5 w-3.5" />
                     {t(TEXT.retry)}
                   </button>
                 </div>
               )}
               {status === 'done' && (
                 <div>
+                  <div className="flex items-center gap-2">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-100 text-emerald-600">
+                      <FiCheckCircle aria-hidden="true" className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-bold text-emerald-800">{t(TEXT.resultReady)}</p>
+                      <p className="text-[11px] text-emerald-600">{t(TEXT.resultAvailable)}</p>
+                    </div>
+                  </div>
                   <button
                     type="button"
                     onClick={handleDownloadResult}
                     disabled={downloading}
-                    className="mt-3 rounded-lg bg-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-sky-600 disabled:opacity-50"
+                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-200 transition hover:-translate-y-0.5 hover:shadow-xl disabled:translate-y-0 disabled:opacity-50"
                   >
-                    {t(downloading ? TEXT.retrieving : TEXT.getResult)}
+                    <FiDownload aria-hidden="true" className="h-4 w-4" />
+                    {t(downloading ? TEXT.retrieving : TEXT.download)}
                   </button>
                   {downloadedJobId === jobId && downloadError && (
-                    <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                    <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-xs text-red-700">
                       {downloadError.message}
                     </p>
                   )}
                   {downloadedJobId === jobId && !downloadError && !downloading && (
-                    <p className="mt-3 text-sm text-emerald-700">{t(TEXT.downloadStarted)}</p>
+                    <p className="mt-3 text-center text-xs font-medium text-emerald-700">
+                      {t(TEXT.downloadStarted)}
+                    </p>
                   )}
                 </div>
               )}
