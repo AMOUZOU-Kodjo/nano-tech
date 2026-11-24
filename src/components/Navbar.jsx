@@ -176,7 +176,6 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [toolsOpen, setToolsOpen] = useState(false)
   const [spaceOpen, setSpaceOpen] = useState(false)
-  const [menuSearch, setMenuSearch] = useState('')
   const [expandedGroups, setExpandedGroups] = useState(() => ({
     [findCurrentToolGroupId(location.pathname)]: true,
   }))
@@ -184,14 +183,11 @@ export default function Navbar() {
   const spaceRef = useRef(null)
   const menuButtonRef = useRef(null)
   const menuContainerRef = useRef(null)
-  const menuSearchRef = useRef(null)
   const toolsActive = location.pathname.startsWith('/tools')
   const spaceActive =
     SPACE_LINKS.some((link) => location.pathname.startsWith(link.to)) ||
     (!isGuest && ACCOUNT_LINKS.some((link) => location.pathname.startsWith(link.to)))
   const currentGroupId = findCurrentToolGroupId(location.pathname)
-  const normalizedSearch = menuSearch.trim().toLocaleLowerCase(locale)
-  const searchActive = normalizedSearch.length > 0
 
   const authLinks = loading
     ? []
@@ -202,16 +198,8 @@ export default function Navbar() {
         ]
       : ACCOUNT_LINKS
 
-  const filteredToolGroups = MOBILE_TOOL_GROUPS.map((group) => ({
-    ...group,
-    links: group.links.filter((link) =>
-      `${t(group.title)} ${t(link.label)}`.toLocaleLowerCase(locale).includes(normalizedSearch),
-    ),
-  })).filter((group) => group.links.length > 0)
-
-  // Ouvre le menu en réinitialisant la recherche et en dépliant le groupe courant.
+  // Ouvre le menu en dépliant le groupe courant.
   function openMenu() {
-    setMenuSearch('')
     setExpandedGroups({ [currentGroupId]: true })
     setMenuOpen(true)
   }
@@ -295,7 +283,6 @@ export default function Navbar() {
       }
     }
 
-    menuSearchRef.current?.focus()
     window.addEventListener('keydown', handleKeyDown)
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
@@ -550,23 +537,6 @@ export default function Navbar() {
             <div className="space-y-6">
               <section>
                 <h2 className="px-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  {locale === 'fr' ? 'Recherche' : 'Search'}
-                </h2>
-                <label className="mt-2 block">
-                  <span className="sr-only">{t(MESSAGES.nav.searchPlaceholder)}</span>
-                  <input
-                    ref={menuSearchRef}
-                    type="search"
-                    value={menuSearch}
-                    onChange={(event) => setMenuSearch(event.target.value)}
-                    placeholder={t(MESSAGES.nav.searchPlaceholder)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
-                  />
-                </label>
-              </section>
-
-              <section>
-                <h2 className="px-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                   {locale === 'fr' ? 'Accès rapide' : 'Quick access'}
                 </h2>
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -623,60 +593,42 @@ export default function Navbar() {
                 <h2 className="px-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                   {t(MESSAGES.common.tools)}
                 </h2>
-                {searchActive ? (
-                  filteredToolGroups.length > 0 ? (
-                    <div className="mt-2 space-y-1">
-                      {filteredToolGroups.flatMap((group) =>
-                        group.links.map((link) => (
-                          <MobileNavLink key={link.to} link={link} pathname={location.pathname} onClick={closeMenu} />
-                        )),
-                      )}
-                    </div>
-                  ) : (
-                    <p className="mt-2 break-all px-4 py-3 text-sm text-slate-500">
-                      {locale === 'fr'
-                        ? `Aucun outil trouvé pour « ${menuSearch.trim()} ».`
-                        : `No tool found for “${menuSearch.trim()}”.`}
-                    </p>
-                  )
-                ) : (
-                  <div className="mt-2 space-y-2">
-                    {MOBILE_TOOL_GROUPS.map((group) => {
-                      const open = isGroupOpen(group)
-                      const GroupIcon = group.icon
-                      return (
-                        <div key={group.id} className="overflow-hidden rounded-xl border border-slate-200">
-                          <button
-                            type="button"
-                            onClick={() => toggleGroup(group.id)}
-                            aria-expanded={open}
-                            aria-controls={`mobile-group-${group.id}`}
-                            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50"
-                          >
-                            <span className="flex items-center gap-2">
-                              <GroupIcon aria-hidden="true" className="h-4 w-4 text-sky-600" />
-                              <span className="text-sm font-semibold text-slate-800">{t(group.title)}</span>
-                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-                                {group.links.length}
-                              </span>
+                <div className="mt-2 space-y-2">
+                  {MOBILE_TOOL_GROUPS.map((group) => {
+                    const open = isGroupOpen(group)
+                    const GroupIcon = group.icon
+                    return (
+                      <div key={group.id} className="overflow-hidden rounded-xl border border-slate-200">
+                        <button
+                          type="button"
+                          onClick={() => toggleGroup(group.id)}
+                          aria-expanded={open}
+                          aria-controls={`mobile-group-${group.id}`}
+                          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50"
+                        >
+                          <span className="flex items-center gap-2">
+                            <GroupIcon aria-hidden="true" className="h-4 w-4 text-sky-600" />
+                            <span className="text-sm font-semibold text-slate-800">{t(group.title)}</span>
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                              {group.links.length}
                             </span>
-                            <FiChevronDown
-                              aria-hidden="true"
-                              className={`h-4 w-4 text-slate-500 transition ${open ? 'rotate-180' : ''}`}
-                            />
-                          </button>
-                          {open && (
-                            <div id={`mobile-group-${group.id}`} className="border-t border-slate-100 bg-slate-50/60 px-2 py-2">
-                              {group.links.map((link) => (
-                                <MobileNavLink key={link.to} link={link} pathname={location.pathname} onClick={closeMenu} />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
+                          </span>
+                          <FiChevronDown
+                            aria-hidden="true"
+                            className={`h-4 w-4 text-slate-500 transition ${open ? 'rotate-180' : ''}`}
+                          />
+                        </button>
+                        {open && (
+                          <div id={`mobile-group-${group.id}`} className="border-t border-slate-100 bg-slate-50/60 px-2 py-2">
+                            {group.links.map((link) => (
+                              <MobileNavLink key={link.to} link={link} pathname={location.pathname} onClick={closeMenu} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </section>
 
               <section>
