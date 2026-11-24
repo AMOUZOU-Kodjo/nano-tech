@@ -95,39 +95,25 @@ const TEXT = {
   creating: { fr: 'Création du job…', en: 'Creating the job…' },
   startProcessing: { fr: 'Lancer le traitement', en: 'Start processing' },
   newProcessing: { fr: 'Nouveau traitement', en: 'New processing' },
-  jobTracking: { fr: 'Suivi du job', en: 'Job tracking' },
   identifier: { fr: 'Identifiant', en: 'Identifier' },
   loadingStatus: { fr: 'Chargement du statut…', en: 'Loading status…' },
   jobProgress: { fr: 'Progression du job', en: 'Job progress' },
+  stage: { fr: 'Étape', en: 'Stage' },
+  eta: { fr: 'Temps estimé', en: 'Estimated time' },
+  seconds: { fr: 's', en: 's' },
   processingFailed: { fr: 'Le traitement a échoué.', en: 'Processing failed.' },
   retry: { fr: 'Réessayer', en: 'Try again' },
   retrieving: { fr: 'Récupération…', en: 'Retrieving…' },
   getResult: { fr: 'Récupérer le résultat', en: 'Get the result' },
   downloadStarted: { fr: 'Le téléchargement a été lancé.', en: 'The download has started.' },
-  howItWorks: { fr: 'Comment ça marche', en: 'How it works' },
-  step1Title: { fr: 'Ajoutez vos fichiers', en: 'Add your files' },
-  step1Description: {
-    fr: 'Glissez vos fichiers ou sélectionnez-les depuis votre appareil.',
-    en: 'Drag your files or select them from your device.',
-  },
-  step2Title: { fr: 'Lancez le traitement', en: 'Start processing' },
-  step2DescriptionPhoto: {
-    fr: 'Le job est créé avec le pays et le document sélectionnés.',
-    en: 'The job is created with the selected country and document.',
-  },
-  step2DescriptionAdvanced: {
-    fr: 'Le job est créé avec les options choisies.',
-    en: 'The job is created with the chosen options.',
-  },
-  step2DescriptionDefault: {
-    fr: 'Le job est créé avec les options par défaut documentées.',
-    en: 'The job is created with the documented default options.',
-  },
-  step3Title: { fr: 'Récupérez le résultat', en: 'Get the result' },
-  step3Description: {
-    fr: 'Suivez le statut puis téléchargez le résultat quand le job est terminé.',
-    en: 'Track the status, then download the result when the job is complete.',
-  },
+  liveTracking: { fr: 'Suivi en direct', en: 'Live tracking' },
+  filesReady: { fr: 'Fichiers prêts', en: 'Files ready' },
+  processing: { fr: 'Traitement en cours', en: 'Processing' },
+  resultStep: { fr: 'Résultat', en: 'Result' },
+  notStarted: { fr: 'Pas encore lancé', en: 'Not started yet' },
+  resultAvailable: { fr: 'Résultat disponible', en: 'Result available' },
+  resultFailed: { fr: 'Traitement échoué', en: 'Processing failed' },
+  resultPending: { fr: 'En attente du résultat', en: 'Waiting for the result' },
   photoSpecs: { fr: 'Spécifications photo', en: 'Photo specifications' },
   refresh: { fr: 'Actualiser', en: 'Refresh' },
   loading: { fr: 'Chargement…', en: 'Loading…' },
@@ -281,9 +267,9 @@ function normalizePhotoExcluded(specs) {
     .filter((item) => item.code)
 }
 
-function Step({ title, description, done, active }) {
+function Step({ title, description, done, active, className = '' }) {
   return (
-    <li className="flex gap-3">
+    <li className={`flex gap-3 ${className}`}>
       <span
         className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ${
           done ? 'bg-emerald-500 text-white' : active ? 'bg-sky-500 text-white' : 'bg-slate-100 text-slate-500'
@@ -390,6 +376,17 @@ export default function ToolPage() {
     locale === 'en' ? category?.labelEn ?? toolInfo?.category : category?.label ?? toolInfo?.category
   const status = job?.status
   const progress = typeof job?.progress === 'number' ? Math.min(100, Math.max(0, job.progress)) : 0
+  const processingDescription = !jobId
+    ? t(TEXT.notStarted)
+    : [
+        t(STATUS_LABELS[status] ?? STATUS_LABELS.queued),
+        job?.stage,
+        typeof job?.eta_seconds === 'number' && job.eta_seconds > 0
+          ? `${job.eta_seconds} ${t(TEXT.seconds)}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' · ')
   const photoCountries = useMemo(() => normalizePhotoCountries(photoSpecs), [photoSpecs])
   const photoExcluded = useMemo(() => normalizePhotoExcluded(photoSpecs), [photoSpecs])
   const selectedPhotoCountry = photoOptions.country || photoCountries[0]?.value || ''
@@ -450,6 +447,14 @@ export default function ToolPage() {
     getPhotoSpecs()
     return undefined
   }, [tool, photoSpecs, getPhotoSpecs])
+
+  // Prépare les miniatures des images sélectionnées et libère les URL à chaque changement.
+  const previews = useMemo(
+    () => files.map((file) => (file.type.startsWith('image/') ? URL.createObjectURL(file) : null)),
+    [files],
+  )
+
+  useEffect(() => () => previews.forEach((url) => url && URL.revokeObjectURL(url)), [previews])
 
   if (!toolInfo) {
     return (
@@ -677,7 +682,7 @@ export default function ToolPage() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-12">
+    <section className="mx-auto max-w-6xl px-6 py-6 lg:py-4">
       <nav aria-label={t(TEXT.breadcrumb)} className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
         <Link to="/catalogue" className="text-sky-700 hover:text-sky-800">
           {t(TEXT.catalogue)}
@@ -688,14 +693,14 @@ export default function ToolPage() {
         <span className="text-slate-700">{toolName}</span>
       </nav>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <div className="mt-4 grid gap-5 lg:grid-cols-2">
         <div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{categoryLabel}</p>
-            <h1 className="mt-2 text-3xl font-bold text-slate-900">{toolName}</h1>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">{toolDescription}</p>
+            <h1 className="mt-1 text-2xl font-bold text-slate-900 lg:text-3xl">{toolName}</h1>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">{toolDescription}</p>
 
-            <form onSubmit={handleSubmit} className="mt-8">
+            <form onSubmit={handleSubmit} className="mt-5">
               <div
                 onDragOver={(event) => {
                   event.preventDefault()
@@ -707,7 +712,7 @@ export default function ToolPage() {
                   setIsDragging(false)
                   handleFiles(event.dataTransfer.files)
                 }}
-                className={`rounded-2xl border-2 border-dashed p-8 text-center transition ${
+                className={`rounded-2xl border-2 border-dashed p-6 text-center transition lg:p-4 ${
                   isDragging
                     ? 'border-sky-400 bg-sky-50'
                     : 'border-slate-300 bg-slate-50 hover:border-sky-300'
@@ -721,10 +726,10 @@ export default function ToolPage() {
                   className="sr-only"
                 />
                 <label htmlFor="job-files" className="cursor-pointer">
-                  <span className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-white text-sm font-bold text-sky-700 shadow-sm ring-1 ring-slate-200">
+                  <span className="mx-auto grid h-10 w-10 place-items-center rounded-xl bg-white text-sm font-bold text-sky-700 shadow-sm ring-1 ring-slate-200 lg:h-9 lg:w-9">
                     +
                   </span>
-                  <span className="mt-4 block text-sm font-semibold text-slate-900">
+                  <span className="mt-2 block text-sm font-semibold text-slate-900">
                     {t(TEXT.dropFiles)}
                   </span>
                   <span className="mt-1 block text-sm text-slate-600">
@@ -740,9 +745,18 @@ export default function ToolPage() {
                       key={`${file.name}-${index}`}
                       className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2"
                     >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-slate-800">{file.name}</p>
-                        <p className="text-xs text-slate-500">{formatFileSize(file.size, locale)}</p>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-slate-100 text-[10px] font-bold text-slate-500">
+                          {previews[index] ? (
+                            <img src={previews[index]} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            file.name.split('.').pop()?.toUpperCase().slice(0, 4)
+                          )}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-slate-800">{file.name}</p>
+                          <p className="text-xs text-slate-500">{formatFileSize(file.size, locale)}</p>
+                        </div>
                       </div>
                       <div className="flex shrink-0 items-center gap-1">
                         {toolInfo.tool === 'images_to_pdf' && (
@@ -779,46 +793,8 @@ export default function ToolPage() {
                 </ul>
               )}
 
-              {toolInfo.tool === 'compress' && (
-                <div className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.compressionOptions)}</h3>
-                  <p className="text-xs leading-relaxed text-slate-600">
-                    {t(TEXT.compressionHelp)}
-                  </p>
-                  <p className="text-xs leading-relaxed text-slate-500">
-                    {t(TEXT.acceptedFormats)}
-                  </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                      <span>{t(TEXT.level)}</span>
-                      <select
-                        value={compressOptions.level}
-                        onChange={(event) => updateCompressOption('level', event.target.value)}
-                        disabled={creating || Boolean(compressOptions.targetSizeKb)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
-                      >
-                        <option value="">{t(TEXT.default)}</option>
-                        <option value="basic">{t(TEXT.basic)}</option>
-                        <option value="medium">{t(TEXT.medium)}</option>
-                        <option value="max">{t(TEXT.max)}</option>
-                      </select>
-                    </label>
-                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
-                      <span>{t(TEXT.targetSizeKb)}</span>
-                      <input
-                        type="number"
-                        min="1"
-                        value={compressOptions.targetSizeKb}
-                        onChange={(event) => updateCompressOption('targetSizeKb', event.target.value)}
-                        disabled={creating || Boolean(compressOptions.level)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
-                      />
-                    </label>
-                  </div>
-                </div>
-              )}
               {hasAdvancedOptions && toolInfo.tool !== 'compress' && toolInfo.tool !== 'photo_id' && (
-                <div className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:p-3">
                   <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.advancedOptions)}</h3>
                   {toolInfo.tool === 'pdf_to_images' && (
                     <div className="grid gap-3 sm:grid-cols-3">
@@ -957,7 +933,7 @@ export default function ToolPage() {
                 </div>
               )}
               {toolInfo.tool === 'photo_id' && (
-                <div className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:p-3">
                   <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.photoOptions)}</h3>
                   {specsLoading && <p className="text-sm text-slate-600">{t(TEXT.loadingCountries)}</p>}
                   {specsError && (
@@ -1047,7 +1023,7 @@ export default function ToolPage() {
                 </p>
               )}
 
-              <div className="mt-6 flex flex-wrap gap-3">
+              <div className="mt-4 flex flex-wrap gap-3">
                 <button
                   type="submit"
                   disabled={
@@ -1079,29 +1055,23 @@ export default function ToolPage() {
             )}
           </div>
 
-          {jobId && (
-            <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-xl font-semibold text-slate-900">{t(TEXT.jobTracking)}</h2>
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-slate-900">{t(TEXT.liveTracking)}</h2>
+              {jobId && (
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[status] ?? 'bg-slate-100 text-slate-700'}`}>
                   {t(STATUS_LABELS[status] ?? STATUS_LABELS.queued)}
                 </span>
-              </div>
-              <p className="mt-2 text-sm text-slate-600">
-                {t(TEXT.identifier)} : <span className="break-all font-mono text-slate-700">{jobId}</span>
-              </p>
-
-              {jobLoading && !job && <p className="mt-4 text-sm text-slate-600">{t(TEXT.loadingStatus)}</p>}
-              {jobError && (
-                <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                  {jobError.message}
-                </p>
               )}
-
-              {job && (
-                <div className="mt-6">
-                  <div className="flex justify-between text-sm text-slate-600">
-                    <span>{t(STATUS_LABELS[status] ?? status)}</span>
+            </div>
+            {jobId && (
+              <>
+                <p className="mt-2 text-sm text-slate-600">
+                  {t(TEXT.identifier)} : <span className="break-all font-mono text-slate-700">{jobId}</span>
+                </p>
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs text-slate-600">
+                    <span>{t(TEXT.jobProgress)}</span>
                     <span>{progress}%</span>
                   </div>
                   <div
@@ -1114,71 +1084,147 @@ export default function ToolPage() {
                   >
                     <div className="h-full rounded-full bg-sky-500" style={{ width: `${progress}%` }} />
                   </div>
-
-                  {status === 'failed' && (
-                    <div className="mt-5">
-                      <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                        {job.error?.message ?? t(TEXT.processingFailed)}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={resetTool}
-                        className="mt-3 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                      >
-                        {t(TEXT.retry)}
-                      </button>
+                  {((job?.stage) || (typeof job?.eta_seconds === 'number' && job.eta_seconds > 0)) && (
+                    <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-600">
+                      {job.stage && (
+                        <span>
+                          <span className="font-semibold text-slate-700">{t(TEXT.stage)} : </span>
+                          {job.stage}
+                        </span>
+                      )}
+                      {typeof job.eta_seconds === 'number' && job.eta_seconds > 0 && (
+                        <span>
+                          <span className="font-semibold text-slate-700">{t(TEXT.eta)} : </span>
+                          {job.eta_seconds} {t(TEXT.seconds)}
+                        </span>
+                      )}
                     </div>
                   )}
+                </div>
+              </>
+            )}
+            {jobLoading && !job && <p className="mt-3 text-sm text-slate-600">{t(TEXT.loadingStatus)}</p>}
+            {jobError && (
+              <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                {jobError.message}
+              </p>
+            )}
+            <ol className="mt-4 grid gap-3 sm:grid-cols-3 lg:gap-4">
+              <Step
+                title={t(TEXT.filesReady)}
+                description={
+                  files.length === 0
+                    ? t(TEXT.notStarted)
+                    : locale === 'fr'
+                      ? `${files.length} fichier${files.length > 1 ? 's' : ''} sélectionné${files.length > 1 ? 's' : ''}`
+                      : `${files.length} file${files.length > 1 ? 's' : ''} selected`
+                }
+                done={files.length > 0}
+                active={files.length === 0}
+              />
+              <Step
+                title={t(TEXT.processing)}
+                description={processingDescription}
+                done={status === 'done'}
+                active={Boolean(jobId) && status !== 'done' && status !== 'failed'}
+              />
+              <Step
+                title={t(TEXT.resultStep)}
+                description={
+                  status === 'done'
+                    ? t(TEXT.resultAvailable)
+                    : status === 'failed'
+                      ? t(TEXT.resultFailed)
+                      : t(TEXT.resultPending)
+                }
+                done={status === 'done'}
+                active={Boolean(jobId) && status !== 'done' && status !== 'failed'}
+              />
+            </ol>
+          </div>
+        </div>
 
-                  {status === 'done' && (
-                    <div className="mt-5">
-                      <button
-                        type="button"
-                        onClick={handleDownloadResult}
-                        disabled={downloading}
-                        className="rounded-lg bg-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-sky-600 disabled:opacity-50"
-                      >
-                        {t(downloading ? TEXT.retrieving : TEXT.getResult)}
-                      </button>
-                      {downloadedJobId === jobId && downloadError && (
-                        <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                          {downloadError.message}
-                        </p>
-                      )}
-                      {downloadedJobId === jobId && !downloadError && !downloading && (
-                        <p className="mt-3 text-sm text-emerald-700">{t(TEXT.downloadStarted)}</p>
-                      )}
-                    </div>
+        <aside className="space-y-4 lg:space-y-3">
+          {toolInfo.tool === 'compress' && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
+              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:p-3">
+                <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.compressionOptions)}</h3>
+                <p className="text-xs leading-relaxed text-slate-600">
+                  {t(TEXT.compressionHelp)}
+                </p>
+                <p className="text-xs leading-relaxed text-slate-500">
+                  {t(TEXT.acceptedFormats)}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                  <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                    <span>{t(TEXT.level)}</span>
+                    <select
+                      value={compressOptions.level}
+                      onChange={(event) => updateCompressOption('level', event.target.value)}
+                      disabled={creating || Boolean(compressOptions.targetSizeKb)}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                    >
+                      <option value="">{t(TEXT.default)}</option>
+                      <option value="basic">{t(TEXT.basic)}</option>
+                      <option value="medium">{t(TEXT.medium)}</option>
+                      <option value="max">{t(TEXT.max)}</option>
+                    </select>
+                  </label>
+                  <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                    <span>{t(TEXT.targetSizeKb)}</span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={compressOptions.targetSizeKb}
+                      onChange={(event) => updateCompressOption('targetSizeKb', event.target.value)}
+                      disabled={creating || Boolean(compressOptions.level)}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+          {job && (status === 'failed' || status === 'done') && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
+              {status === 'failed' && (
+                <div>
+                  <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                    {job.error?.message ?? t(TEXT.processingFailed)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={resetTool}
+                    className="mt-3 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    {t(TEXT.retry)}
+                  </button>
+                </div>
+              )}
+              {status === 'done' && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleDownloadResult}
+                    disabled={downloading}
+                    className="mt-3 rounded-lg bg-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-sky-600 disabled:opacity-50"
+                  >
+                    {t(downloading ? TEXT.retrieving : TEXT.getResult)}
+                  </button>
+                  {downloadedJobId === jobId && downloadError && (
+                    <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                      {downloadError.message}
+                    </p>
+                  )}
+                  {downloadedJobId === jobId && !downloadError && !downloading && (
+                    <p className="mt-3 text-sm text-emerald-700">{t(TEXT.downloadStarted)}</p>
                   )}
                 </div>
               )}
             </div>
           )}
-        </div>
-
-        <aside className="space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">{t(TEXT.howItWorks)}</h2>
-            <ol className="mt-5 space-y-5">
-              <Step title={t(TEXT.step1Title)} description={t(TEXT.step1Description)} done={files.length > 0} active={files.length === 0} />
-              <Step
-                title={t(TEXT.step2Title)}
-                description={
-                  toolInfo.tool === 'photo_id'
-                    ? t(TEXT.step2DescriptionPhoto)
-                    : hasAdvancedOptions
-                      ? t(TEXT.step2DescriptionAdvanced)
-                      : t(TEXT.step2DescriptionDefault)
-                }
-                done={Boolean(jobId)}
-                active={files.length > 0 && !jobId}
-              />
-              <Step title={t(TEXT.step3Title)} description={t(TEXT.step3Description)} done={status === 'done'} active={Boolean(jobId) && status !== 'done' && status !== 'failed'} />
-            </ol>
-          </div>
-
           {toolInfo.tool === 'photo_id' && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold text-slate-900">{t(TEXT.photoSpecs)}</h2>
                 <button
@@ -1200,7 +1246,7 @@ export default function ToolPage() {
           )}
 
           {relatedTools.length > 0 && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:hidden">
               <h2 className="text-lg font-semibold text-slate-900">{t(TEXT.similarTools)}</h2>
               <div className="mt-4 space-y-2">
                 {relatedTools.map((item) => (
@@ -1216,7 +1262,7 @@ export default function ToolPage() {
             </div>
           )}
 
-          <div className="rounded-2xl border border-sky-200 bg-sky-50 p-6">
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 p-6 lg:hidden">
             <h2 className="text-sm font-semibold text-sky-900">{t(TEXT.needAnotherTool)}</h2>
             <p className="mt-2 text-sm leading-relaxed text-sky-800">
               {t(TEXT.catalogueHelp)}

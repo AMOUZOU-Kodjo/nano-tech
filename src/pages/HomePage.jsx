@@ -1,24 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiArrowRight, FiCheck, FiFileText, FiImage, FiLayers, FiShield, FiZap } from 'react-icons/fi'
+import { FiArrowRight, FiCheck, FiShield } from 'react-icons/fi'
 import heroIllustration from '@/assets/auth-illustration.svg'
 import { Link } from 'react-router-dom'
 import { MESSAGES } from '@/i18n/messages.js'
 import { useLocale } from '@/hooks/useLocale.js'
 
 const TEXT = {
-  badge: { fr: 'Traitement en ligne', en: 'Online processing' },
-  badgeDetail: { fr: 'Simple · clair · prévisible', en: 'Simple · clear · predictable' },
   tryCompress: { fr: 'Essayer la compression', en: 'Try compression' },
   seeHow: { fr: 'Voir comment ça marche', en: 'See how it works' },
-  previewTitle: { fr: 'Aperçu du traitement', en: 'Processing preview' },
-  previewSimulation: { fr: 'Simulation', en: 'Demo' },
-  previewFile: { fr: 'presentation.pdf', en: 'presentation.pdf' },
-  previewFileMeta: { fr: 'Document PDF', en: 'PDF document' },
-  previewStep: { fr: 'Compression en cours', en: 'Compression in progress' },
-  previewDone: { fr: 'Prêt à télécharger', en: 'Ready to download' },
-  toolCompress: { fr: 'Compression', en: 'Compression' },
-  toolConvert: { fr: 'Conversion', en: 'Conversion' },
-  toolSecure: { fr: 'Sécurisation', en: 'Security' },
 }
 
 function Reveal({ as: Element = 'div', children, className = '', delay = 0, ...props }) {
@@ -72,35 +61,11 @@ function DocumentBadge({ label, color, tint }) {
 
 // Vue d'accueil : présentation concise et accès directs aux espaces principaux.
 export default function HomePage() {
-  const { locale, t } = useLocale()
-  const [progress, setProgress] = useState(() =>
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 68 : 8,
-  )
-
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return undefined
-    }
-
-    let frame
-    const start = performance.now()
-    const animate = (time) => {
-      const cycle = ((time - start) % 3200) / 3200
-      const ratio = cycle < 0.5 ? cycle * 2 : (1 - cycle) * 2
-      const next = 8 + Math.round(ratio * 60)
-      setProgress((current) => (current === next ? current : next))
-      frame = requestAnimationFrame(animate)
-    }
-
-    frame = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(frame)
-  }, [])
-
-  const progressLabel = locale === 'fr' ? `${progress} %` : `${progress}%`
+  const { t } = useLocale()
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-      <div className="relative overflow-hidden py-6 sm:py-10 lg:py-12">
+    <section className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-6">
+      <div className="relative overflow-hidden py-2 sm:py-4 lg:py-6">
         <img
           src={heroIllustration}
           alt=""
@@ -172,115 +137,37 @@ export default function HomePage() {
             </a>
           </Reveal>
 
-          <Reveal className="relative mx-auto w-full max-w-md" delay={90}>
-            <div className="relative py-2 sm:py-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-surface text-brand">
-                    <FiLayers aria-hidden="true" className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-ink">{t(TEXT.previewTitle)}</p>
-                      <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-faint">
-                        {t(TEXT.previewSimulation)}
-                      </span>
-                    </div>
-                    <p className="text-xs text-ink-muted">{t(TEXT.previewFileMeta)}</p>
-                  </div>
-                </div>
-                <span className="rounded-full bg-brand-surface px-3 py-1 text-xs font-semibold text-brand">{progressLabel}</span>
+          <Reveal className="relative mx-auto w-full max-w-md rounded-xl border border-slate-100 bg-white p-5 shadow-sm" delay={90}>
+            <div className="flex flex-col gap-4 text-center">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t(MESSAGES.home.processingZone)}</p>
+                <h2 className="mt-2 text-2xl font-bold text-slate-900">{t(MESSAGES.home.compress)}</h2>
+                <p className="mt-2 text-xs leading-relaxed text-slate-600 sm:text-sm">{t(MESSAGES.home.compressFormats)}</p>
               </div>
-
-              <div className="mt-6 flex items-center gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-surface text-brand">
-                  <FiFileText aria-hidden="true" className="h-5 w-5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-ink">{t(TEXT.previewFile)}</p>
-                  <p className="mt-0.5 text-xs text-ink-muted">{t(TEXT.previewFileMeta)}</p>
-                </div>
-                <FiCheck aria-hidden="true" className="h-4 w-4 text-brand" />
-              </div>
-
-              <div className="mt-5">
-                <div className="flex items-center justify-between text-xs font-medium text-ink-muted">
-                  <span>{t(TEXT.previewStep)}</span>
-                  <span>{progressLabel}</span>
-                </div>
-                <div
-                  role="progressbar"
-                  aria-label={t(TEXT.previewStep)}
-                  aria-valuenow={progress}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-strong"
-                >
-                  <div className="h-full rounded-full bg-brand transition-[width] duration-200 ease-out" style={{ width: `${progress}%` }} />
-                </div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-3 gap-2">
-                {[
-                  { Icon: FiZap, label: TEXT.toolCompress },
-                  { Icon: FiImage, label: TEXT.toolConvert },
-                  { Icon: FiShield, label: TEXT.toolSecure },
-                ].map(({ Icon, label }) => (
-                  <div key={label.fr} className="flex flex-col items-center gap-2 p-2 text-center">
-                    <Icon aria-hidden="true" className="h-4 w-4 text-brand" />
-                    <span className="text-[11px] font-semibold text-ink-soft">{t(label)}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 flex items-center justify-between gap-3">
-                <span className="inline-flex items-center gap-2 text-xs font-semibold text-brand">
-                  <FiCheck aria-hidden="true" className="h-4 w-4" />
-                  {t(TEXT.previewDone)}
-                </span>
-                <span className="text-[11px] text-ink-faint">{t(TEXT.badge)}</span>
-              </div>
+              <Link
+                to="/tools/compress"
+                className="self-center rounded-lg border border-slate-300 px-4 py-2 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                {t(MESSAGES.home.openTool)}
+              </Link>
             </div>
+
+            <Link
+              to="/tools/compress"
+              className="mt-5 flex min-h-44 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-sky-200 bg-brand-surface/60 p-5 text-center transition hover:border-sky-400 hover:bg-brand-surface sm:mt-6 sm:min-h-48 sm:p-8"
+            >
+              <span className="text-sm font-semibold text-slate-900 sm:text-base">{t(MESSAGES.home.dropFiles)}</span>
+              <span className="mt-2 text-xs text-slate-500 sm:text-sm">{t(MESSAGES.home.or)}</span>
+              <span className="mt-4 rounded-lg bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white">
+                {t(MESSAGES.home.chooseFiles)}
+              </span>
+              <span className="mt-4 text-[11px] leading-relaxed text-slate-500 sm:mt-5 sm:text-xs">
+                {t(MESSAGES.home.acceptedFormats)}
+              </span>
+            </Link>
           </Reveal>
         </div>
       </div>
-
-      <Reveal className="mt-8 rounded-xl border border-slate-100 bg-white p-5 shadow-sm sm:mt-10 sm:p-8">
-        <div className="flex flex-col gap-4 text-center sm:flex-row sm:items-start sm:justify-between sm:text-left">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t(MESSAGES.home.processingZone)}</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900">{t(MESSAGES.home.compress)}</h2>
-            <p className="mt-2 text-xs leading-relaxed text-slate-600 sm:text-sm">{t(MESSAGES.home.compressFormats)}</p>
-          </div>
-          <Link
-            to="/tools/compress"
-            className="self-center rounded-lg border border-slate-300 px-4 py-2 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:self-auto"
-          >
-            {t(MESSAGES.home.openTool)}
-          </Link>
-        </div>
-
-        <Link
-          to="/tools/compress"
-          className="mt-5 flex min-h-44 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-sky-200 bg-brand-surface/60 p-5 text-center transition hover:border-sky-400 hover:bg-brand-surface sm:mt-6 sm:min-h-48 sm:p-8"
-        >
-          <span className="text-sm font-semibold text-slate-900 sm:text-base">{t(MESSAGES.home.dropFiles)}</span>
-          <span className="mt-2 text-xs text-slate-500 sm:text-sm">{t(MESSAGES.home.or)}</span>
-          <span className="mt-4 rounded-lg bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white">
-            {t(MESSAGES.home.chooseFiles)}
-          </span>
-          <span className="mt-4 text-[11px] leading-relaxed text-slate-500 sm:mt-5 sm:text-xs">
-            {t(MESSAGES.home.acceptedFormats)}
-          </span>
-        </Link>
-
-        <div className="mt-4 flex flex-col items-center gap-2 text-center sm:flex-row sm:justify-between sm:text-left">
-          {/* <p className="text-xs text-slate-500">Aucun fichier choisi</p>
-          <a href="#comment-ca-marche" className="text-xs font-semibold text-sky-700 hover:underline">
-            01 / Comment ça marche
-          </a> */}
-        </div>
-      </Reveal>
 
       <div className="mt-10 grid gap-4 sm:mt-14 sm:grid-cols-2 sm:gap-6 md:grid-cols-3">
         <Link

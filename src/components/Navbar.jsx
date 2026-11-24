@@ -327,7 +327,12 @@ export default function Navbar() {
             {t(MESSAGES.common.home)}
           </Link>
 
-          <div ref={toolsRef} className="relative">
+          <div
+            ref={toolsRef}
+            className="relative"
+            onMouseEnter={() => setToolsOpen(true)}
+            onMouseLeave={() => setToolsOpen(false)}
+          >
             <button
               type="button"
               onClick={() => setToolsOpen((open) => !open)}
@@ -390,7 +395,12 @@ export default function Navbar() {
               </Link>
             )
           })}
-          <div ref={spaceRef} className="relative">
+          <div
+            ref={spaceRef}
+            className="relative"
+            onMouseEnter={() => setSpaceOpen(true)}
+            onMouseLeave={() => setSpaceOpen(false)}
+          >
             <button
               type="button"
               onClick={() => setSpaceOpen((open) => !open)}
