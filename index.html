@@ -5,7 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#ffffff" />
-    <title>NanoFile</title>
+    <meta name="google-site-verification" content="rJJh547IRULi2l4h6KdVPei_UH6W0CPBR_6q2ih-uE8" />
+    <meta
+      name="description"
+      content="NanoFile : compressez, convertissez et réorganisez vos fichiers PDF, images et documents en ligne, simplement et en toute sécurité."
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://nanofile.tech/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="NanoFile" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:url" content="https://nanofile.tech/" />
+    <meta property="og:title" content="NanoFile — Traitement de fichiers en ligne" />
+    <meta
+      property="og:description"
+      content="Compressez, convertissez et réorganisez vos fichiers PDF, images et documents en ligne avec NanoFile."
+    />
+    <meta name="twitter:card" content="summary" />
+    <title>NanoFile — Traitement de fichiers en ligne</title>
+    <script>
+      const siteUrl = 'https://nanofile.tech'
+      const path = window.location.pathname.replace(/\/+$/, '') || '/'
+      const publicPaths = new Set(['/', '/catalogue', '/terms', '/privacy', '/cookies', '/legal'])
+      const isPublicPath = publicPaths.has(path) || path.startsWith('/tools/')
+      const canonicalUrl = `${siteUrl}${path}`
+      const titles = {
+        '/': 'NanoFile — Traitement de fichiers en ligne',
+        '/catalogue': 'Catalogue des outils — NanoFile',
+        '/terms': 'Conditions générales — NanoFile',
+        '/privacy': 'Confidentialité — NanoFile',
+        '/cookies': 'Cookies — NanoFile',
+        '/legal': 'Mentions légales — NanoFile',
+      }
+      const descriptions = {
+        '/': 'Compressez, convertissez et réorganisez vos fichiers PDF, images et documents en ligne avec NanoFile.',
+        '/catalogue': 'Découvrez tous les outils NanoFile pour traiter vos fichiers PDF, images et documents.',
+        '/terms': 'Conditions générales d’utilisation de NanoFile.',
+        '/privacy': 'Politique de confidentialité de NanoFile.',
+        '/cookies': 'Politique de gestion des cookies de NanoFile.',
+        '/legal': 'Mentions légales de NanoFile.',
+      }
+      const robots = document.querySelector('meta[name="robots"]')
+      const canonical = document.querySelector('link[rel="canonical"]')
+      const ogUrl = document.querySelector('meta[property="og:url"]')
+      const ogTitle = document.querySelector('meta[property="og:title"]')
+      const ogDescription = document.querySelector('meta[property="og:description"]')
+      const metaDescription = document.querySelector('meta[name="description"]')
+
+      if (!isPublicPath && robots) {
+        robots.setAttribute('content', 'noindex, nofollow')
+      }
+      if (canonical) {
+        canonical.setAttribute('href', canonicalUrl)
+      }
+      if (ogUrl) {
+        ogUrl.setAttribute('content', canonicalUrl)
+      }
+      if (titles[path]) {
+        document.title = titles[path]
+        if (ogTitle) {
+          ogTitle.setAttribute('content', titles[path])
+        }
+      }
+      if (descriptions[path]) {
+        if (metaDescription) {
+          metaDescription.setAttribute('content', descriptions[path])
+        }
+        if (ogDescription) {
+          ogDescription.setAttribute('content', descriptions[path])
+        }
+      }
+    </script>
     <script>
       const storedTheme = (() => {
         try {

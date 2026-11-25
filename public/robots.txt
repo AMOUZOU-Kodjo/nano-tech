@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /account
+Disallow: /documents
+Disallow: /studio
+Disallow: /jobs
+Disallow: /billing
+Disallow: /d/
+Disallow: /auth/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+
+Sitemap: https://nanofile.tech/sitemap.xml

@@ -6,6 +6,7 @@ import { MeProvider } from '@/contexts/MeContext.jsx'
 import AdminSidebar from '@/components/AdminSidebar.jsx'
 import Navbar from '@/components/Navbar.jsx'
 import SiteFooter from '@/components/SiteFooter.jsx'
+import { TOOLS } from '@/config/tools.js'
 import { useLocale } from '@/hooks/useLocale.js'
 import { MESSAGES } from '@/i18n/messages.js'
 import AccountPage from '@/pages/AccountPage.jsx'
@@ -40,6 +41,79 @@ const MOBILE_DENIED = {
   },
 }
 
+const SITE_URL = 'https://nanofile.tech'
+
+const SEO_PAGES = {
+  '/': {
+    fr: {
+      title: 'NanoFile — Traitement de fichiers en ligne',
+      description: 'Compressez, convertissez et réorganisez vos fichiers PDF, images et documents en ligne avec NanoFile.',
+    },
+    en: {
+      title: 'NanoFile — Online file processing',
+      description: 'Compress, convert and reorganize your PDF, image and document files online with NanoFile.',
+    },
+  },
+  '/catalogue': {
+    fr: {
+      title: 'Catalogue des outils — NanoFile',
+      description: 'Découvrez tous les outils NanoFile pour traiter vos fichiers PDF, images et documents.',
+    },
+    en: {
+      title: 'Tool catalog — NanoFile',
+      description: 'Explore all NanoFile tools to process your PDF, image and document files.',
+    },
+  },
+  '/terms': {
+    fr: { title: 'Conditions générales — NanoFile', description: 'Conditions générales d’utilisation de NanoFile.' },
+    en: { title: 'Terms of service — NanoFile', description: 'NanoFile terms of service.' },
+  },
+  '/privacy': {
+    fr: { title: 'Confidentialité — NanoFile', description: 'Politique de confidentialité de NanoFile.' },
+    en: { title: 'Privacy — NanoFile', description: 'NanoFile privacy policy.' },
+  },
+  '/cookies': {
+    fr: { title: 'Cookies — NanoFile', description: 'Politique de gestion des cookies de NanoFile.' },
+    en: { title: 'Cookies — NanoFile', description: 'NanoFile cookie policy.' },
+  },
+  '/legal': {
+    fr: { title: 'Mentions légales — NanoFile', description: 'Mentions légales de NanoFile.' },
+    en: { title: 'Legal notice — NanoFile', description: 'NanoFile legal notice.' },
+  },
+}
+
+const SEO_FALLBACK = {
+  fr: {
+    title: 'NanoFile — Traitement de fichiers en ligne',
+    description: 'Compressez, convertissez et réorganisez vos fichiers PDF, images et documents en ligne avec NanoFile.',
+  },
+  en: {
+    title: 'NanoFile — Online file processing',
+    description: 'Compress, convert and reorganize your PDF, image and document files online with NanoFile.',
+  },
+}
+
+function getSeoMetadata(pathname, locale) {
+  const path = pathname.replace(/\/+$/, '') || '/'
+  const toolSlug = path.startsWith('/tools/') ? path.slice('/tools/'.length) : ''
+  const tool = TOOLS.find((item) => item.tool === toolSlug)
+
+  if (tool) {
+    return {
+      indexable: true,
+      title: `${locale === 'en' ? tool.nameEn : tool.name} — NanoFile`,
+      description: locale === 'en' ? tool.descriptionEn : tool.description,
+    }
+  }
+
+  const page = SEO_PAGES[path]
+  if (page) {
+    return { indexable: true, ...page[locale] }
+  }
+
+  return { indexable: false, ...SEO_FALLBACK[locale] }
+}
+
 // Détecte un écran assez large pour afficher la sidebar administrative.
 function useDesktopViewport() {
   const [isDesktop, setIsDesktop] = useState(
@@ -59,10 +133,32 @@ function useDesktopViewport() {
 function AppLayout() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { t } = useLocale()
+  const { locale, t } = useLocale()
   const isDesktop = useDesktopViewport()
   const isAdminRoute = location.pathname.startsWith('/admin')
   const hideFooter = AUTH_ROUTES.has(location.pathname) || isAdminRoute
+
+  useEffect(() => {
+    const path = location.pathname.replace(/\/+$/, '') || '/'
+    const seo = getSeoMetadata(location.pathname, locale)
+    const canonicalUrl = `${SITE_URL}${path}`
+    const setAttribute = (selector, attribute, value) => {
+      const element = document.querySelector(selector)
+      if (element) {
+        element.setAttribute(attribute, value)
+      }
+    }
+
+    document.title = seo.title
+    document.documentElement.lang = locale
+    setAttribute('meta[name="description"]', 'content', seo.description)
+    setAttribute('meta[name="robots"]', 'content', seo.indexable ? 'index, follow, max-image-preview:large' : 'noindex, nofollow')
+    setAttribute('link[rel="canonical"]', 'href', canonicalUrl)
+    setAttribute('meta[property="og:url"]', 'content', canonicalUrl)
+    setAttribute('meta[property="og:title"]', 'content', seo.title)
+    setAttribute('meta[property="og:description"]', 'content', seo.description)
+    setAttribute('meta[property="og:locale"]', 'content', locale === 'en' ? 'en_US' : 'fr_FR')
+  }, [location.pathname, locale])
 
   // Remet la vue en haut à chaque navigation, y compris sur un même chemin.
   useEffect(() => {
