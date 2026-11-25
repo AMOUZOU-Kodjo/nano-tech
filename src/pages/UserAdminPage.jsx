@@ -63,6 +63,17 @@ const PROFILE_LABELS = {
   is_verified: { fr: 'Vérifié', en: 'Verified' },
 }
 
+const MOBILE_TABS = [
+  { id: 'overview', label: { fr: 'Vue d’ensemble', en: 'Overview' } },
+  { id: 'users', label: { fr: 'Utilisateurs', en: 'Users' } },
+  { id: 'runs', label: { fr: 'Exécutions', en: 'Runs' } },
+  { id: 'events', label: { fr: 'Événements', en: 'Events' } },
+  { id: 'errors', label: { fr: 'Erreurs', en: 'Errors' } },
+  { id: 'anonymous', label: { fr: 'Anonyme', en: 'Anonymous' } },
+  { id: 'photo', label: { fr: 'Photo', en: 'Photo' } },
+  { id: 'settings', label: { fr: 'Paramètres', en: 'Settings' } },
+]
+
 const inputClass =
   'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500'
 
@@ -284,6 +295,18 @@ export default function UserAdminPage() {
         <FiArrowLeft aria-hidden="true" className="h-4 w-4" />
         {t(TEXT.back)}
       </Link>
+
+      <nav aria-label={t(TEXT.title)} className="mt-3 flex gap-2 overflow-x-auto lg:hidden">
+        {MOBILE_TABS.map(({ id, label }) => (
+          <Link
+            key={id}
+            to={`/admin?tab=${id}`}
+            className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-sky-300 hover:text-sky-700"
+          >
+            {t(label)}
+          </Link>
+        ))}
+      </nav>
 
       <div className="relative mt-4 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
         <div className="h-1 w-full bg-gradient-to-r from-sky-400 via-violet-400 to-cyan-500" />

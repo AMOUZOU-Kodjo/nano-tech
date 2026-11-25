@@ -9,6 +9,7 @@ import {
   FiHome,
   FiLayers,
   FiLogIn,
+  FiLogOut,
   FiMenu,
   FiMinimize2,
   FiRefreshCw,
@@ -25,6 +26,7 @@ import ThemeToggle from '@/components/ThemeToggle.jsx'
 import { TOOLS } from '@/config/tools.js'
 import { MESSAGES } from '@/i18n/messages.js'
 import { useLocale } from '@/hooks/useLocale.js'
+import { useLogout } from '@/hooks/useLogout.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
 
 // Regroupement des outils affiché dans le menu de la navbar.
@@ -122,6 +124,36 @@ function desktopAuthLinkClass(link, currentPath) {
     return 'inline-flex items-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-sky-700'
   }
   return linkClass(link.to, currentPath)
+}
+
+const LOGOUT_LOADING = { fr: 'Déconnexion…', en: 'Signing out…' }
+
+// Action de déconnexion commune aux menus desktop et mobile.
+function NavLogoutButton({ className, onSuccess }) {
+  const { t } = useLocale()
+  const { isGuest, loading: profileLoading, reload } = useMeContext()
+  const { loading, error, logout } = useLogout({
+    onSuccess: () => {
+      reload()
+      onSuccess?.()
+    },
+  })
+
+  if (isGuest || profileLoading) return null
+
+  return (
+    <div>
+      <button type="button" onClick={logout} disabled={loading} className={className}>
+        <FiLogOut aria-hidden="true" className="h-4 w-4 shrink-0" />
+        <span>{t(loading ? LOGOUT_LOADING : MESSAGES.common.logout)}</span>
+      </button>
+      {error && (
+        <p role="alert" className="mt-1 px-2 text-[11px] text-red-600">
+          {error.message}
+        </p>
+      )}
+    </div>
+  )
 }
 
 function mobileLinkClass(path, currentPath) {
@@ -465,6 +497,10 @@ export default function Navbar() {
                         )
                       })}
                     </div>
+                    <NavLogoutButton
+                      onSuccess={() => setSpaceOpen(false)}
+                      className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-60"
+                    />
                   </>
                 )}
               </div>
@@ -652,6 +688,10 @@ export default function Navbar() {
                   {!isGuest && !loading && ACCOUNT_LINKS.map((link) => (
                     <MobileNavLink key={link.to} link={link} pathname={location.pathname} onClick={closeMenu} />
                   ))}
+                  <NavLogoutButton
+                    onSuccess={closeMenu}
+                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-60"
+                  />
                 </div>
               </section>
             </div>

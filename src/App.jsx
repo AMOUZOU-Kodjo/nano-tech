@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { LocaleProvider } from '@/contexts/LocaleContext.jsx'
 import { MeProvider } from '@/contexts/MeContext.jsx'
+import AdminSidebar from '@/components/AdminSidebar.jsx'
 import Navbar from '@/components/Navbar.jsx'
 import SiteFooter from '@/components/SiteFooter.jsx'
 import AccountPage from '@/pages/AccountPage.jsx'
@@ -29,7 +30,9 @@ const AUTH_ROUTES = new Set(['/login', '/register'])
 
 function AppLayout() {
   const location = useLocation()
-  const hideFooter = AUTH_ROUTES.has(location.pathname) || location.pathname.startsWith('/admin')
+  const navigate = useNavigate()
+  const isAdminRoute = location.pathname.startsWith('/admin')
+  const hideFooter = AUTH_ROUTES.has(location.pathname) || isAdminRoute
 
   // Remet la vue en haut à chaque navigation, y compris sur un même chemin.
   useEffect(() => {
@@ -42,8 +45,17 @@ function AppLayout() {
 
   return (
     <>
-      <Navbar />
-      <main key={location.pathname} className="min-h-screen bg-white text-slate-900 animate-page-in">
+      {!isAdminRoute && <Navbar />}
+      {isAdminRoute && (
+        <AdminSidebar
+          activeTab={new URLSearchParams(location.search).get('tab')}
+          onSelect={(id) => navigate(`/admin?tab=${id}`)}
+        />
+      )}
+      <main
+        key={location.pathname}
+        className={`min-h-screen bg-white text-slate-900 animate-page-in ${isAdminRoute ? 'lg:pl-64' : ''}`}
+      >
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/catalogue" element={<CataloguePage />} />

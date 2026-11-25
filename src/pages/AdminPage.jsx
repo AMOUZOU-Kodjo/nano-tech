@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   FiActivity,
   FiAlertCircle,
@@ -125,6 +124,8 @@ const inputClass =
   'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500'
 
 const SETTING_KEYS = ['tools_enabled', 'limits', 'compression']
+
+const TAB_IDS = ['overview', 'users', 'runs', 'events', 'errors', 'anonymous', 'photo', 'settings']
 
 const COLUMN_LABELS = {
   id: { fr: 'ID', en: 'ID' },
@@ -1154,7 +1155,11 @@ export default function AdminPage() {
   } = useAdmin()
   const { photoSpecs, getPhotoSpecs } = useCatalog()
 
-  const [activeTab, setActiveTab] = useState('overview')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedTab = searchParams.get('tab')
+  const activeTab = TAB_IDS.includes(requestedTab) ? requestedTab : 'overview'
+  const setActiveTab = (id) => setSearchParams({ tab: id })
+
   const [announcement, setAnnouncement] = useState({ title: '', body: '' })
   const [settingError, setSettingError] = useState(null)
   const [settingSuccess, setSettingSuccess] = useState(null)
@@ -1250,25 +1255,7 @@ export default function AdminPage() {
   ]
 
   return (
-    <div className="lg:pl-64">
-      {createPortal(
-        <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col overflow-y-auto border-r border-slate-200 bg-white shadow-xl lg:flex">
-          <div className="h-1 w-full bg-gradient-to-r from-sky-400 via-violet-400 to-cyan-500" />
-          <div className="px-5 py-5">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-sky-700 ring-1 ring-sky-100">
-              <FiCpu aria-hidden="true" className="h-3.5 w-3.5" />
-              {t(TEXT.controlRoom)}
-            </span>
-            <p className="mt-3 text-sm font-bold text-slate-900">{t(TEXT.title)}</p>
-          </div>
-          <div className="px-2 pb-5">
-            <NavTabs tabs={tabs} activeTab={activeTab} onSelect={setActiveTab} t={t} vertical />
-          </div>
-        </aside>,
-        document.body,
-      )}
-
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
+    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
         <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
           <div className="h-1 w-full bg-gradient-to-r from-sky-400 via-violet-400 to-cyan-500" />
           <div className="flex flex-wrap items-start justify-between gap-5 p-5 lg:p-7">
@@ -1421,7 +1408,6 @@ export default function AdminPage() {
         )}
       </div>
         </div>
-      </section>
-    </div>
+    </section>
   )
 }
