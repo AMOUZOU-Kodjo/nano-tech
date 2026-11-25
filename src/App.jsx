@@ -22,6 +22,7 @@ import RegisterPage from '@/pages/RegisterPage.jsx'
 import ResetPasswordPage from '@/pages/ResetPasswordPage.jsx'
 import StudioPage from '@/pages/StudioPage.jsx'
 import ToolPage from '@/pages/ToolPage.jsx'
+import UserAdminPage from '@/pages/UserAdminPage.jsx'
 import VerifyEmailPage from '@/pages/VerifyEmailPage.jsx'
 
 const AUTH_ROUTES = new Set(['/login', '/register'])
@@ -51,6 +52,7 @@ function AppLayout() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin/users/:id" element={<UserAdminPage />} />
           <Route path="/auth/verify" element={<VerifyEmailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/account" element={<AccountPage />} />
