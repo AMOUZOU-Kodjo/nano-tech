@@ -1,22 +1,18 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import logoUrl from '../../Logo NanoFile bleu et cyan.png'
 import { TOOLS } from '@/config/tools.js'
 import { MESSAGES } from '@/i18n/messages.js'
+import { useEnabledTools } from '@/hooks/useEnabledTools.js'
 import { useLocale } from '@/hooks/useLocale.js'
 
-// Regroupements d’outils affichés directement dans le pied de page.
-const FOOTER_TOOL_GROUPS = [
+// Définition des groupes d’outils ; les liens visibles suivent les paramètres admin.
+const FOOTER_TOOL_DEFINITIONS = [
   { id: 'optimize', title: MESSAGES.nav.groups.optimize, categories: ['optimize'] },
   { id: 'convert', title: MESSAGES.nav.groups.convert, categories: ['convert'] },
   { id: 'organize', title: MESSAGES.nav.groups.organize, categories: ['organize'] },
   { id: 'security-photo', title: MESSAGES.nav.groups.securityPhoto, categories: ['security', 'photo'] },
-].map((group) => ({
-  ...group,
-  links: TOOLS.filter((tool) => group.categories.includes(tool.category)).map((tool) => ({
-    to: `/tools/${tool.tool}`,
-    label: MESSAGES.tools[tool.tool] ?? { fr: tool.name, en: tool.name },
-  })),
-}))
+]
 
 const FOOTER_SECTIONS = [
   {
@@ -27,7 +23,6 @@ const FOOTER_SECTIONS = [
       { to: '/catalogue', label: MESSAGES.common.catalogue },
     ],
   },
-  ...FOOTER_TOOL_GROUPS,
   {
     id: 'more-tools',
     title: MESSAGES.footer.complementaryTools,
@@ -77,6 +72,23 @@ function FooterSection({ title, links }) {
 // Pied de page commun : navigation secondaire et liens légaux exigés côté frontend.
 export default function SiteFooter() {
   const { t } = useLocale()
+  const { isEnabled } = useEnabledTools()
+
+  // Insère les groupes d’outils actifs juste après la section « Découvrir ».
+  const toolSections = useMemo(
+    () =>
+      FOOTER_TOOL_DEFINITIONS.map((group) => ({
+        ...group,
+        links: TOOLS.filter(
+          (tool) => group.categories.includes(tool.category) && isEnabled(tool.tool),
+        ).map((tool) => ({
+          to: `/tools/${tool.tool}`,
+          label: MESSAGES.tools[tool.tool] ?? { fr: tool.name, en: tool.name },
+        })),
+      })).filter((group) => group.links.length > 0),
+    [isEnabled],
+  )
+  const sections = [FOOTER_SECTIONS[0], ...toolSections, ...FOOTER_SECTIONS.slice(1)]
 
   return (
     <footer className="mt-12 border-t border-slate-200 bg-slate-50 sm:mt-16">
@@ -93,7 +105,7 @@ export default function SiteFooter() {
           </div>
 
           <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:gap-x-8 lg:grid-cols-4">
-            {FOOTER_SECTIONS.map((section) => (
+            {sections.map((section) => (
               <FooterSection
                 key={section.id}
                 title={t(section.title)}

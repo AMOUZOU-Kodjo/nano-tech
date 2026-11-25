@@ -14,6 +14,7 @@ import {
   FiX,
 } from 'react-icons/fi'
 import { TOOLS, TOOL_CATEGORIES } from '@/config/tools.js'
+import { useEnabledTools } from '@/hooks/useEnabledTools.js'
 import { useLocale } from '@/hooks/useLocale.js'
 import { useCatalog } from '@/hooks/useCatalog.js'
 import { useEvents } from '@/hooks/useEvents.js'
@@ -21,6 +22,7 @@ import { useJob } from '@/hooks/useJob.js'
 import { useJobDownload } from '@/hooks/useJobDownload.js'
 import { useJobsManager } from '@/hooks/useJobsManager.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
+import { usePublicLimits } from '@/hooks/usePublicLimits.js'
 
 // Outils dont les options sont documentées dans FRONTEND.md.
 const DOCUMENTED_OPTION_TOOLS = new Set([
@@ -43,6 +45,11 @@ const TEXT = {
   unknownToolDescription: {
     fr: 'Cet outil ne fait pas partie du catalogue.',
     en: 'This tool is not part of the catalogue.',
+  },
+  disabledTool: { fr: 'Outil indisponible', en: 'Tool unavailable' },
+  disabledToolDescription: {
+    fr: 'Cet outil est actuellement désactivé par l’administration.',
+    en: 'This tool is currently disabled by the administrator.',
   },
   backCatalogue: { fr: 'Retour au catalogue', en: 'Back to the catalogue' },
   catalogue: { fr: 'Catalogue', en: 'Catalog' },
@@ -150,6 +157,21 @@ const TEXT = {
   },
   viewCatalogue: { fr: 'Voir le catalogue →', en: 'View the catalogue →' },
   noFiles: { fr: 'Sélectionnez au moins un fichier.', en: 'Select at least one file.' },
+  maxFilesError: {
+    fr: 'Vous pouvez sélectionner au maximum {n} fichiers.',
+    en: 'You can select up to {n} files.',
+  },
+  maxFileSizeError: {
+    fr: 'Un fichier ne peut pas dépasser {n} Mo.',
+    en: 'A file cannot exceed {n} MB.',
+  },
+  maxTotalSizeError: {
+    fr: 'La taille totale ne peut pas dépasser {n} Mo.',
+    en: 'The total size cannot exceed {n} MB.',
+  },
+  maxFilesHint: { fr: '{n} fichiers max.', en: 'Up to {n} files' },
+  maxFileSizeHint: { fr: '{n} Mo par fichier', en: '{n} MB per file' },
+  maxTotalSizeHint: { fr: '{n} Mo au total', en: '{n} MB in total' },
   positiveTargetSize: {
     fr: 'La taille cible doit être un nombre positif.',
     en: 'The target size must be a positive number.',
@@ -179,6 +201,17 @@ const TEXT = {
     en: 'The page number must be a positive integer.',
   },
   jobNotCreated: { fr: 'Le job n’a pas pu être créé.', en: 'The job could not be created.' },
+}
+
+const LIMIT_ERRORS = {
+  max_files: TEXT.maxFilesError,
+  max_file_mb: TEXT.maxFileSizeError,
+  max_total_mb: TEXT.maxTotalSizeError,
+}
+
+// Remplace le symbole {n} par la valeur de limite renvoyée par l'API.
+function limitMessage(code, value, t) {
+  return t(LIMIT_ERRORS[code]).replace('{n}', String(value))
 }
 
 // Libellés des statuts documentés pour un job.
@@ -369,6 +402,8 @@ function PhotoSpecSummary({ countries, excluded }) {
 export default function ToolPage() {
   const { locale, t } = useLocale()
   const { tool } = useParams()
+  const { isEnabled } = useEnabledTools()
+  const { limits, validateFiles } = usePublicLimits()
   const { reload } = useMeContext()
   const { photoSpecs, loading: specsLoading, error: specsError, getPhotoSpecs } = useCatalog()
   const [files, setFiles] = useState([])
@@ -511,10 +546,24 @@ export default function ToolPage() {
     )
   }
 
+  // Un outil désactivé reste inaccessible même par URL directe.
+  if (!isEnabled(tool)) {
+    return (
+      <section className="mx-auto max-w-3xl px-6 py-12">
+        <h1 className="text-2xl font-semibold text-slate-900">{t(TEXT.disabledTool)}</h1>
+        <p className="mt-2 text-sm text-slate-600">{t(TEXT.disabledToolDescription)}</p>
+        <Link to="/catalogue" className="mt-6 inline-block text-sky-600 hover:text-sky-700">
+          {t(TEXT.backCatalogue)}
+        </Link>
+      </section>
+    )
+  }
+
   const toolName = locale === 'en' ? toolInfo.nameEn : toolInfo.name
   const toolDescription = locale === 'en' ? toolInfo.descriptionEn : toolInfo.description
   const relatedTools = TOOLS.filter(
-    (item) => item.category === toolInfo.category && item.tool !== toolInfo.tool,
+    (item) =>
+      item.category === toolInfo.category && item.tool !== toolInfo.tool && isEnabled(item.tool),
   ).slice(0, 3)
   const hasAdvancedOptions = DOCUMENTED_OPTION_TOOLS.has(toolInfo.tool)
 
@@ -525,6 +574,12 @@ export default function ToolPage() {
 
     if (files.length === 0) {
       setLocalError(t(TEXT.noFiles))
+      return
+    }
+
+    const validation = validateFiles(files)
+    if (validation.error) {
+      setLocalError(limitMessage(validation.error, validation.value, t))
       return
     }
 
@@ -647,7 +702,14 @@ export default function ToolPage() {
   }
 
   function handleFiles(selected) {
-    setFiles(Array.from(selected ?? []))
+    const validation = validateFiles(selected)
+    if (validation.error) {
+      setFiles([])
+      setLocalError(limitMessage(validation.error, validation.value, t))
+      return
+    }
+
+    setFiles(validation.files)
     setLocalError(null)
   }
 
@@ -803,6 +865,15 @@ export default function ToolPage() {
                     </span>
                     <span className="mt-4 text-sm font-semibold text-slate-900">{t(TEXT.dropFiles)}</span>
                     <span className="mt-1 text-xs text-slate-500">{t(TEXT.uploadHint)}</span>
+                    <span className="mt-1 text-[11px] text-slate-400">
+                      {[
+                        limits.maxFiles ? t(TEXT.maxFilesHint).replace('{n}', String(limits.maxFiles)) : null,
+                        limits.maxFileMb ? t(TEXT.maxFileSizeHint).replace('{n}', String(limits.maxFileMb)) : null,
+                        limits.maxTotalMb ? t(TEXT.maxTotalSizeHint).replace('{n}', String(limits.maxTotalMb)) : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </span>
                     <span className="mt-4 inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition group-hover:bg-sky-700">
                       {t(TEXT.clickSelect)}
                       <FiArrowRight aria-hidden="true" className="h-3.5 w-3.5" />

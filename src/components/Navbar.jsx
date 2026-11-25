@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   FiActivity,
@@ -25,12 +25,13 @@ import LocaleToggle from '@/components/LocaleToggle.jsx'
 import ThemeToggle from '@/components/ThemeToggle.jsx'
 import { TOOLS } from '@/config/tools.js'
 import { MESSAGES } from '@/i18n/messages.js'
+import { useEnabledTools } from '@/hooks/useEnabledTools.js'
 import { useLocale } from '@/hooks/useLocale.js'
 import { useLogout } from '@/hooks/useLogout.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
 
-// Regroupement des outils affiché dans le menu de la navbar.
-const TOOL_MENU_GROUPS = [
+// Définition des groupes du menu ; les outils visibles sont calculés selon les paramètres admin.
+const TOOL_MENU_DEFINITIONS = [
   {
     id: 'optimize',
     title: MESSAGES.nav.groups.optimize,
@@ -59,28 +60,11 @@ const TOOL_MENU_GROUPS = [
     categories: ['security', 'photo'],
     icon: FiShield,
   },
-].map((group) => ({
-  ...group,
-  tools: TOOLS.filter((tool) => group.categories.includes(tool.category)).map((tool) => ({
-    ...tool,
-    label: MESSAGES.tools[tool.tool] ?? { fr: tool.name, en: tool.name },
-  })),
-}))
+]
 
-// Groupes d’outils affichés dans le menu mobile.
-const MOBILE_TOOL_GROUPS = TOOL_MENU_GROUPS.map((group) => ({
-  id: group.id,
-  title: group.title,
-  icon: group.icon,
-  links: group.tools.map((tool) => ({
-    to: `/tools/${tool.tool}`,
-    label: tool.label,
-  })),
-}))
-
-// Raccourcis mis en avant dans le menu mobile.
+// Raccourcis mis en avant dans le menu mobile ; le premier suit l'état de l'outil compress.
 const MOBILE_SHORTCUTS = [
-  { to: '/tools/compress', label: MESSAGES.nav.shortcuts.compress, hint: MESSAGES.nav.shortcuts.compressHint, icon: FiMinimize2 },
+  { tool: 'compress', to: '/tools/compress', label: MESSAGES.nav.shortcuts.compress, hint: MESSAGES.nav.shortcuts.compressHint, icon: FiMinimize2 },
   { to: '/catalogue', label: MESSAGES.common.catalogue, hint: MESSAGES.nav.shortcuts.catalogueHint, icon: FiGrid },
   { to: '/studio', label: MESSAGES.common.studio, hint: MESSAGES.nav.shortcuts.studioHint, icon: FiFileText },
 ]
@@ -166,10 +150,8 @@ function mobileLinkClass(path, currentPath) {
 }
 
 // Retrouve le groupe d’outils correspondant à la route courante.
-function findCurrentToolGroupId(pathname) {
-  return (
-    MOBILE_TOOL_GROUPS.find((group) => group.links.some((link) => pathname.startsWith(link.to)))?.id ?? ''
-  )
+function findCurrentToolGroupId(pathname, groups) {
+  return groups.find((group) => group.links.some((link) => pathname.startsWith(link.to)))?.id ?? ''
 }
 
 // Lien du menu mobile avec indication visuelle de la route active.
@@ -205,11 +187,45 @@ export default function Navbar() {
   const location = useLocation()
   const { locale, t } = useLocale()
   const { isGuest, loading } = useMeContext()
+  const { isEnabled } = useEnabledTools()
+
+  // Les groupes et raccourcis suivent les outils réellement activés par l'administration.
+  const toolMenuGroups = useMemo(
+    () =>
+      TOOL_MENU_DEFINITIONS.map((group) => ({
+        ...group,
+        tools: TOOLS.filter(
+          (tool) => group.categories.includes(tool.category) && isEnabled(tool.tool),
+        ).map((tool) => ({
+          ...tool,
+          label: MESSAGES.tools[tool.tool] ?? { fr: tool.name, en: tool.name },
+        })),
+      })).filter((group) => group.tools.length > 0),
+    [isEnabled],
+  )
+  const mobileToolGroups = useMemo(
+    () =>
+      toolMenuGroups.map((group) => ({
+        id: group.id,
+        title: group.title,
+        icon: group.icon,
+        links: group.tools.map((tool) => ({
+          to: `/tools/${tool.tool}`,
+          label: tool.label,
+        })),
+      })),
+    [toolMenuGroups],
+  )
+  const mobileShortcuts = useMemo(
+    () => MOBILE_SHORTCUTS.filter((item) => !item.tool || isEnabled(item.tool)),
+    [isEnabled],
+  )
+
   const [menuOpen, setMenuOpen] = useState(false)
   const [toolsOpen, setToolsOpen] = useState(false)
   const [spaceOpen, setSpaceOpen] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState(() => ({
-    [findCurrentToolGroupId(location.pathname)]: true,
+    [findCurrentToolGroupId(location.pathname, mobileToolGroups)]: true,
   }))
   const toolsRef = useRef(null)
   const spaceRef = useRef(null)
@@ -219,7 +235,7 @@ export default function Navbar() {
   const spaceActive =
     SPACE_LINKS.some((link) => location.pathname.startsWith(link.to)) ||
     (!isGuest && ACCOUNT_LINKS.some((link) => location.pathname.startsWith(link.to)))
-  const currentGroupId = findCurrentToolGroupId(location.pathname)
+  const currentGroupId = findCurrentToolGroupId(location.pathname, mobileToolGroups)
 
   const authLinks = loading
     ? []
@@ -389,7 +405,7 @@ export default function Navbar() {
                 className="absolute left-0 top-full z-50 mt-2 w-[640px] max-w-[calc(100vw-3rem)] rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl"
               >
                 <div className="grid grid-cols-2 gap-2">
-                  {TOOL_MENU_GROUPS.map((group) => {
+                  {toolMenuGroups.map((group) => {
                     const GroupIcon = group.icon
                     return (
                       <div key={group.id} className="rounded-xl border border-transparent p-3 hover:border-slate-200 hover:bg-slate-50">
@@ -586,7 +602,7 @@ export default function Navbar() {
                   {locale === 'fr' ? 'Accès rapide' : 'Quick access'}
                 </h2>
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {MOBILE_SHORTCUTS.map((item) => {
+                  {mobileShortcuts.map((item) => {
                     const Icon = item.icon
                     return (
                       <Link
@@ -640,7 +656,7 @@ export default function Navbar() {
                   {t(MESSAGES.common.tools)}
                 </h2>
                 <div className="mt-2 space-y-2">
-                  {MOBILE_TOOL_GROUPS.map((group) => {
+                  {mobileToolGroups.map((group) => {
                     const open = isGroupOpen(group)
                     const GroupIcon = group.icon
                     return (

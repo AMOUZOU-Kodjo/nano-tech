@@ -22,7 +22,9 @@ import {
 } from 'react-icons/fi'
 import { useLocale } from '@/hooks/useLocale.js'
 import { useAdmin } from '@/hooks/useAdmin.js'
+import { useMeContext } from '@/hooks/useMeContext.js'
 import { useCatalog } from '@/hooks/useCatalog.js'
+import { clearEnabledToolsCache } from '@/hooks/useEnabledTools.js'
 import { TOOLS } from '@/config/tools.js'
 
 const TEXT = {
@@ -1138,6 +1140,7 @@ export default function AdminPage() {
     getAdminSettings,
   } = useAdmin()
   const { photoSpecs, getPhotoSpecs } = useCatalog()
+  const { reload } = useMeContext()
 
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedTab = searchParams.get('tab')
@@ -1183,10 +1186,11 @@ export default function AdminPage() {
     const payload = await action()
     if (!payload) {
       setSettingError(t(TEXT.actionDenied))
-      return
+      return false
     }
 
     setSettingSuccess(successMessage)
+    return true
   }
 
   async function handleAnnouncement(event) {
@@ -1204,7 +1208,9 @@ export default function AdminPage() {
       return
     }
 
-    await runAction(() => updateAdminSetting(key, value), t(TEXT.settingDone))
+    const saved = await runAction(() => updateAdminSetting(key, value), t(TEXT.settingDone))
+    if (saved && key === 'tools_enabled') clearEnabledToolsCache()
+    if (saved && (key === 'limits' || key === 'compression')) reload()
     await getAdminSettings()
   }
 
