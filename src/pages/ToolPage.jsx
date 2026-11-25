@@ -13,6 +13,7 @@ import {
   FiUploadCloud,
   FiX,
 } from 'react-icons/fi'
+import PdfPageSelector from '@/components/PdfPageSelector.jsx'
 import { TOOLS, TOOL_CATEGORIES } from '@/config/tools.js'
 import { useEnabledTools } from '@/hooks/useEnabledTools.js'
 import { useLocale } from '@/hooks/useLocale.js'
@@ -87,6 +88,7 @@ const TEXT = {
   targetSizeKb: { fr: 'Taille cible (Ko)', en: 'Target size (KB)' },
   advancedOptions: { fr: 'Options avancées', en: 'Advanced options' },
   pages: { fr: 'Pages', en: 'Pages' },
+  allPages: { fr: 'Toutes les pages', en: 'All pages' },
   format: { fr: 'Format', en: 'Format' },
   resolution: { fr: 'Résolution (dpi)', en: 'Resolution (dpi)' },
   resolutionPlaceholder: { fr: '72 à 600', en: '72 to 600' },
@@ -434,6 +436,7 @@ export default function ToolPage() {
     password: '',
     watermark: '',
   })
+  const [selectedPdfPages, setSelectedPdfPages] = useState([])
 
   const { createJob, loading: creating, error: createError } = useJobsManager({ onSuccess: reload })
   const { data: job, loading: jobLoading, error: jobError, reload: reloadJob } = useJob(jobId)
@@ -448,6 +451,10 @@ export default function ToolPage() {
   )
 
   const toolInfo = TOOLS.find((item) => item.tool === tool)
+  const pdfFile =
+    toolInfo?.tool === 'pdf_to_images'
+      ? files.find((item) => item.type === 'application/pdf' || item.name.toLowerCase().endsWith('.pdf'))
+      : null
   const category = TOOL_CATEGORIES.find((item) => item.id === toolInfo?.category)
   const categoryLabel =
     locale === 'en' ? category?.labelEn ?? toolInfo?.category : category?.label ?? toolInfo?.category
@@ -710,6 +717,10 @@ export default function ToolPage() {
     }
 
     setFiles(validation.files)
+    if (tool === 'pdf_to_images') {
+      setSelectedPdfPages([])
+      setToolOptions((current) => ({ ...current, pages: 'all' }))
+    }
     setLocalError(null)
   }
 
@@ -729,6 +740,13 @@ export default function ToolPage() {
 
   function updateToolOption(field, value) {
     setToolOptions((current) => ({ ...current, [field]: value }))
+    setLocalError(null)
+  }
+
+  // La sélection visuelle alimente directement l'option documentée `pages`.
+  function handlePdfPagesChange(pages) {
+    setSelectedPdfPages(pages)
+    setToolOptions((current) => ({ ...current, pages: pages.length > 0 ? pages : 'all' }))
     setLocalError(null)
   }
 
@@ -757,6 +775,7 @@ export default function ToolPage() {
     setLocalError(null)
     setPhotoOptions({ country: '', document: '', background: '', sheet: '', maxSizeKb: '' })
     setCompressOptions({ level: '', targetSizeKb: '' })
+    setSelectedPdfPages([])
     setToolOptions({ pages: 'all', format: 'png', dpi: '', ranges: '', order: '', signatureText: '', page: '', position: 'bottom_right', password: '', watermark: '' })
     reportedRef.current = null
   }
@@ -942,17 +961,14 @@ export default function ToolPage() {
                   <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.advancedOptions)}</h3>
                   {toolInfo.tool === 'pdf_to_images' && (
                     <div className="grid gap-3 sm:grid-cols-3">
-                      <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <div className="grid gap-1 text-xs font-semibold text-slate-700">
                         <span>{t(TEXT.pages)}</span>
-                        <input
-                          type="text"
-                          value={toolOptions.pages}
-                          onChange={(event) => updateToolOption('pages', event.target.value)}
-                          disabled={creating}
-                          className={OPTION_INPUT_CLASS}
-                          placeholder={locale === 'fr' ? 'all ou 1,3-5' : 'all or 1,3-5'}
-                        />
-                      </label>
+                        <span className={`${OPTION_INPUT_CLASS} truncate`}>
+                          {Array.isArray(toolOptions.pages)
+                            ? toolOptions.pages.join(', ')
+                            : t(TEXT.allPages)}
+                        </span>
+                      </div>
                       <label className="grid gap-1 text-xs font-semibold text-slate-700">
                         <span>{t(TEXT.format)}</span>
                         <select
@@ -1371,6 +1387,14 @@ export default function ToolPage() {
               />
             </ol>
           </div>
+          {toolInfo.tool === 'pdf_to_images' && (
+            <PdfPageSelector
+              file={pdfFile}
+              selectedPages={selectedPdfPages}
+              onChange={handlePdfPagesChange}
+              maxPages={limits.maxPdfPages}
+            />
+          )}
           {job && (status === 'failed' || status === 'done') && (
             <div
               className={`rounded-2xl border p-5 shadow-sm lg:p-4 ${
