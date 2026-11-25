@@ -57,7 +57,14 @@ const TEXT = {
   bodyField: { fr: 'Message', en: 'Message' },
   send: { fr: 'Envoyer l’annonce', en: 'Send announcement' },
   runs: { fr: 'Exécutions d’outils', en: 'Tool runs' },
-  runsHelp: { fr: 'Historique administratif des traitements.', en: 'Administrative history of processing jobs.' },
+  runsHelp: { fr: 'Historique administratif des traitements, avec filtres locaux.', en: 'Administrative history of processing jobs, with local filters.' },
+  searchRuns: { fr: 'Rechercher un outil, un utilisateur ou un ID', en: 'Search a tool, user or ID' },
+  allStatuses: { fr: 'Tous les statuts', en: 'All statuses' },
+  unknown: { fr: 'Indéterminé', en: 'Unknown' },
+  shownRuns: { fr: 'exécutions affichées', en: 'runs shown' },
+  user: { fr: 'Utilisateur', en: 'User' },
+  jobId: { fr: 'Tâche', en: 'Job' },
+  filterLabel: { fr: 'Filtres', en: 'Filters' },
   events: { fr: 'Événements', en: 'Events' },
   eventsHelp: { fr: 'Événements reçus par l’API.', en: 'Events received by the API.' },
   eventErrors: { fr: 'Erreurs d’événements', en: 'Event errors' },
@@ -737,6 +744,146 @@ function PhotoView({ value, empty, t }) {
   )
 }
 
+function runTool(row) {
+  return row.tool ?? row.tool_name ?? row.name ?? row.key ?? ''
+}
+
+function runDate(row) {
+  return row.created_at ?? row.started_at ?? row.finished_at ?? row.completed_at ?? row.timestamp ?? ''
+}
+
+function runDocuments(row) {
+  return Number(row.documents_processed ?? row.documents_count ?? row.files ?? row.documents ?? 0) || 0
+}
+
+function runUser(row) {
+  return row.user_id ?? row.email ?? row.user ?? ''
+}
+
+function runDuration(row) {
+  return row.duration_ms ?? row.duration ?? row.elapsed_ms ?? ''
+}
+
+function runStatus(row) {
+  const raw = row.status ?? row.state ?? row.result ?? row.event ?? ''
+  const value = String(raw).toLowerCase()
+  if (value.includes('fail') || value.includes('error') || row.success === false) return 'failed'
+  if (value.includes('success') || value.includes('complete') || value === 'done' || row.success === true) return 'success'
+  return 'unknown'
+}
+
+function formatDuration(value) {
+  const milliseconds = Number(value)
+  if (!Number.isFinite(milliseconds) || milliseconds < 0) return '—'
+  if (milliseconds < 1000) return `${Math.round(milliseconds)} ms`
+  const seconds = milliseconds / 1000
+  if (seconds < 60) return `${seconds.toFixed(1)} s`
+  const minutes = Math.floor(seconds / 60)
+  return `${minutes} min ${Math.round(seconds % 60)} s`
+}
+
+function StatusBadge({ status, t }) {
+  const styles = {
+    success: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+    failed: 'bg-rose-50 text-rose-700 ring-rose-100',
+    unknown: 'bg-slate-100 text-slate-600 ring-slate-200',
+  }
+  const labels = { success: t(TEXT.success), failed: t(TEXT.failed), unknown: t(TEXT.unknown) }
+
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${styles[status]}`}>
+      {labels[status]}
+    </span>
+  )
+}
+
+// Vue administrative des exécutions : indicateurs, filtres locaux et tableau lisible.
+function RunsView({ value, empty, labelFor, t, locale }) {
+  const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+
+  const rows = normalizeRows(value).map((row) => ({
+    ...row,
+    toolName: runTool(row),
+    statusKey: runStatus(row),
+    dateValue: runDate(row),
+    documentsValue: runDocuments(row),
+    userValue: runUser(row),
+    durationValue: runDuration(row),
+    idValue: row.id ?? row.job_id ?? '',
+  }))
+
+  if (rows.length === 0) return <Empty>{empty}</Empty>
+
+  const totalDocuments = rows.reduce((total, row) => total + row.documentsValue, 0)
+  const successes = rows.filter((row) => row.statusKey === 'success').length
+  const failures = rows.filter((row) => row.statusKey === 'failed').length
+  const normalizedQuery = query.trim().toLowerCase()
+  const filtered = rows.filter((row) => {
+    const matchStatus = statusFilter === 'all' || row.statusKey === statusFilter
+    const haystack = [labelFor(row.toolName), row.toolName, row.userValue, row.idValue].join(' ').toLowerCase()
+    return matchStatus && (!normalizedQuery || haystack.includes(normalizedQuery))
+  })
+
+  return (
+    <>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard icon={FiActivity} label={t(TEXT.total)} value={rows.length} tone="sky" />
+        <StatCard icon={FiCheckCircle} label={t(TEXT.successes)} value={successes} tone="emerald" />
+        <StatCard icon={FiAlertCircle} label={t(TEXT.failed)} value={failures} tone="rose" />
+        <StatCard icon={FiFileText} label={t(TEXT.documentsWord)} value={totalDocuments} tone="violet" />
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
+        <label className="block">
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">{t(TEXT.filterLabel)}</span>
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t(TEXT.searchRuns)}
+            className={inputClass}
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">{t(TEXT.allStatuses)}</span>
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className={inputClass}>
+            <option value="all">{t(TEXT.allStatuses)}</option>
+            <option value="success">{t(TEXT.success)}</option>
+            <option value="failed">{t(TEXT.failed)}</option>
+            <option value="unknown">{t(TEXT.unknown)}</option>
+          </select>
+        </label>
+      </div>
+
+      <p className="mt-3 text-[11px] text-slate-500">
+        {filtered.length}/{rows.length} {t(TEXT.shownRuns)}
+      </p>
+
+      <DataTable
+        value={filtered}
+        empty={t(TEXT.noData)}
+        columns={['tool', 'status', 'documents_processed', 'user_id', 'created_at', 'duration_ms']}
+        headerFor={(column) => (column === 'documents_processed' ? t(TEXT.documentsWord) : columnLabel(column, t))}
+        renderCell={(column, row) => {
+          if (column === 'tool') {
+            return (
+              <span title={String(row.toolName)} className="font-semibold text-slate-900">
+                {labelFor(row.toolName) || formatCell(row.toolName)}
+              </span>
+            )
+          }
+          if (column === 'status') return <StatusBadge status={row.statusKey} t={t} />
+          if (column === 'documents_processed') return formatCell(row.documentsValue)
+          if (column === 'user_id') return formatCell(row.userValue)
+          if (column === 'created_at') return formatDate(row.dateValue, locale)
+          if (column === 'duration_ms') return formatDuration(row.durationValue)
+          return formatCell(row[column])
+        }}
+      />
+    </>
+  )
+}
+
 function SettingValue({ name, value, t, locale }) {
   if (value === null || value === undefined) return <p className="mt-4 text-sm text-slate-500">{t(TEXT.noData)}</p>
 
@@ -1071,7 +1218,7 @@ export default function AdminPage() {
   ]
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
+    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
       <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
         <div className="h-1 w-full bg-gradient-to-r from-sky-400 via-violet-400 to-cyan-500" />
         <div className="flex flex-wrap items-start justify-between gap-5 p-5 lg:p-7">
@@ -1086,27 +1233,36 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div role="tablist" aria-label={t(TEXT.title)} className="mt-5 flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-        {tabs.map(([id, label, Icon]) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={activeTab === id}
-            onClick={() => setActiveTab(id)}
-            className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold transition ${
-              activeTab === id
-                ? 'bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-            }`}
-          >
-            <Icon aria-hidden="true" className="h-4 w-4" />
-            {t(label)}
-          </button>
-        ))}
-      </div>
+      <div className="mt-5 grid gap-5 lg:grid-cols-[16rem_minmax(0,1fr)]">
+        <aside className="self-start lg:sticky lg:top-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+            <p className="px-3 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+              {t(TEXT.controlRoom)}
+            </p>
+            <nav role="tablist" aria-label={t(TEXT.title)} className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
+              {tabs.map(([id, label, Icon]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === id}
+                  onClick={() => setActiveTab(id)}
+                  className={`inline-flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs font-semibold transition ${
+                    activeTab === id
+                      ? 'bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  <span className="whitespace-nowrap">{t(label)}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+        </aside>
 
-      <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="mt-4 flex items-center justify-between gap-3">
         <p className="text-xs text-slate-500">
           {loading && (
             <span className="inline-flex items-center gap-1.5">
@@ -1189,7 +1345,7 @@ export default function AdminPage() {
 
         {activeTab === 'runs' && (
           <Panel title={t(TEXT.runs)} description={t(TEXT.runsHelp)} badge={<FiFileText aria-hidden="true" className="h-5 w-5 text-sky-500" />}>
-            <DataTable value={toolRuns} empty={t(TEXT.noData)} labelFor={labelFor} />
+            <RunsView value={toolRuns} empty={t(TEXT.noData)} labelFor={labelFor} t={t} locale={locale} />
           </Panel>
         )}
 
@@ -1235,6 +1391,8 @@ export default function AdminPage() {
             />
           </Panel>
         )}
+      </div>
+        </div>
       </div>
     </section>
   )
