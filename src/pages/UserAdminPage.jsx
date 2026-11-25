@@ -25,10 +25,16 @@ const TEXT = {
   update: { fr: 'Mettre à jour', en: 'Update' },
   credits: { fr: 'Crédits utilisateur', en: 'User credits' },
   delta: { fr: 'Delta', en: 'Delta' },
+  deltaPlaceholder: { fr: 'De -100000 à 100000', en: 'From -100000 to 100000' },
   reason: { fr: 'Motif', en: 'Reason' },
+  reasonPlaceholder: {
+    fr: '1 à 80 caractères (défaut : admin_adjustment)',
+    en: '1 to 80 characters (default: admin_adjustment)',
+  },
   adjust: { fr: 'Ajuster', en: 'Adjust' },
   plan: { fr: 'Plan utilisateur', en: 'User plan' },
   duration: { fr: 'Durée en jours', en: 'Duration in days' },
+  durationPlaceholder: { fr: 'De 1 à 3660 (vide = null)', en: 'From 1 to 3660 (empty = null)' },
   apply: { fr: 'Appliquer', en: 'Apply' },
   loading: { fr: 'Chargement du compte…', en: 'Loading account…' },
   noValue: { fr: '—', en: '—' },
@@ -142,7 +148,7 @@ function UserActions({ id, user, loading, onAdmin, onCredits, onPlan }) {
   const { t } = useLocale()
   const [adminEnabled, setAdminEnabled] = useState(user.is_admin === true || user.role === 'admin')
   const [delta, setDelta] = useState('')
-  const [reason, setReason] = useState('admin_adjustment')
+  const [reason, setReason] = useState('')
   const [planName, setPlanName] = useState(user.plan === 'pro' ? 'pro' : 'free')
   const [days, setDays] = useState('')
 
@@ -153,7 +159,7 @@ function UserActions({ id, user, loading, onAdmin, onCredits, onPlan }) {
 
   function handleCredits(event) {
     event.preventDefault()
-    onCredits(Number(id), { delta: Number(delta), reason: reason.trim() })
+    onCredits(Number(id), { delta: Number(delta), reason: reason.trim() || 'admin_adjustment' })
   }
 
   function handlePlan(event) {
@@ -185,10 +191,25 @@ function UserActions({ id, user, loading, onAdmin, onCredits, onPlan }) {
         <Panel title={t(TEXT.credits)} badge={<FiDollarSign aria-hidden="true" className="h-5 w-5 text-emerald-500" />}>
           <form onSubmit={handleCredits} className="mt-5 grid gap-3">
             <Field label={t(TEXT.delta)}>
-              <input required type="number" value={delta} onChange={(event) => setDelta(event.target.value)} className={inputClass} />
+              <input
+                required
+                type="number"
+                min={-100000}
+                max={100000}
+                placeholder={t(TEXT.deltaPlaceholder)}
+                value={delta}
+                onChange={(event) => setDelta(event.target.value)}
+                className={inputClass}
+              />
             </Field>
             <Field label={t(TEXT.reason)}>
-              <input required maxLength={80} value={reason} onChange={(event) => setReason(event.target.value)} className={inputClass} />
+              <input
+                maxLength={80}
+                placeholder={t(TEXT.reasonPlaceholder)}
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                className={inputClass}
+              />
             </Field>
             <button type="submit" disabled={loading} className="inline-flex w-fit items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:opacity-50">
               <FiDollarSign aria-hidden="true" className="h-4 w-4" />
@@ -206,7 +227,15 @@ function UserActions({ id, user, loading, onAdmin, onCredits, onPlan }) {
               </select>
             </Field>
             <Field label={t(TEXT.duration)}>
-              <input type="number" min="1" max="3660" value={days} onChange={(event) => setDays(event.target.value)} className={inputClass} />
+              <input
+                type="number"
+                min="1"
+                max="3660"
+                placeholder={t(TEXT.durationPlaceholder)}
+                value={days}
+                onChange={(event) => setDays(event.target.value)}
+                className={inputClass}
+              />
             </Field>
             <button type="submit" disabled={loading} className="inline-flex w-fit items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50 sm:col-span-2">
               <FiTrendingUp aria-hidden="true" className="h-4 w-4" />
