@@ -65,7 +65,6 @@ const TEXT = {
   settings: { fr: 'Paramètres', en: 'Settings' },
   settingsHelp: { fr: 'Clés documentées : tools_enabled, limits, compression.', en: 'Documented keys: tools_enabled, limits, compression.' },
   settingKey: { fr: 'Clé', en: 'Key' },
-  jsonValue: { fr: 'Valeur JSON', en: 'JSON value' },
   save: { fr: 'Enregistrer', en: 'Save' },
   noData: { fr: 'Aucune donnée disponible.', en: 'No data available.' },
   moreRows: { fr: 'lignes supplémentaires', en: 'additional rows' },
@@ -93,7 +92,6 @@ const TEXT = {
   actionDenied: { fr: 'L’action administrative a été refusée.', en: 'The administrative action was denied.' },
   announcementDone: { fr: 'Annonce créée.', en: 'Announcement created.' },
   settingDone: { fr: 'Paramètre mis à jour.', en: 'Setting updated.' },
-  badJson: { fr: 'La valeur du paramètre doit être un JSON valide.', en: 'The setting value must be valid JSON.' },
   badObject: { fr: 'La valeur du paramètre doit être un objet JSON.', en: 'The setting value must be a JSON object.' },
 }
 
@@ -155,6 +153,62 @@ function mergeTools(value) {
 function shorten(value, size = 8) {
   const text = String(value ?? '')
   return text.length > size ? `${text.slice(0, size)}…` : text
+}
+
+const EVENT_LABELS = {
+  tool_started: { fr: 'Outil démarré', en: 'Tool started' },
+  tool_run_completed: { fr: 'Traitement terminé', en: 'Run completed' },
+  tool_run_failed: { fr: 'Traitement en échec', en: 'Run failed' },
+  job_completed: { fr: 'Tâche terminée', en: 'Job completed' },
+  job_failed: { fr: 'Tâche en échec', en: 'Job failed' },
+}
+
+function eventLabel(value, locale) {
+  const key = String(value ?? '')
+  const label = EVENT_LABELS[key]
+  if (label) return locale === 'en' ? label.en : label.fr
+  return key.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+const LIMIT_LABELS = {
+  max_file_mb_anon: { fr: 'Taille max. par fichier (invité)', en: 'Max file size (guest)' },
+  max_file_mb_user: { fr: 'Taille max. par fichier (utilisateur)', en: 'Max file size (user)' },
+  max_total_mb_anon: { fr: 'Volume total max. (invité)', en: 'Max total size (guest)' },
+  max_total_mb_user: { fr: 'Volume total max. (utilisateur)', en: 'Max total size (user)' },
+  max_files_anon: { fr: 'Nombre max. de fichiers (invité)', en: 'Max files (guest)' },
+  max_files_user: { fr: 'Nombre max. de fichiers (utilisateur)', en: 'Max files (user)' },
+  max_pdf_pages: { fr: 'Pages PDF max.', en: 'Max PDF pages' },
+  max_video_min_anon: { fr: 'Durée vidéo max. (invité)', en: 'Max video length (guest)' },
+  max_video_min_user: { fr: 'Durée vidéo max. (utilisateur)', en: 'Max video length (user)' },
+  user_daily_jobs: { fr: 'Tâches quotidiennes', en: 'Daily jobs' },
+  user_daily_renders: { fr: 'Rendus quotidiens', en: 'Daily renders' },
+}
+
+function limitLabel(key, locale) {
+  const label = LIMIT_LABELS[key]
+  return label ? (locale === 'en' ? label.en : label.fr) : key.replaceAll('_', ' ')
+}
+
+function formatDate(value, locale) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return `${new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'fr-FR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  }).format(date)} UTC`
+}
+
+function formatBytes(value) {
+  const bytes = Number(value)
+  if (!Number.isFinite(bytes) || bytes <= 0) return '—'
+  const units = ['o', 'Ko', 'Mo', 'Go']
+  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
+  return `${(bytes / 1024 ** index).toFixed(index === 0 ? 0 : 1)} ${units[index]}`
 }
 
 function StatCard({ icon: Icon, label, value, hint, tone }) {
@@ -270,7 +324,7 @@ function ColumnChart({ items, labelKey, valueKey, empty, labelFor }) {
   )
 }
 
-function DataTable({ value, empty, labelFor, columns }) {
+function DataTable({ value, empty, labelFor, columns, headerFor, renderCell }) {
   const { t } = useLocale()
   const rows = normalizeRows(value)
 
@@ -287,7 +341,7 @@ function DataTable({ value, empty, labelFor, columns }) {
             <tr>
               {keys.map((column) => (
                 <th key={column} className="whitespace-nowrap px-3 py-2.5">
-                  {column.replaceAll('_', ' ')}
+                  {headerFor ? headerFor(column) : column.replaceAll('_', ' ')}
                 </th>
               ))}
             </tr>
@@ -297,7 +351,11 @@ function DataTable({ value, empty, labelFor, columns }) {
               <tr key={index} className="transition hover:bg-sky-50/60">
                 {keys.map((column) => (
                   <td key={column} className="max-w-[18rem] truncate px-3 py-2.5 text-slate-700" title={formatCell(row[column])}>
-                    {column === 'tool' && labelFor ? labelFor(row[column]) : formatCell(row[column])}
+                    {renderCell
+                      ? renderCell(column, row)
+                      : column === 'tool' && labelFor
+                        ? labelFor(row[column])
+                        : formatCell(row[column])}
                   </td>
                 ))}
               </tr>
@@ -320,7 +378,7 @@ function UserCards({ value, empty, t }) {
   if (rows.length === 0) return <Empty>{empty}</Empty>
 
   return (
-    <div className="mt-5 grid gap-3 lg:grid-cols-2">
+    <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {rows.map((user, index) => {
         const userId = user.id ?? user.user_id ?? index
         const displayName = user.name ?? [user.first_name, user.last_name].filter(Boolean).join(' ') ?? user.email ?? `#${userId}`
@@ -369,7 +427,68 @@ function UserCards({ value, empty, t }) {
   )
 }
 
-function EventsView({ value, empty, labelFor, t }) {
+const EVENT_HEADERS = {
+  id: { fr: 'ID', en: 'ID' },
+  name: { fr: 'Événement', en: 'Event' },
+  tool: { fr: 'Outil', en: 'Tool' },
+  code: { fr: 'Code', en: 'Code' },
+  files: { fr: 'Fichiers', en: 'Files' },
+  input_bytes: { fr: 'Volume', en: 'Size' },
+}
+
+function ToolRanking({ value, empty, labelFor, t }) {
+  const rows = [...normalizeRows(value)].sort(
+    (a, b) => Number(b.successful_requests ?? 0) - Number(a.successful_requests ?? 0),
+  )
+
+  if (rows.length === 0) return <Empty>{empty}</Empty>
+
+  const max = Math.max(1, ...rows.map((row) => Number(row.successful_requests ?? 0)))
+
+  return (
+    <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {rows.map((row, index) => (
+        <article
+          key={normalizeToolKey(row.tool)}
+          className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <span
+            className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${
+              index < 3 ? 'from-sky-500 to-cyan-400' : 'from-slate-300 to-slate-200'
+            }`}
+          />
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="truncate text-sm font-bold text-slate-900" title={String(row.tool)}>
+                {labelFor(row.tool)}
+              </h3>
+              <p className="mt-0.5 truncate font-mono text-[10px] text-slate-400">{String(row.tool)}</p>
+            </div>
+            <span className="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600">#{index + 1}</span>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="rounded-xl bg-sky-50/70 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-sky-600">{t(TEXT.requestsShort)}</p>
+              <p className="mt-1 text-xl font-bold tabular-nums text-slate-900">{formatCell(row.successful_requests)}</p>
+            </div>
+            <div className="rounded-xl bg-violet-50/70 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-violet-600">{t(TEXT.documentsWord)}</p>
+              <p className="mt-1 text-xl font-bold tabular-nums text-slate-900">{formatCell(row.documents_processed)}</p>
+            </div>
+          </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-400"
+              style={{ width: `${Math.round((Number(row.successful_requests ?? 0) / max) * 100)}%` }}
+            />
+          </div>
+        </article>
+      ))}
+    </div>
+  )
+}
+
+function EventsView({ value, empty, labelFor, t, locale }) {
   const rows = normalizeRows(value)
   const started = rows.filter((row) => row.name === 'tool_started').length
   const completed = rows.filter((row) => row.name === 'tool_run_completed').length
@@ -389,8 +508,14 @@ function EventsView({ value, empty, labelFor, t }) {
       <DataTable
         value={rows.slice(0, 20)}
         empty={empty}
-        labelFor={labelFor}
         columns={['id', 'name', 'tool', 'code', 'files', 'input_bytes']}
+        headerFor={(column) => (EVENT_HEADERS[column] ? t(EVENT_HEADERS[column]) : column.replaceAll('_', ' '))}
+        renderCell={(column, row) => {
+          if (column === 'name') return eventLabel(row.name, locale)
+          if (column === 'tool') return labelFor(row.tool)
+          if (column === 'input_bytes') return formatBytes(row.input_bytes)
+          return formatCell(row[column])
+        }}
       />
     </>
   )
@@ -430,7 +555,7 @@ function ErrorsView({ value, empty, labelFor, t }) {
   )
 }
 
-function AnonymousView({ value, empty, labelFor, t }) {
+function AnonymousView({ value, empty, labelFor, t, locale }) {
   const rows = Array.isArray(value?.usage) ? value.usage : normalizeRows(value)
 
   if (rows.length === 0) return <Empty>{empty}</Empty>
@@ -474,7 +599,7 @@ function AnonymousView({ value, empty, labelFor, t }) {
               {shorten(row.ip_hash)} · {shorten(row.device_id)}
             </p>
             <p className="mt-1 text-[10px] text-slate-400">
-              {t(TEXT.lastUse)} : {formatCell(row.last_used_at)}
+              {t(TEXT.lastUse)} : {formatDate(row.last_used_at, locale)}
             </p>
           </div>
         ))}
@@ -483,7 +608,7 @@ function AnonymousView({ value, empty, labelFor, t }) {
   )
 }
 
-function SettingValue({ name, value, t }) {
+function SettingValue({ name, value, t, locale }) {
   if (value === null || value === undefined) return <p className="mt-4 text-sm text-slate-500">{t(TEXT.noData)}</p>
 
   if (name === 'tools_enabled' && value && typeof value === 'object') {
@@ -510,7 +635,7 @@ function SettingValue({ name, value, t }) {
               title={key}
             >
               {active ? <FiCheckCircle aria-hidden="true" className="h-3 w-3" /> : <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />}
-              {toolLabel(key, 'fr')}
+              {toolLabel(key, locale)}
             </span>
           ))}
         </div>
@@ -534,9 +659,109 @@ function SettingValue({ name, value, t }) {
   return <p className="mt-4 font-mono text-sm text-slate-700">{formatCell(value)}</p>
 }
 
-function SettingsView({ value, empty, t, onSave, disabled, formError, formSuccess }) {
+function SaveButton({ disabled, t }) {
+  return (
+    <button type="submit" disabled={disabled} className="inline-flex w-fit items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50">
+      <FiSettings aria-hidden="true" className="h-3.5 w-3.5" />
+      {t(TEXT.save)}
+    </button>
+  )
+}
+
+function ToolsEditor({ value, locale, onSave, disabled, t }) {
+  const [draft, setDraft] = useState(() => ({ ...value }))
+
+  return (
+    <form
+      className="mt-5 grid gap-2 border-t border-slate-200 pt-4"
+      onSubmit={(event) => {
+        event.preventDefault()
+        onSave('tools_enabled', draft)
+      }}
+    >
+      <p className="text-xs font-bold text-slate-700">{t(TEXT.editValue)}</p>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {Object.entries(draft).map(([key, active]) => (
+          <label
+            key={key}
+            className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold text-slate-700"
+          >
+            <span className="truncate" title={key}>{toolLabel(key, locale)}</span>
+            <input
+              type="checkbox"
+              checked={Boolean(active)}
+              onChange={(event) => setDraft((current) => ({ ...current, [key]: event.target.checked }))}
+              className="h-4 w-4 shrink-0 rounded border-slate-300 accent-sky-600"
+            />
+          </label>
+        ))}
+      </div>
+      <SaveButton disabled={disabled} t={t} />
+    </form>
+  )
+}
+
+function LimitsEditor({ value, locale, onSave, disabled, t }) {
+  const [draft, setDraft] = useState(() => ({ ...value }))
+
+  return (
+    <form
+      className="mt-5 grid gap-3 border-t border-slate-200 pt-4"
+      onSubmit={(event) => {
+        event.preventDefault()
+        onSave('limits', Object.fromEntries(Object.entries(draft).map(([key, current]) => [key, Number(current)])))
+      }}
+    >
+      <p className="text-xs font-bold text-slate-700">{t(TEXT.editValue)}</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {Object.entries(draft).map(([key, current]) => (
+          <label key={key} className="grid gap-1 text-[11px] font-semibold text-slate-600">
+            <span>{limitLabel(key, locale)}</span>
+            <input
+              type="number"
+              min="0"
+              value={current}
+              onChange={(event) => setDraft((data) => ({ ...data, [key]: event.target.value }))}
+              className={inputClass}
+            />
+          </label>
+        ))}
+      </div>
+      <SaveButton disabled={disabled} t={t} />
+    </form>
+  )
+}
+
+function CompressionEditor({ value, onSave, disabled, t }) {
+  const [draft, setDraft] = useState(() => String(value?.max_target_pct ?? ''))
+
+  return (
+    <form
+      className="mt-5 grid gap-3 border-t border-slate-200 pt-4"
+      onSubmit={(event) => {
+        event.preventDefault()
+        onSave('compression', { ...value, max_target_pct: Number(draft) })
+      }}
+    >
+      <p className="text-xs font-bold text-slate-700">{t(TEXT.editValue)}</p>
+      <label className="grid gap-1 text-[11px] font-semibold text-slate-600">
+        <span>max target pct</span>
+        <input
+          type="number"
+          min="1"
+          max="100"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          className={inputClass}
+        />
+      </label>
+      <SaveButton disabled={disabled} t={t} />
+    </form>
+  )
+}
+
+function SettingsView({ value, empty, t, locale, onSave, disabled, formError, formSuccess }) {
   const values = value && typeof value === 'object' && !Array.isArray(value) ? value : {}
-  const [drafts, setDrafts] = useState({})
 
   if (!Object.keys(values).length) return <Empty>{empty}</Empty>
 
@@ -558,31 +783,36 @@ function SettingsView({ value, empty, t, onSave, disabled, formError, formSucces
               <h3 className="font-mono text-sm font-bold text-slate-800">{key}</h3>
               {key === 'compression' && <FiTrendingUp aria-hidden="true" className="h-5 w-5 text-violet-500" />}
             </div>
-            <SettingValue name={key} value={values[key]} t={t} />
-            <details className="mt-4 group">
-              <summary className="cursor-pointer list-none text-xs font-bold text-sky-700 transition group-open:text-sky-900">
-                {t(TEXT.editValue)}
-              </summary>
-              <form
-                className="mt-3 grid gap-2"
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  onSave(key, drafts[key] ?? JSON.stringify(values[key], null, 2))
-                }}
-              >
-                <textarea
-                  rows={5}
-                  value={drafts[key] ?? JSON.stringify(values[key], null, 2)}
-                  onChange={(event) => setDrafts((current) => ({ ...current, [key]: event.target.value }))}
-                  className={`${inputClass} font-mono text-xs`}
-                  aria-label={`${t(TEXT.jsonValue)} ${key}`}
-                />
-                <button type="submit" disabled={disabled} className="inline-flex w-fit items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50">
-                  <FiSettings aria-hidden="true" className="h-3.5 w-3.5" />
-                  {t(TEXT.save)}
-                </button>
-              </form>
-            </details>
+            <SettingValue name={key} value={values[key]} t={t} locale={locale} />
+            {key === 'tools_enabled' && (
+              <ToolsEditor
+                key={JSON.stringify(values[key])}
+                value={values[key]}
+                locale={locale}
+                onSave={onSave}
+                disabled={disabled}
+                t={t}
+              />
+            )}
+            {key === 'limits' && (
+              <LimitsEditor
+                key={JSON.stringify(values[key])}
+                value={values[key]}
+                locale={locale}
+                onSave={onSave}
+                disabled={disabled}
+                t={t}
+              />
+            )}
+            {key === 'compression' && (
+              <CompressionEditor
+                key={JSON.stringify(values[key])}
+                value={values[key]}
+                onSave={onSave}
+                disabled={disabled}
+                t={t}
+              />
+            )}
           </section>
         ))}
       </div>
@@ -665,16 +895,7 @@ export default function AdminPage() {
     )
   }
 
-  async function handleSetting(key, rawValue) {
-    let value
-    try {
-      value = JSON.parse(rawValue)
-    } catch {
-      setSettingError(t(TEXT.badJson))
-      setSettingSuccess(null)
-      return
-    }
-
+  async function saveSetting(key, value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       setSettingError(t(TEXT.badObject))
       setSettingSuccess(null)
@@ -682,6 +903,7 @@ export default function AdminPage() {
     }
 
     await runAction(() => updateAdminSetting(key, value), t(TEXT.settingDone))
+    await getAdminSettings()
   }
 
   if (error?.status === 401 || error?.status === 403) {
@@ -797,7 +1019,7 @@ export default function AdminPage() {
             </div>
 
             <Panel title={t(TEXT.ranking)} description={t(TEXT.rankingHelp)}>
-              <DataTable value={tools} empty={t(TEXT.noData)} labelFor={labelFor} />
+              <ToolRanking value={tools} empty={t(TEXT.noData)} labelFor={labelFor} t={t} />
             </Panel>
 
             <Panel title={t(TEXT.announcement)} description={t(TEXT.announcementHelp)}>
@@ -838,7 +1060,7 @@ export default function AdminPage() {
 
         {activeTab === 'events' && (
           <Panel title={t(TEXT.events)} description={t(TEXT.eventsHelp)} badge={<FiActivity aria-hidden="true" className="h-5 w-5 text-sky-500" />}>
-            <EventsView value={events} empty={t(TEXT.noData)} labelFor={labelFor} t={t} />
+            <EventsView value={events} empty={t(TEXT.noData)} labelFor={labelFor} t={t} locale={locale} />
           </Panel>
         )}
 
@@ -850,7 +1072,7 @@ export default function AdminPage() {
 
         {activeTab === 'anonymous' && (
           <Panel title={t(TEXT.anonymous)} description={t(TEXT.anonymousHelp)} badge={<FiGlobe aria-hidden="true" className="h-5 w-5 text-sky-500" />}>
-            <AnonymousView value={anonymousUsage} empty={t(TEXT.noData)} labelFor={labelFor} t={t} />
+            <AnonymousView value={anonymousUsage} empty={t(TEXT.noData)} labelFor={labelFor} t={t} locale={locale} />
           </Panel>
         )}
 
@@ -860,7 +1082,8 @@ export default function AdminPage() {
               value={settings}
               empty={t(TEXT.noData)}
               t={t}
-              onSave={handleSetting}
+              locale={locale}
+              onSave={saveSetting}
               disabled={loading}
               formError={settingError}
               formSuccess={settingSuccess}
