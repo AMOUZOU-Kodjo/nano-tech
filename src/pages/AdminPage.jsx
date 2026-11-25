@@ -1098,6 +1098,37 @@ function SettingsView({ value, empty, t, locale, onSave, disabled, formError, fo
   )
 }
 
+// Navigation commune à la sidebar fixe et à la barre mobile.
+function NavTabs({ tabs, activeTab, onSelect, t, vertical = false }) {
+  return (
+    <nav
+      role="tablist"
+      aria-label={t(TEXT.title)}
+      className={vertical ? 'flex flex-col gap-1' : 'flex gap-2 overflow-x-auto'}
+    >
+      {tabs.map(([id, label, Icon]) => (
+        <button
+          key={id}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === id}
+          onClick={() => onSelect(id)}
+          className={`inline-flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs font-semibold transition ${
+            vertical ? 'w-full' : 'shrink-0'
+          } ${
+            activeTab === id
+              ? 'bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+          }`}
+        >
+          <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
+          <span className={vertical ? '' : 'whitespace-nowrap'}>{t(label)}</span>
+        </button>
+      ))}
+    </nav>
+  )
+}
+
 export default function AdminPage() {
   const { t, locale } = useLocale()
   const {
@@ -1218,48 +1249,41 @@ export default function AdminPage() {
   ]
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+    <div className="lg:pl-64">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-200 bg-white shadow-xl lg:flex">
         <div className="h-1 w-full bg-gradient-to-r from-sky-400 via-violet-400 to-cyan-500" />
-        <div className="flex flex-wrap items-start justify-between gap-5 p-5 lg:p-7">
-          <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-sky-700 ring-1 ring-sky-100">
-              <FiCpu aria-hidden="true" className="h-3.5 w-3.5" />
-              {t(TEXT.controlRoom)}
-            </span>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">{t(TEXT.title)}</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">{t(TEXT.intro)}</p>
+        <div className="px-5 py-5">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-sky-700 ring-1 ring-sky-100">
+            <FiCpu aria-hidden="true" className="h-3.5 w-3.5" />
+            {t(TEXT.controlRoom)}
+          </span>
+          <p className="mt-3 text-sm font-bold text-slate-900">{t(TEXT.title)}</p>
+        </div>
+        <div className="px-2">
+          <NavTabs tabs={tabs} activeTab={activeTab} onSelect={setActiveTab} t={t} vertical />
+        </div>
+      </aside>
+
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
+        <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div className="h-1 w-full bg-gradient-to-r from-sky-400 via-violet-400 to-cyan-500" />
+          <div className="flex flex-wrap items-start justify-between gap-5 p-5 lg:p-7">
+            <div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-sky-700 ring-1 ring-sky-100">
+                <FiCpu aria-hidden="true" className="h-3.5 w-3.5" />
+                {t(TEXT.controlRoom)}
+              </span>
+              <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">{t(TEXT.title)}</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">{t(TEXT.intro)}</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[16rem_minmax(0,1fr)]">
-        <aside className="self-start lg:sticky lg:top-6">
+        <div className="mt-5 lg:hidden">
           <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-            <p className="px-3 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-              {t(TEXT.controlRoom)}
-            </p>
-            <nav role="tablist" aria-label={t(TEXT.title)} className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
-              {tabs.map(([id, label, Icon]) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === id}
-                  onClick={() => setActiveTab(id)}
-                  className={`inline-flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs font-semibold transition ${
-                    activeTab === id
-                      ? 'bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-sm'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                  }`}
-                >
-                  <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
-                  <span className="whitespace-nowrap">{t(label)}</span>
-                </button>
-              ))}
-            </nav>
+            <NavTabs tabs={tabs} activeTab={activeTab} onSelect={setActiveTab} t={t} />
           </div>
-        </aside>
+        </div>
 
         <div className="min-w-0">
           <div className="mt-4 flex items-center justify-between gap-3">
@@ -1393,7 +1417,7 @@ export default function AdminPage() {
         )}
       </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   )
 }
