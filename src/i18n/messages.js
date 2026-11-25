@@ -6,7 +6,7 @@ export const MESSAGES = {
     studio: { fr: 'Studio', en: 'Studio' },
     dashboard: { fr: 'Espace utilisateur', en: 'User space' },
     documents: { fr: 'Documents', en: 'Documents' },
-    jobs: { fr: 'Jobs', en: 'Jobs' },
+    jobs: { fr: 'Traitements', en: 'Processing' },
     billing: { fr: 'Facturation', en: 'Billing' },
     login: { fr: 'Connexion', en: 'Sign in' },
     register: { fr: 'Inscription', en: 'Sign up' },
@@ -61,7 +61,7 @@ export const MESSAGES = {
     userSpace: { fr: 'Espace utilisateur', en: 'User space' },
     information: { fr: 'Informations', en: 'Information' },
     dashboard: { fr: 'État du service et du compte', en: 'Service and account status' },
-    jobs: { fr: 'Historique des jobs', en: 'Job history' },
+    jobs: { fr: 'Historique des traitements', en: 'Processing history' },
     terms: { fr: 'CGU 2026-11', en: 'Terms 2026-11' },
     privacy: { fr: 'Confidentialité', en: 'Privacy' },
     cookies: { fr: 'Cookies', en: 'Cookies' },
@@ -145,8 +145,8 @@ export const MESSAGES = {
     },
     faqOneQuestion: { fr: 'Comment se déroule un traitement ?', en: 'How does a processing work?' },
     faqOneAnswer: {
-      fr: 'Le front crée un job, suit son statut à intervalles réguliers, puis télécharge le résultat dès que le traitement est terminé.',
-      en: 'The front creates a job, checks its status regularly, then downloads the result as soon as processing is complete.',
+      fr: 'Le front lance un traitement, suit son avancement régulièrement, puis télécharge le résultat dès qu’il est prêt.',
+      en: 'The front starts a processing, tracks its progress regularly, then downloads the result as soon as it is ready.',
     },
     faqTwoQuestion: { fr: 'Mes fichiers sont-ils conservés dans le navigateur ?', en: 'Are my files stored in the browser?' },
     faqTwoAnswer: {
@@ -160,8 +160,8 @@ export const MESSAGES = {
     },
     faqFourQuestion: { fr: 'Faut-il créer un compte ?', en: 'Do I need an account?' },
     faqFourAnswer: {
-      fr: 'Non. Vous pouvez lancer un traitement sans compte dans la limite du quota invité. Un compte permet ensuite de retrouver vos documents et l’historique de vos jobs.',
-      en: 'No. You can start a processing without an account within the guest quota. An account then lets you find your documents and job history.',
+      fr: 'Non. Vous pouvez lancer un traitement sans compte dans la limite du quota invité. Un compte permet ensuite de retrouver vos documents et l’historique de vos traitements.',
+      en: 'No. You can start a processing without an account within the guest quota. An account then lets you find your documents and processing history.',
     },
   },
   legal: {

@@ -13,6 +13,8 @@ import {
   FiUploadCloud,
   FiX,
 } from 'react-icons/fi'
+import ImagesOrder from '@/components/ImagesOrder.jsx'
+import PdfPageReorder from '@/components/PdfPageReorder.jsx'
 import PdfPageSelector from '@/components/PdfPageSelector.jsx'
 import { TOOLS, TOOL_CATEGORIES } from '@/config/tools.js'
 import { useEnabledTools } from '@/hooks/useEnabledTools.js'
@@ -65,11 +67,10 @@ const TEXT = {
   hintOptimal: { fr: 'Gain maximal', en: 'Maximum gain' },
   targetHelp: { fr: 'Ou fixez une taille cible en Ko.', en: 'Or set a target size in KB.' },
   resultReady: { fr: 'Votre fichier est prêt', en: 'Your file is ready' },
+  viewHistory: { fr: 'Voir dans l’historique →', en: 'View in history →' },
   download: { fr: 'Télécharger le fichier', en: 'Download the file' },
   dropFiles: { fr: 'Déposez vos fichiers ici', en: 'Drop your files here' },
   clickSelect: { fr: 'ou cliquez pour les sélectionner', en: 'or click to select them' },
-  moveUp: { fr: 'Monter', en: 'Move up' },
-  moveDown: { fr: 'Descendre', en: 'Move down' },
   remove: { fr: 'Retirer', en: 'Remove' },
   compressionOptions: { fr: 'Options de compression', en: 'Compression options' },
   compressionHelp: {
@@ -94,9 +95,10 @@ const TEXT = {
   resolutionPlaceholder: { fr: '72 à 600', en: '72 to 600' },
   pageRanges: { fr: 'Plages de pages', en: 'Page ranges' },
   pageOrder: { fr: 'Ordre des pages', en: 'Page order' },
+  defaultOrder: { fr: 'Ordre par défaut', en: 'Default order' },
   imagesOrderHelp: {
-    fr: 'Les images sont assemblées dans l’ordre affiché. Utilisez les boutons Monter et Descendre pour les classer.',
-    en: 'Images are assembled in the displayed order. Use the Move up and Move down buttons to sort them.',
+    fr: 'Les images sont assemblées dans l’ordre du panneau « Ordre des images », à droite.',
+    en: 'Images are assembled in the order shown in the “Image order” panel on the right.',
   },
   signatureText: { fr: 'Texte de la signature', en: 'Signature text' },
   page: { fr: 'Page', en: 'Page' },
@@ -452,7 +454,7 @@ export default function ToolPage() {
 
   const toolInfo = TOOLS.find((item) => item.tool === tool)
   const pdfFile =
-    toolInfo?.tool === 'pdf_to_images'
+    toolInfo?.tool === 'pdf_to_images' || toolInfo?.tool === 'pdf_reorder'
       ? files.find((item) => item.type === 'application/pdf' || item.name.toLowerCase().endsWith('.pdf'))
       : null
   const category = TOOL_CATEGORIES.find((item) => item.id === toolInfo?.category)
@@ -658,8 +660,10 @@ export default function ToolPage() {
       options.ranges = toolOptions.ranges.trim()
     }
 
-    if (toolInfo.tool === 'pdf_reorder' && toolOptions.order) {
-      const order = parsePageOrder(toolOptions.order)
+    if (toolInfo.tool === 'pdf_reorder') {
+      const order = Array.isArray(toolOptions.order)
+        ? toolOptions.order
+        : parsePageOrder(toolOptions.order)
       if (order.length === 0) {
         setLocalError(t(TEXT.invalidPageOrder))
         return
@@ -696,7 +700,11 @@ export default function ToolPage() {
       options.text = toolOptions.watermark
     }
 
+    setLocalError(null)
     const payload = await createJob(files, toolInfo.tool, options)
+    if (payload === null) {
+      return
+    }
     if (!payload?.id) {
       trackEvent('tool_run_failed', { tool: toolInfo.tool })
       setLocalError(t(TEXT.jobNotCreated))
@@ -720,6 +728,9 @@ export default function ToolPage() {
     if (tool === 'pdf_to_images') {
       setSelectedPdfPages([])
       setToolOptions((current) => ({ ...current, pages: 'all' }))
+    }
+    if (tool === 'pdf_reorder') {
+      setToolOptions((current) => ({ ...current, order: '' }))
     }
     setLocalError(null)
   }
@@ -750,22 +761,17 @@ export default function ToolPage() {
     setLocalError(null)
   }
 
+  function handlePdfPageOrderChange(order) {
+    setToolOptions((current) => ({ ...current, order }))
+    setLocalError(null)
+  }
+
   // Convertit une saisie « 3, 1, 2 » en liste de numéros de pages valides.
   function parsePageOrder(value) {
     return String(value)
       .split(',')
       .map((item) => Number(item.trim()))
       .filter((item) => Number.isInteger(item) && item > 0)
-  }
-
-  function moveFile(index, direction) {
-    setFiles((current) => {
-      const target = index + direction
-      if (target < 0 || target >= current.length) return current
-      const next = [...current]
-      ;[next[index], next[target]] = [next[target], next[index]]
-      return next
-    })
   }
 
   function resetTool() {
@@ -900,7 +906,34 @@ export default function ToolPage() {
                   </label>
                 </div>
 
-                {files.length > 0 && (
+                {files.length > 0 && toolInfo.tool === 'images_to_pdf' && (
+                  <div className="mt-3 flex flex-nowrap gap-2 overflow-x-auto pb-2">
+                    {files.map((file, index) => (
+                      <div
+                        key={`${file.name}-${index}`}
+                        className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white ring-1 ring-slate-200/70"
+                      >
+                        {previews[index] ? (
+                          <img src={previews[index]} alt={file.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="grid h-full w-full place-items-center">
+                            <FiFile aria-hidden="true" className="h-5 w-5 text-slate-400" />
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}
+                          disabled={creating}
+                          aria-label={t(TEXT.remove)}
+                          className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-lg bg-white/90 text-slate-500 shadow-sm transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                        >
+                          <FiX aria-hidden="true" className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {files.length > 0 && toolInfo.tool !== 'images_to_pdf' && (
                   <ul className="mt-3 space-y-2">
                     {files.map((file, index) => (
                       <li
@@ -920,37 +953,15 @@ export default function ToolPage() {
                             <p className="mt-0.5 text-xs text-slate-500">{formatFileSize(file.size, locale)}</p>
                           </div>
                         </div>
-                        <div className="flex shrink-0 items-center gap-1">
-                          {toolInfo.tool === 'images_to_pdf' && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => moveFile(index, -1)}
-                                disabled={creating || index === 0}
-                                className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40"
-                              >
-                                {t(TEXT.moveUp)}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => moveFile(index, 1)}
-                                disabled={creating || index === files.length - 1}
-                                className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40"
-                              >
-                                {t(TEXT.moveDown)}
-                              </button>
-                            </>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}
-                            disabled={creating}
-                            aria-label={t(TEXT.remove)}
-                            className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-                          >
-                            <FiX aria-hidden="true" className="h-4 w-4" />
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}
+                          disabled={creating}
+                          aria-label={t(TEXT.remove)}
+                          className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                        >
+                          <FiX aria-hidden="true" className="h-4 w-4" />
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -1010,17 +1021,14 @@ export default function ToolPage() {
                     </label>
                   )}
                   {toolInfo.tool === 'pdf_reorder' && (
-                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                    <div className="grid gap-1 text-xs font-semibold text-slate-700">
                       <span>{t(TEXT.pageOrder)}</span>
-                      <input
-                        type="text"
-                        value={toolOptions.order}
-                        onChange={(event) => updateToolOption('order', event.target.value)}
-                        disabled={creating}
-                        className={OPTION_INPUT_CLASS}
-                        placeholder="3,1,2"
-                      />
-                    </label>
+                      <span className={`${OPTION_INPUT_CLASS} truncate`}>
+                        {Array.isArray(toolOptions.order)
+                          ? toolOptions.order.join(', ')
+                          : t(TEXT.defaultOrder)}
+                      </span>
+                    </div>
                   )}
                   {toolInfo.tool === 'images_to_pdf' && (
                     <p className="text-xs leading-relaxed text-slate-600">
@@ -1395,6 +1403,12 @@ export default function ToolPage() {
               maxPages={limits.maxPdfPages}
             />
           )}
+          {toolInfo.tool === 'pdf_reorder' && (
+            <PdfPageReorder file={pdfFile} onChange={handlePdfPageOrderChange} />
+          )}
+          {toolInfo.tool === 'images_to_pdf' && (
+            <ImagesOrder files={files} previews={previews} onChange={setFiles} disabled={creating} />
+          )}
           {job && (status === 'failed' || status === 'done') && (
             <div
               className={`rounded-2xl border p-5 shadow-sm lg:p-4 ${
@@ -1447,6 +1461,12 @@ export default function ToolPage() {
                     <FiDownload aria-hidden="true" className="h-4 w-4" />
                     {t(downloading ? TEXT.retrieving : TEXT.download)}
                   </button>
+                  <Link
+                    to="/jobs"
+                    className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-white/80 px-5 py-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-white"
+                  >
+                    {t(TEXT.viewHistory)}
+                  </Link>
                   {downloadedJobId === jobId && downloadError && (
                     <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-xs text-red-700">
                       {downloadError.message}

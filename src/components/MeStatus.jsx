@@ -15,6 +15,7 @@ const TEXT = {
   plan: { fr: 'Formule', en: 'Plan' },
   credits: { fr: 'Crédits', en: 'Credits' },
   freeTrials: { fr: 'Essais gratuits', en: 'Free trials' },
+  freeTrialsRemaining: { fr: 'Essais gratuits restants', en: 'Free trials remaining' },
   dailyJobs: { fr: 'Jobs du jour', en: "Today's jobs" },
   dailyRenders: { fr: 'Rendus du jour', en: "Today's renders" },
   dailyAi: { fr: 'IA du jour', en: "Today's AI uses" },
@@ -69,8 +70,16 @@ export default function MeStatus() {
   const limit = quota?.limit
   const used = quota?.used
   const remaining = quota?.remaining
-  const hasGuestQuota = isGuest && typeof limit === 'number' && typeof used === 'number'
-  const percent = hasGuestQuota && limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0
+  const freeTrialsLeft =
+    isGuest && typeof quota?.free_uses_left === 'number' ? quota.free_uses_left : null
+  const hasGuestQuota =
+    freeTrialsLeft === null && isGuest && typeof limit === 'number' && typeof used === 'number'
+  const percent =
+    freeTrialsLeft !== null && typeof limit === 'number' && limit > 0
+      ? Math.min(100, Math.round((freeTrialsLeft / limit) * 100))
+      : hasGuestQuota && limit > 0
+        ? Math.min(100, Math.round((used / limit) * 100))
+        : 0
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -91,7 +100,27 @@ export default function MeStatus() {
         {isGuest ? t(TEXT.guestMessage) : displayName}
       </p>
 
-      {hasGuestQuota ? (
+      {freeTrialsLeft !== null ? (
+        <div className="mt-5">
+          <div className="flex items-center justify-between text-sm text-slate-600">
+            <span>{t(TEXT.freeTrialsRemaining)}</span>
+            <span>
+              {freeTrialsLeft}
+              {typeof limit === 'number' ? ` / ${limit}` : ''}
+            </span>
+          </div>
+          <div
+            className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200"
+            role="progressbar"
+            aria-label={t(TEXT.freeTrialsRemaining)}
+            aria-valuenow={percent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div className="h-full rounded-full bg-sky-500" style={{ width: `${percent}%` }} />
+          </div>
+        </div>
+      ) : hasGuestQuota ? (
         <div className="mt-5">
           <div className="flex items-center justify-between text-sm text-slate-600">
             <span>{t(TEXT.quotaUsed)}</span>
