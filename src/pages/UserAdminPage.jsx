@@ -14,7 +14,7 @@ import { useLocale } from '@/hooks/useLocale.js'
 import { useAdmin } from '@/hooks/useAdmin.js'
 
 const TEXT = {
-  back: { fr: 'Retour au control-room', en: 'Back to control room' },
+  back: { fr: 'Retour au centre de contrôle', en: 'Back to control room' },
   title: { fr: 'Gestion de l’utilisateur', en: 'User management' },
   intro: { fr: 'Actions administratives documentées par l’API.', en: 'Administrative actions documented by the API.' },
   profile: { fr: 'Profil', en: 'Profile' },
@@ -33,11 +33,34 @@ const TEXT = {
   loading: { fr: 'Chargement du compte…', en: 'Loading account…' },
   noValue: { fr: '—', en: '—' },
   deniedTitle: { fr: 'Espace réservé aux administrateurs', en: 'Administrators only' },
-  deniedFallback: { fr: 'Votre session ne permet pas d’accéder au control-room.', en: 'Your session cannot access the control room.' },
+  deniedFallback: { fr: 'Votre session ne permet pas d’accéder au centre de contrôle.', en: 'Your session cannot access the control room.' },
   actionDenied: { fr: 'L’action administrative a été refusée.', en: 'The administrative action was denied.' },
   adminDone: { fr: 'Statut administrateur mis à jour.', en: 'Administrator status updated.' },
   creditsDone: { fr: 'Crédits mis à jour.', en: 'Credits updated.' },
   planDone: { fr: 'Plan mis à jour.', en: 'Plan updated.' },
+  freePlan: { fr: 'Gratuit', en: 'Free' },
+  proPlan: { fr: 'Pro', en: 'Pro' },
+  yes: { fr: 'Oui', en: 'Yes' },
+  no: { fr: 'Non', en: 'No' },
+}
+
+const PROFILE_LABELS = {
+  id: { fr: 'Identifiant', en: 'ID' },
+  user_id: { fr: 'Identifiant', en: 'ID' },
+  email: { fr: 'E-mail', en: 'Email' },
+  name: { fr: 'Nom', en: 'Name' },
+  first_name: { fr: 'Prénom', en: 'First name' },
+  last_name: { fr: 'Nom de famille', en: 'Last name' },
+  is_admin: { fr: 'Administrateur', en: 'Administrator' },
+  role: { fr: 'Rôle', en: 'Role' },
+  plan: { fr: 'Plan', en: 'Plan' },
+  credits: { fr: 'Crédits', en: 'Credits' },
+  quota: { fr: 'Quota', en: 'Quota' },
+  created_at: { fr: 'Créé le', en: 'Created at' },
+  updated_at: { fr: 'Mis à jour le', en: 'Updated at' },
+  terms_accepted: { fr: 'CGU acceptées', en: 'Terms accepted' },
+  marketing_opt_in: { fr: 'Offres marketing', en: 'Marketing opt-in' },
+  is_verified: { fr: 'Vérifié', en: 'Verified' },
 }
 
 const inputClass =
@@ -47,6 +70,36 @@ function formatCell(value, empty) {
   if (value === null || value === undefined || value === '') return empty
   if (typeof value === 'object') return JSON.stringify(value)
   return String(value)
+}
+
+function profileLabel(key, locale) {
+  const label = PROFILE_LABELS[key]
+  return label ? (locale === 'en' ? label.en : label.fr) : key.replaceAll('_', ' ')
+}
+
+function planLabel(value, t) {
+  if (value === 'pro') return t(TEXT.proPlan)
+  if (value === 'free') return t(TEXT.freePlan)
+  return value
+}
+
+function formatProfileValue(value, locale, t, empty) {
+  if (value === null || value === undefined || value === '') return empty
+  if (typeof value === 'boolean') return value ? t(TEXT.yes) : t(TEXT.no)
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+    const date = new Date(value)
+    if (!Number.isNaN(date.getTime())) {
+      return `${new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'fr-FR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'UTC',
+      }).format(date)} UTC`
+    }
+  }
+  return formatCell(value, empty)
 }
 
 function Panel({ title, description, children, badge }) {
@@ -137,8 +190,8 @@ function UserActions({ id, user, loading, onAdmin, onCredits, onPlan }) {
           <form onSubmit={handlePlan} className="mt-5 grid gap-3 sm:grid-cols-2">
             <Field label={t(TEXT.plan)}>
               <select value={planName} onChange={(event) => setPlanName(event.target.value)} className={inputClass}>
-                <option value="free">free</option>
-                <option value="pro">pro</option>
+                <option value="free">{t(TEXT.freePlan)}</option>
+                <option value="pro">{t(TEXT.proPlan)}</option>
               </select>
             </Field>
             <Field label={t(TEXT.duration)}>
@@ -157,7 +210,7 @@ function UserActions({ id, user, loading, onAdmin, onCredits, onPlan }) {
 
 export default function UserAdminPage() {
   const { id } = useParams()
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const {
     users,
     loading,
@@ -279,9 +332,9 @@ export default function UserAdminPage() {
             <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {details.map(([key, value]) => (
                 <div key={key} className="rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
-                  <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{key.replaceAll('_', ' ')}</dt>
+                  <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{profileLabel(key, locale)}</dt>
                   <dd className="mt-1 truncate text-sm font-medium text-slate-800" title={formatCell(value, '')}>
-                    {formatCell(value, t(TEXT.noValue))}
+                    {formatProfileValue(key === 'plan' ? planLabel(value, t) : value, locale, t, t(TEXT.noValue))}
                   </dd>
                 </div>
               ))}

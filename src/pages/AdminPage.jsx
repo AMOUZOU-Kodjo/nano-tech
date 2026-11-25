@@ -4,6 +4,7 @@ import {
   FiActivity,
   FiAlertCircle,
   FiBarChart2,
+  FiCamera,
   FiCheckCircle,
   FiChevronRight,
   FiClock,
@@ -21,10 +22,11 @@ import {
 } from 'react-icons/fi'
 import { useLocale } from '@/hooks/useLocale.js'
 import { useAdmin } from '@/hooks/useAdmin.js'
+import { useCatalog } from '@/hooks/useCatalog.js'
 import { TOOLS } from '@/config/tools.js'
 
 const TEXT = {
-  controlRoom: { fr: 'Control-room', en: 'Control room' },
+  controlRoom: { fr: 'Centre de contrôle', en: 'Control room' },
   title: { fr: 'Administration NanoFile', en: 'NanoFile administration' },
   intro: {
     fr: 'Pilotage complet de la plateforme. Données et actions réservées aux sessions autorisées.',
@@ -86,9 +88,25 @@ const TEXT = {
   enabled: { fr: 'Activés', en: 'Enabled' },
   disabled: { fr: 'Désactivés', en: 'Disabled' },
   editValue: { fr: 'Modifier la valeur', en: 'Edit value' },
+  adminBadge: { fr: 'Admin', en: 'Admin' },
+  freePlan: { fr: 'Gratuit', en: 'Free' },
+  proPlan: { fr: 'Pro', en: 'Pro' },
+  maxTargetPct: { fr: 'Pourcentage cible max.', en: 'Max target pct' },
+  photo: { fr: 'Photo d’identité', en: 'ID photo' },
+  photoSpecs: { fr: 'Spécifications photo', en: 'Photo specifications' },
+  photoSpecsHelp: { fr: 'Pays et documents disponibles exposés par l’API catalogue.', en: 'Countries and documents exposed by the catalog API.' },
+  countries: { fr: 'Pays', en: 'Countries' },
+  excludedCountries: { fr: 'Pays exclus', en: 'Excluded countries' },
+  documentsPerCountry: { fr: 'Documents disponibles', en: 'Available documents' },
+  noPhotoSpecs: { fr: 'Aucune spécification photo disponible.', en: 'No photo specification available.' },
+  readOnly: {
+    fr: 'Lecture seule : l’API n’expose pas de modification des pays, documents ou polices.',
+    en: 'Read-only: the API does not expose editing of countries, documents or fonts.',
+  },
+  reason: { fr: 'Motif', en: 'Reason' },
   denied: { fr: 'Accès refusé', en: 'Access denied' },
   deniedTitle: { fr: 'Espace réservé aux administrateurs', en: 'Administrators only' },
-  deniedFallback: { fr: 'Votre session ne permet pas d’accéder au control-room.', en: 'Your session cannot access the control room.' },
+  deniedFallback: { fr: 'Votre session ne permet pas d’accéder au centre de contrôle.', en: 'Your session cannot access the control room.' },
   actionDenied: { fr: 'L’action administrative a été refusée.', en: 'The administrative action was denied.' },
   announcementDone: { fr: 'Annonce créée.', en: 'Announcement created.' },
   settingDone: { fr: 'Paramètre mis à jour.', en: 'Setting updated.' },
@@ -99,6 +117,28 @@ const inputClass =
   'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500'
 
 const SETTING_KEYS = ['tools_enabled', 'limits', 'compression']
+
+const COLUMN_LABELS = {
+  id: { fr: 'ID', en: 'ID' },
+  name: { fr: 'Nom', en: 'Name' },
+  tool: { fr: 'Outil', en: 'Tool' },
+  code: { fr: 'Code', en: 'Code' },
+  files: { fr: 'Fichiers', en: 'Files' },
+  input_bytes: { fr: 'Volume', en: 'Size' },
+  user_id: { fr: 'ID utilisateur', en: 'User ID' },
+  email: { fr: 'E-mail', en: 'Email' },
+  success: { fr: 'Succès', en: 'Success' },
+  status: { fr: 'Statut', en: 'Status' },
+  created_at: { fr: 'Créé le', en: 'Created at' },
+  started_at: { fr: 'Démarré le', en: 'Started at' },
+  duration_ms: { fr: 'Durée', en: 'Duration' },
+  key: { fr: 'Clé', en: 'Key' },
+  value: { fr: 'Valeur', en: 'Value' },
+}
+
+function columnLabel(column, t) {
+  return COLUMN_LABELS[column] ? t(COLUMN_LABELS[column]) : column.replaceAll('_', ' ')
+}
 
 function formatCell(value) {
   if (value === null || value === undefined || value === '') return '—'
@@ -187,6 +227,12 @@ const LIMIT_LABELS = {
 function limitLabel(key, locale) {
   const label = LIMIT_LABELS[key]
   return label ? (locale === 'en' ? label.en : label.fr) : key.replaceAll('_', ' ')
+}
+
+function settingLabel(name, key, locale, t) {
+  if (name === 'limits') return limitLabel(key, locale)
+  if (name === 'compression' && key === 'max_target_pct') return t(TEXT.maxTargetPct)
+  return key.replaceAll('_', ' ')
 }
 
 function formatDate(value, locale) {
@@ -341,7 +387,7 @@ function DataTable({ value, empty, labelFor, columns, headerFor, renderCell }) {
             <tr>
               {keys.map((column) => (
                 <th key={column} className="whitespace-nowrap px-3 py-2.5">
-                  {headerFor ? headerFor(column) : column.replaceAll('_', ' ')}
+                  {headerFor ? headerFor(column) : columnLabel(column, t)}
                 </th>
               ))}
             </tr>
@@ -404,10 +450,12 @@ function UserCards({ value, empty, t }) {
               <span className="block truncate text-xs text-slate-500">{user.email ?? `#${userId}`}</span>
               <span className="mt-1.5 flex flex-wrap gap-1.5">
                 {isAdmin && (
-                  <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold text-violet-700 ring-1 ring-violet-100">admin</span>
+                  <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold text-violet-700 ring-1 ring-violet-100">{t(TEXT.adminBadge)}</span>
                 )}
                 {user.plan && (
-                  <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700 ring-1 ring-sky-100">{String(user.plan)}</span>
+                  <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700 ring-1 ring-sky-100">
+                    {user.plan === 'pro' ? t(TEXT.proPlan) : t(TEXT.freePlan)}
+                  </span>
                 )}
                 {credits !== undefined && (
                   <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-100">
@@ -425,15 +473,6 @@ function UserCards({ value, empty, t }) {
       })}
     </div>
   )
-}
-
-const EVENT_HEADERS = {
-  id: { fr: 'ID', en: 'ID' },
-  name: { fr: 'Événement', en: 'Event' },
-  tool: { fr: 'Outil', en: 'Tool' },
-  code: { fr: 'Code', en: 'Code' },
-  files: { fr: 'Fichiers', en: 'Files' },
-  input_bytes: { fr: 'Volume', en: 'Size' },
 }
 
 function ToolRanking({ value, empty, labelFor, t }) {
@@ -509,7 +548,7 @@ function EventsView({ value, empty, labelFor, t, locale }) {
         value={rows.slice(0, 20)}
         empty={empty}
         columns={['id', 'name', 'tool', 'code', 'files', 'input_bytes']}
-        headerFor={(column) => (EVENT_HEADERS[column] ? t(EVENT_HEADERS[column]) : column.replaceAll('_', ' '))}
+        headerFor={(column) => (column === 'name' ? t({ fr: 'Événement', en: 'Event' }) : columnLabel(column, t))}
         renderCell={(column, row) => {
           if (column === 'name') return eventLabel(row.name, locale)
           if (column === 'tool') return labelFor(row.tool)
@@ -608,6 +647,96 @@ function AnonymousView({ value, empty, labelFor, t, locale }) {
   )
 }
 
+function photoCountries(specs) {
+  const source = Array.isArray(specs) ? specs : (specs?.countries ?? [])
+  return source
+    .map((item) => {
+      if (typeof item === 'string') return { code: item, name: item, documents: [] }
+      const code = String(item?.code ?? item?.id ?? item?.name ?? '')
+      const rawDocuments = item?.documents ?? item?.document_types ?? item?.types ?? []
+      return {
+        code,
+        name: String(item?.name ?? item?.label ?? item?.title ?? code),
+        documents: rawDocuments
+          .map((document) =>
+            typeof document === 'string'
+              ? document
+              : String(document?.name ?? document?.label ?? document?.code ?? ''),
+          )
+          .filter(Boolean),
+      }
+    })
+    .filter((item) => item.code)
+}
+
+function photoExcluded(specs) {
+  const source = Array.isArray(specs?.excluded) ? specs.excluded : []
+  return source
+    .map((item) => ({
+      code: String(item?.code ?? item?.id ?? ''),
+      reason: String(item?.reason ?? ''),
+    }))
+    .filter((item) => item.code)
+}
+
+function PhotoView({ value, empty, t }) {
+  const countries = photoCountries(value)
+  const excluded = photoExcluded(value)
+
+  if (countries.length === 0 && excluded.length === 0) return <Empty>{empty}</Empty>
+
+  const documentCount = countries.reduce((total, country) => total + country.documents.length, 0)
+
+  return (
+    <>
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <StatCard icon={FiGlobe} label={t(TEXT.countries)} value={countries.length} tone="sky" />
+        <StatCard icon={FiFileText} label={t(TEXT.documentsWord)} value={documentCount} tone="violet" />
+        <StatCard icon={FiAlertCircle} label={t(TEXT.excludedCountries)} value={excluded.length} tone="rose" />
+      </div>
+      <p className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-500">{t(TEXT.readOnly)}</p>
+
+      <h3 className="mt-6 text-xs font-bold uppercase tracking-wider text-slate-500">{t(TEXT.countries)}</h3>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {countries.map((country) => (
+          <article key={country.code} className="rounded-xl border border-slate-200 bg-white p-4">
+            <div className="flex items-start justify-between gap-2">
+              <h4 className="truncate text-sm font-bold text-slate-900">{country.name}</h4>
+              <code className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">{country.code}</code>
+            </div>
+            <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">{t(TEXT.documentsPerCountry)}</p>
+            {country.documents.length > 0 ? (
+              <ul className="mt-2 flex flex-wrap gap-1.5">
+                {country.documents.map((document, index) => (
+                  <li key={`${document}-${index}`} className="rounded-lg bg-sky-50 px-2 py-1 text-[11px] font-semibold text-sky-700">
+                    {document}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-xs text-slate-400">{t(TEXT.noData)}</p>
+            )}
+          </article>
+        ))}
+      </div>
+
+      {excluded.length > 0 && (
+        <>
+          <h3 className="mt-6 text-xs font-bold uppercase tracking-wider text-slate-500">{t(TEXT.excludedCountries)}</h3>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {excluded.map((item) => (
+              <div key={item.code} className="flex items-start justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                <code className="text-xs font-bold text-amber-800">{item.code}</code>
+                <span className="text-right text-[11px] text-amber-700">{item.reason || t(TEXT.reason)}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </>
+  )
+}
+
 function SettingValue({ name, value, t, locale }) {
   if (value === null || value === undefined) return <p className="mt-4 text-sm text-slate-500">{t(TEXT.noData)}</p>
 
@@ -648,7 +777,9 @@ function SettingValue({ name, value, t, locale }) {
       <dl className="mt-4 grid gap-2 sm:grid-cols-2">
         {Object.entries(value).map(([key, item]) => (
           <div key={key} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-            <dt className="truncate font-mono text-[11px] text-slate-500">{key.replaceAll('_', ' ')}</dt>
+            <dt className="truncate text-[11px] font-semibold text-slate-500" title={key}>
+              {settingLabel(name, key, locale, t)}
+            </dt>
             <dd className="shrink-0 text-sm font-bold tabular-nums text-slate-800">{formatCell(item)}</dd>
           </div>
         ))}
@@ -745,7 +876,7 @@ function CompressionEditor({ value, onSave, disabled, t }) {
     >
       <p className="text-xs font-bold text-slate-700">{t(TEXT.editValue)}</p>
       <label className="grid gap-1 text-[11px] font-semibold text-slate-600">
-        <span>max target pct</span>
+        <span>{t(TEXT.maxTargetPct)}</span>
         <input
           type="number"
           min="1"
@@ -842,6 +973,7 @@ export default function AdminPage() {
     listAnonymousUsage,
     getAdminSettings,
   } = useAdmin()
+  const { photoSpecs, getPhotoSpecs } = useCatalog()
 
   const [activeTab, setActiveTab] = useState('overview')
   const [announcement, setAnnouncement] = useState({ title: '', body: '' })
@@ -857,6 +989,7 @@ export default function AdminPage() {
       events: listAdminEvents,
       errors: listEventErrors,
       anonymous: listAnonymousUsage,
+      photo: getPhotoSpecs,
       settings: getAdminSettings,
     }),
     [
@@ -866,6 +999,7 @@ export default function AdminPage() {
       listAdminEvents,
       listEventErrors,
       listAnonymousUsage,
+      getPhotoSpecs,
       getAdminSettings,
     ],
   )
@@ -932,6 +1066,7 @@ export default function AdminPage() {
     ['events', TEXT.events, FiActivity],
     ['errors', TEXT.eventErrors, FiAlertCircle],
     ['anonymous', TEXT.anonymous, FiGlobe],
+    ['photo', TEXT.photo, FiCamera],
     ['settings', TEXT.settings, FiSettings],
   ]
 
@@ -1073,6 +1208,16 @@ export default function AdminPage() {
         {activeTab === 'anonymous' && (
           <Panel title={t(TEXT.anonymous)} description={t(TEXT.anonymousHelp)} badge={<FiGlobe aria-hidden="true" className="h-5 w-5 text-sky-500" />}>
             <AnonymousView value={anonymousUsage} empty={t(TEXT.noData)} labelFor={labelFor} t={t} locale={locale} />
+          </Panel>
+        )}
+
+        {activeTab === 'photo' && (
+          <Panel
+            title={t(TEXT.photoSpecs)}
+            description={t(TEXT.photoSpecsHelp)}
+            badge={<FiCamera aria-hidden="true" className="h-5 w-5 text-sky-500" />}
+          >
+            <PhotoView value={photoSpecs} empty={t(TEXT.noPhotoSpecs)} t={t} />
           </Panel>
         )}
 
