@@ -4,6 +4,7 @@ import {
   FiAlertCircle,
   FiBarChart2,
   FiCheckCircle,
+  FiChevronDown,
   FiClock,
   FiCpu,
   FiDollarSign,
@@ -21,6 +22,7 @@ import {
 } from 'react-icons/fi'
 import { useLocale } from '@/hooks/useLocale.js'
 import { useAdmin } from '@/hooks/useAdmin.js'
+import { TOOLS } from '@/config/tools.js'
 
 const TEXT = {
   controlRoom: { fr: 'Control-room', en: 'Control room' },
@@ -54,17 +56,12 @@ const TEXT = {
   bodyField: { fr: 'Message', en: 'Message' },
   send: { fr: 'Envoyer l’annonce', en: 'Send announcement' },
   adminStatus: { fr: 'Statut administrateur', en: 'Administrator status' },
-  adminStatusHelp: { fr: 'Le paramètre enabled est envoyé en query comme l’exige l’OpenAPI.', en: 'The enabled parameter is sent as a query param as required by OpenAPI.' },
-  userId: { fr: 'Identifiant utilisateur', en: 'User ID' },
   administrator: { fr: 'Administrateur', en: 'Administrator' },
   update: { fr: 'Mettre à jour', en: 'Update' },
   credits: { fr: 'Crédits utilisateur', en: 'User credits' },
-  creditsHelp: { fr: 'Ajuste le solde avec delta et reason.', en: 'Adjusts the balance with delta and reason.' },
   delta: { fr: 'Delta', en: 'Delta' },
-  reason: { fr: 'Motif', en: 'Reason' },
   adjust: { fr: 'Ajuster', en: 'Adjust' },
   plan: { fr: 'Plan utilisateur', en: 'User plan' },
-  planHelp: { fr: 'Applique un plan free ou pro avec une durée optionnelle.', en: 'Applies a free or pro plan with an optional duration.' },
   duration: { fr: 'Durée en jours', en: 'Duration in days' },
   apply: { fr: 'Appliquer', en: 'Apply' },
   runs: { fr: 'Exécutions d’outils', en: 'Tool runs' },
@@ -82,6 +79,9 @@ const TEXT = {
   save: { fr: 'Enregistrer', en: 'Save' },
   noData: { fr: 'Aucune donnée disponible.', en: 'No data available.' },
   moreRows: { fr: 'lignes supplémentaires', en: 'additional rows' },
+  noUsers: { fr: 'Aucun utilisateur exposé par l’API.', en: 'No user exposed by the API.' },
+  manageHelp: { fr: 'Actions administratives directes sur ce compte.', en: 'Direct administrative actions on this account.' },
+  creditBalance: { fr: 'Crédits', en: 'Credits' },
   denied: { fr: 'Accès refusé', en: 'Access denied' },
   deniedTitle: { fr: 'Espace réservé aux administrateurs', en: 'Administrators only' },
   deniedFallback: { fr: 'Votre session ne permet pas d’accéder au control-room.', en: 'Your session cannot access the control room.' },
@@ -113,6 +113,40 @@ function normalizeRows(value) {
   }
 
   return Object.entries(value).map(([key, item]) => ({ key, value: item }))
+}
+
+// Les identifiants historiques utilisent indifféremment tirets et underscores.
+// La clé canonique permet de regrouper ces variantes sans modifier les données API.
+function normalizeToolKey(value) {
+  return String(value ?? '').trim().toLowerCase().replaceAll('-', '_')
+}
+
+// Les libellés officiels viennent du catalogue ; l'identifiant technique reste en infobulle.
+function toolLabel(value, locale) {
+  const key = normalizeToolKey(value)
+  const tool = TOOLS.find((item) => normalizeToolKey(item.tool) === key)
+  if (tool) return locale === 'en' ? tool.nameEn : tool.name
+  return String(value ?? '')
+    .replaceAll('_', ' ')
+    .replaceAll('-', ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+// Additionne les variantes d'un même outil pour éviter les lignes dupliquées.
+function mergeTools(value) {
+  const rows = normalizeRows(value)
+  const merged = new Map()
+
+  for (const row of rows) {
+    const raw = row.tool ?? row.key ?? ''
+    const key = normalizeToolKey(raw)
+    const current = merged.get(key) ?? { tool: raw, successful_requests: 0, documents_processed: 0 }
+    current.successful_requests = Number(current.successful_requests ?? 0) + Number(row.successful_requests ?? 0)
+    current.documents_processed = Number(current.documents_processed ?? 0) + Number(row.documents_processed ?? 0)
+    merged.set(key, current)
+  }
+
+  return [...merged.values()]
 }
 
 function StatCard({ icon: Icon, label, value, hint, tone }) {
@@ -164,7 +198,7 @@ function Field({ label, children }) {
   )
 }
 
-function BarChart({ items, labelKey, valueKey, empty }) {
+function BarChart({ items, labelKey, valueKey, empty, labelFor }) {
   const rows = [...items]
     .sort((a, b) => (b[valueKey] ?? 0) - (a[valueKey] ?? 0))
     .slice(0, 8)
@@ -175,9 +209,9 @@ function BarChart({ items, labelKey, valueKey, empty }) {
   return (
     <div className="mt-5 space-y-3">
       {rows.map((row) => (
-        <div key={String(row[labelKey])} className="grid grid-cols-[minmax(0,9rem)_1fr_2.5rem] items-center gap-3 sm:grid-cols-[minmax(0,12rem)_1fr_3rem]">
+        <div key={normalizeToolKey(row[labelKey])} className="grid grid-cols-[minmax(0,9rem)_1fr_2.5rem] items-center gap-3 sm:grid-cols-[minmax(0,12rem)_1fr_3rem]">
           <span className="truncate text-xs font-medium text-slate-600" title={String(row[labelKey])}>
-            {String(row[labelKey])}
+            {labelFor ? labelFor(row[labelKey]) : String(row[labelKey])}
           </span>
           <div className="h-2.5 overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200/60">
             <div
@@ -192,7 +226,7 @@ function BarChart({ items, labelKey, valueKey, empty }) {
   )
 }
 
-function ColumnChart({ items, labelKey, valueKey, empty }) {
+function ColumnChart({ items, labelKey, valueKey, empty, labelFor }) {
   const rows = [...items]
     .sort((a, b) => (b[valueKey] ?? 0) - (a[valueKey] ?? 0))
     .slice(0, 6)
@@ -203,7 +237,7 @@ function ColumnChart({ items, labelKey, valueKey, empty }) {
   return (
     <div className="mt-6 flex h-40 items-end gap-2 sm:gap-4">
       {rows.map((row) => (
-        <div key={String(row[labelKey])} className="group flex h-full min-w-0 flex-1 flex-col justify-end gap-2">
+        <div key={normalizeToolKey(row[labelKey])} className="group flex h-full min-w-0 flex-1 flex-col justify-end gap-2">
           <span className="text-center text-[10px] font-bold tabular-nums text-slate-600">{row[valueKey] ?? 0}</span>
           <div
             className="w-full rounded-t-lg bg-gradient-to-t from-violet-600 to-fuchsia-400 transition-all duration-500 group-hover:from-violet-500 group-hover:to-fuchsia-300"
@@ -211,7 +245,7 @@ function ColumnChart({ items, labelKey, valueKey, empty }) {
             title={String(row[labelKey])}
           />
           <span className="truncate text-center text-[10px] text-slate-500" title={String(row[labelKey])}>
-            {String(row[labelKey])}
+            {labelFor ? labelFor(row[labelKey]) : String(row[labelKey])}
           </span>
         </div>
       ))}
@@ -219,7 +253,7 @@ function ColumnChart({ items, labelKey, valueKey, empty }) {
   )
 }
 
-function DataTable({ value, empty }) {
+function DataTable({ value, empty, labelFor }) {
   const { t } = useLocale()
   const rows = normalizeRows(value)
 
@@ -252,7 +286,7 @@ function DataTable({ value, empty }) {
               <tr key={index} className="transition hover:bg-sky-50/60">
                 {columns.map((column) => (
                   <td key={column} className="max-w-[18rem] truncate px-3 py-2.5 text-slate-700" title={formatCell(row[column])}>
-                    {formatCell(row[column])}
+                    {column === 'tool' && labelFor ? labelFor(row[column]) : formatCell(row[column])}
                   </td>
                 ))}
               </tr>
@@ -269,8 +303,133 @@ function DataTable({ value, empty }) {
   )
 }
 
-export default function AdminPage() {
+function userDisplayName(user) {
+  if (user.name) return String(user.name)
+  const parts = [user.first_name, user.last_name].filter(Boolean)
+  if (parts.length > 0) return parts.join(' ')
+  if (user.email) return String(user.email)
+  return '—'
+}
+
+function UserCard({ user, expanded, onToggle, onAdmin, onCredits, onPlan, disabled }) {
   const { t } = useLocale()
+  const userId = user.id ?? user.user_id
+  const isAdmin = user.is_admin === true || user.role === 'admin'
+  const credits = user.credits ?? user.quota?.remaining
+  const planName = user.plan ?? 'free'
+  const initials = userDisplayName(user)
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('')
+
+  const [adminEnabled, setAdminEnabled] = useState(isAdmin)
+  const [delta, setDelta] = useState('')
+  const [nextPlan, setNextPlan] = useState(planName === 'pro' ? 'pro' : 'free')
+  const [days, setDays] = useState('')
+
+  return (
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-sky-200 hover:shadow-md">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        className="flex w-full items-center gap-3 p-4 text-left transition hover:bg-slate-50/80"
+      >
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-sm font-bold text-white shadow-sm">
+          {initials || '?'}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-bold text-slate-900">{userDisplayName(user)}</span>
+          <span className="block truncate text-xs text-slate-500">{user.email ?? `#${formatCell(userId)}`}</span>
+        </span>
+        <span className="flex shrink-0 flex-wrap justify-end gap-1.5">
+          {isAdmin && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold text-violet-700 ring-1 ring-violet-100">
+              <FiShield aria-hidden="true" className="h-3 w-3" />
+              {t(TEXT.administrator)}
+            </span>
+          )}
+          {user.plan && (
+            <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700 ring-1 ring-sky-100">
+              {String(user.plan)}
+            </span>
+          )}
+          {credits !== undefined && (
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-100">
+              {formatCell(credits)} {t(TEXT.creditBalance).toLowerCase()}
+            </span>
+          )}
+        </span>
+        <FiChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 text-slate-400 transition ${expanded ? 'rotate-180' : ''}`} />
+      </button>
+
+      {expanded && (
+        <div className="border-t border-slate-100 bg-slate-50/60 p-4">
+          <p className="text-xs font-semibold text-slate-500">{t(TEXT.manageHelp)}</p>
+          <div className="mt-3 grid gap-4 lg:grid-cols-3">
+            <form
+              onSubmit={(event) => {
+                event.preventDefault()
+                onAdmin(userId, adminEnabled)
+              }}
+              className="grid gap-2"
+            >
+              <span className="text-xs font-bold text-slate-700">{t(TEXT.adminStatus)}</span>
+              <label className="flex items-center gap-2 text-xs text-slate-600">
+                <input type="checkbox" checked={adminEnabled} onChange={(event) => setAdminEnabled(event.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+                {t(TEXT.administrator)}
+              </label>
+              <button type="submit" disabled={disabled} className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50">
+                <FiUserCheck aria-hidden="true" className="h-3.5 w-3.5" />
+                {t(TEXT.update)}
+              </button>
+            </form>
+
+            <form
+              onSubmit={(event) => {
+                event.preventDefault()
+                onCredits(userId, Number(delta))
+              }}
+              className="grid gap-2"
+            >
+              <span className="text-xs font-bold text-slate-700">{t(TEXT.credits)}</span>
+              <input required type="number" value={delta} onChange={(event) => setDelta(event.target.value)} placeholder={t(TEXT.delta)} className={inputClass} />
+              <button type="submit" disabled={disabled} className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-sky-700 disabled:opacity-50">
+                <FiDollarSign aria-hidden="true" className="h-3.5 w-3.5" />
+                {t(TEXT.adjust)}
+              </button>
+            </form>
+
+            <form
+              onSubmit={(event) => {
+                event.preventDefault()
+                onPlan(userId, nextPlan, days ? Number(days) : null)
+              }}
+              className="grid gap-2"
+            >
+              <span className="text-xs font-bold text-slate-700">{t(TEXT.plan)}</span>
+              <div className="grid grid-cols-2 gap-2">
+                <select value={nextPlan} onChange={(event) => setNextPlan(event.target.value)} className={inputClass}>
+                  <option value="free">free</option>
+                  <option value="pro">pro</option>
+                </select>
+                <input type="number" min="1" max="3660" value={days} onChange={(event) => setDays(event.target.value)} placeholder={t(TEXT.duration)} className={inputClass} />
+              </div>
+              <button type="submit" disabled={disabled} className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50">
+                <FiTrendingUp aria-hidden="true" className="h-3.5 w-3.5" />
+                {t(TEXT.apply)}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </article>
+  )
+}
+
+export default function AdminPage() {
+  const { t, locale } = useLocale()
   const {
     dashboard,
     users,
@@ -296,9 +455,7 @@ export default function AdminPage() {
   } = useAdmin()
 
   const [announcement, setAnnouncement] = useState({ title: '', body: '' })
-  const [adminChange, setAdminChange] = useState({ userId: '', enabled: true })
-  const [credits, setCredits] = useState({ userId: '', delta: '', reason: 'admin_adjustment' })
-  const [plan, setPlan] = useState({ userId: '', plan: 'free', days: '' })
+  const [selectedUserId, setSelectedUserId] = useState(null)
   const [setting, setSetting] = useState({ key: '', value: '{}' })
   const [formError, setFormError] = useState(null)
   const [formSuccess, setFormSuccess] = useState(null)
@@ -343,34 +500,25 @@ export default function AdminPage() {
     )
   }
 
-  async function handleAdminChange(event) {
-    event.preventDefault()
+  async function handleUserAdmin(userId, enabled) {
     await runAction(
-      () => updateUserAdmin(Number(adminChange.userId), adminChange.enabled),
+      () => updateUserAdmin(Number(userId), enabled),
       t(TEXT.adminDone),
       listAdminUsers,
     )
   }
 
-  async function handleCredits(event) {
-    event.preventDefault()
+  async function handleUserCredits(userId, delta) {
     await runAction(
-      () => updateUserCredits(Number(credits.userId), {
-        delta: Number(credits.delta),
-        reason: credits.reason.trim(),
-      }),
+      () => updateUserCredits(Number(userId), { delta, reason: 'admin_adjustment' }),
       t(TEXT.creditsDone),
       listAdminUsers,
     )
   }
 
-  async function handlePlan(event) {
-    event.preventDefault()
+  async function handleUserPlan(userId, planName, days) {
     await runAction(
-      () => updateUserPlan(Number(plan.userId), {
-        plan: plan.plan,
-        days: plan.days ? Number(plan.days) : null,
-      }),
+      () => updateUserPlan(Number(userId), { plan: planName, days }),
       t(TEXT.planDone),
       listAdminUsers,
     )
@@ -418,7 +566,9 @@ export default function AdminPage() {
     )
   }
 
-  const tools = Array.isArray(dashboard?.tools) ? dashboard.tools : []
+  const tools = mergeTools(dashboard?.tools)
+  const userRows = normalizeRows(users)
+  const labelFor = (value) => toolLabel(value, locale)
   const refreshActions = [
     [t(TEXT.refresh), getAdminDashboard, FiRefreshCw],
     [t(TEXT.users), listAdminUsers, FiUsers],
@@ -509,94 +659,55 @@ export default function AdminPage() {
 
         <div className="grid gap-5 lg:grid-cols-2">
           <Panel title={t(TEXT.activity)} description={t(TEXT.activityHelp)}>
-            <BarChart items={tools} labelKey="tool" valueKey="successful_requests" empty={t(TEXT.noData)} />
+            <BarChart items={tools} labelKey="tool" valueKey="successful_requests" empty={t(TEXT.noData)} labelFor={labelFor} />
           </Panel>
           <Panel title={t(TEXT.documents)} description={t(TEXT.documentsHelp)}>
-            <ColumnChart items={tools} labelKey="tool" valueKey="documents_processed" empty={t(TEXT.noData)} />
+            <ColumnChart items={tools} labelKey="tool" valueKey="documents_processed" empty={t(TEXT.noData)} labelFor={labelFor} />
           </Panel>
         </div>
 
         <Panel title={t(TEXT.ranking)} description={t(TEXT.rankingHelp)}>
-          <DataTable value={tools} empty={t(TEXT.noData)} />
+          <DataTable value={tools} empty={t(TEXT.noData)} labelFor={labelFor} />
         </Panel>
 
         <Panel title={t(TEXT.users)} description={t(TEXT.usersHelp)} badge={<FiUsers aria-hidden="true" className="h-5 w-5 text-sky-500" />}>
-          <DataTable value={users} empty={t(TEXT.noData)} />
+          {userRows.length === 0 ? (
+            <p className="mt-5 text-sm text-slate-500">{t(TEXT.noUsers)}</p>
+          ) : (
+            <div className="mt-5 grid gap-3 lg:grid-cols-2">
+              {userRows.map((user, index) => {
+                const userId = user.id ?? user.user_id ?? index
+                return (
+                  <UserCard
+                    key={userId}
+                    user={user}
+                    expanded={String(selectedUserId) === String(userId)}
+                    onToggle={() => setSelectedUserId(selectedUserId === userId ? null : userId)}
+                    onAdmin={(id, enabled) => handleUserAdmin(id, enabled)}
+                    onCredits={(id, value) => handleUserCredits(id, value)}
+                    onPlan={(id, name, days) => handleUserPlan(id, name, days)}
+                    disabled={loading}
+                  />
+                )
+              })}
+            </div>
+          )}
         </Panel>
 
-        <div className="grid gap-5 lg:grid-cols-2">
-          <Panel title={t(TEXT.announcement)} description={t(TEXT.announcementHelp)}>
-            <form onSubmit={handleAnnouncement} className="mt-5 grid gap-3">
-              <Field label={t(TEXT.titleField)}>
-                <input required maxLength={160} value={announcement.title} onChange={(event) => setAnnouncement({ ...announcement, title: event.target.value })} className={inputClass} />
-              </Field>
-              <Field label={t(TEXT.bodyField)}>
-                <textarea required rows={4} maxLength={10000} value={announcement.body} onChange={(event) => setAnnouncement({ ...announcement, body: event.target.value })} className={inputClass} />
-              </Field>
-              <button type="submit" disabled={loading} className="inline-flex w-fit items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:opacity-50">
-                <FiSend aria-hidden="true" className="h-4 w-4" />
-                {t(TEXT.send)}
-              </button>
-            </form>
-          </Panel>
-
-          <Panel title={t(TEXT.adminStatus)} description={t(TEXT.adminStatusHelp)}>
-            <form onSubmit={handleAdminChange} className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
-              <Field label={t(TEXT.userId)}>
-                <input required type="number" min="1" value={adminChange.userId} onChange={(event) => setAdminChange({ ...adminChange, userId: event.target.value })} className={inputClass} />
-              </Field>
-              <label className="flex items-center gap-2 pb-2.5 text-sm text-slate-700">
-                <input type="checkbox" checked={adminChange.enabled} onChange={(event) => setAdminChange({ ...adminChange, enabled: event.target.checked })} className="h-4 w-4 rounded border-slate-300" />
-                {t(TEXT.administrator)}
-              </label>
-              <button type="submit" disabled={loading} className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:opacity-50">
-                <FiUserCheck aria-hidden="true" className="h-4 w-4" />
-                {t(TEXT.update)}
-              </button>
-            </form>
-          </Panel>
-        </div>
-
-        <div className="grid gap-5 lg:grid-cols-2">
-          <Panel title={t(TEXT.credits)} description={t(TEXT.creditsHelp)}>
-            <form onSubmit={handleCredits} className="mt-5 grid gap-3 sm:grid-cols-2">
-              <Field label={t(TEXT.userId)}>
-                <input required type="number" min="1" value={credits.userId} onChange={(event) => setCredits({ ...credits, userId: event.target.value })} className={inputClass} />
-              </Field>
-              <Field label={t(TEXT.delta)}>
-                <input required type="number" value={credits.delta} onChange={(event) => setCredits({ ...credits, delta: event.target.value })} className={inputClass} />
-              </Field>
-              <Field label={t(TEXT.reason)}>
-                <input required maxLength={80} value={credits.reason} onChange={(event) => setCredits({ ...credits, reason: event.target.value })} className={inputClass} />
-              </Field>
-              <button type="submit" disabled={loading} className="inline-flex w-fit items-end gap-2 self-end rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:opacity-50 sm:mb-0">
-                <FiDollarSign aria-hidden="true" className="h-4 w-4" />
-                {t(TEXT.adjust)}
-              </button>
-            </form>
-          </Panel>
-
-          <Panel title={t(TEXT.plan)} description={t(TEXT.planHelp)}>
-            <form onSubmit={handlePlan} className="mt-5 grid gap-3 sm:grid-cols-2">
-              <Field label={t(TEXT.userId)}>
-                <input required type="number" min="1" value={plan.userId} onChange={(event) => setPlan({ ...plan, userId: event.target.value })} className={inputClass} />
-              </Field>
-              <Field label={t(TEXT.plan)}>
-                <select value={plan.plan} onChange={(event) => setPlan({ ...plan, plan: event.target.value })} className={inputClass}>
-                  <option value="free">free</option>
-                  <option value="pro">pro</option>
-                </select>
-              </Field>
-              <Field label={t(TEXT.duration)}>
-                <input type="number" min="1" max="3660" value={plan.days} onChange={(event) => setPlan({ ...plan, days: event.target.value })} className={inputClass} />
-              </Field>
-              <button type="submit" disabled={loading} className="inline-flex w-fit items-end gap-2 self-end rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:opacity-50">
-                <FiTrendingUp aria-hidden="true" className="h-4 w-4" />
-                {t(TEXT.apply)}
-              </button>
-            </form>
-          </Panel>
-        </div>
+        <Panel title={t(TEXT.announcement)} description={t(TEXT.announcementHelp)}>
+          <form onSubmit={handleAnnouncement} className="mt-5 grid gap-3">
+            <Field label={t(TEXT.titleField)}>
+              <input required maxLength={160} value={announcement.title} onChange={(event) => setAnnouncement({ ...announcement, title: event.target.value })} className={inputClass} />
+            </Field>
+            <Field label={t(TEXT.bodyField)}>
+              <textarea required rows={4} maxLength={10000} value={announcement.body} onChange={(event) => setAnnouncement({ ...announcement, body: event.target.value })} className={inputClass} />
+            </Field>
+            <button type="submit" disabled={loading} className="inline-flex w-fit items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:opacity-50">
+              <FiSend aria-hidden="true" className="h-4 w-4" />
+              {t(TEXT.send)}
+            </button>
+          </form>
+        </Panel>
 
         <div className="grid gap-5 lg:grid-cols-2">
           <Panel title={t(TEXT.runs)} description={t(TEXT.runsHelp)} badge={<FiFileText aria-hidden="true" className="h-5 w-5 text-sky-500" />}>
