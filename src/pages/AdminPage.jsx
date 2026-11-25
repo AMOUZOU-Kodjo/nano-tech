@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import {
   FiActivity,
@@ -1250,19 +1251,22 @@ export default function AdminPage() {
 
   return (
     <div className="lg:pl-64">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-200 bg-white shadow-xl lg:flex">
-        <div className="h-1 w-full bg-gradient-to-r from-sky-400 via-violet-400 to-cyan-500" />
-        <div className="px-5 py-5">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-sky-700 ring-1 ring-sky-100">
-            <FiCpu aria-hidden="true" className="h-3.5 w-3.5" />
-            {t(TEXT.controlRoom)}
-          </span>
-          <p className="mt-3 text-sm font-bold text-slate-900">{t(TEXT.title)}</p>
-        </div>
-        <div className="px-2">
-          <NavTabs tabs={tabs} activeTab={activeTab} onSelect={setActiveTab} t={t} vertical />
-        </div>
-      </aside>
+      {createPortal(
+        <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col overflow-y-auto border-r border-slate-200 bg-white shadow-xl lg:flex">
+          <div className="h-1 w-full bg-gradient-to-r from-sky-400 via-violet-400 to-cyan-500" />
+          <div className="px-5 py-5">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-sky-700 ring-1 ring-sky-100">
+              <FiCpu aria-hidden="true" className="h-3.5 w-3.5" />
+              {t(TEXT.controlRoom)}
+            </span>
+            <p className="mt-3 text-sm font-bold text-slate-900">{t(TEXT.title)}</p>
+          </div>
+          <div className="px-2 pb-5">
+            <NavTabs tabs={tabs} activeTab={activeTab} onSelect={setActiveTab} t={t} vertical />
+          </div>
+        </aside>,
+        document.body,
+      )}
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
         <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">

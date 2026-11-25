@@ -29,7 +29,7 @@ const AUTH_ROUTES = new Set(['/login', '/register'])
 
 function AppLayout() {
   const location = useLocation()
-  const hideFooter = AUTH_ROUTES.has(location.pathname)
+  const hideFooter = AUTH_ROUTES.has(location.pathname) || location.pathname.startsWith('/admin')
 
   // Remet la vue en haut à chaque navigation, y compris sur un même chemin.
   useEffect(() => {
