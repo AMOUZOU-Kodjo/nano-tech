@@ -11,6 +11,7 @@ import {
   FiSettings,
   FiUsers,
 } from 'react-icons/fi'
+import logoUrl from '../../Logo NanoFile bleu et cyan.png'
 import LogoutButton from '@/components/LogoutButton.jsx'
 import { useLocale } from '@/hooks/useLocale.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
@@ -42,9 +43,12 @@ export default function AdminSidebar({ activeTab, onSelect, tabs = ADMIN_TABS })
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col overflow-y-auto border-r border-slate-200 bg-white shadow-xl lg:flex">
       <div className="h-1 w-full bg-gradient-to-r from-sky-400 via-violet-400 to-cyan-500" />
 
-      <div className="px-5 py-5">
-        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sky-600">{t(TEXT.controlRoom)}</p>
-        <p className="mt-1 text-sm font-bold text-slate-900">NanoFile</p>
+      <div className="flex items-center gap-3 px-5 py-5">
+        <img src={logoUrl} alt="" className="h-10 w-10 shrink-0 rounded-xl object-contain" />
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sky-600">{t(TEXT.controlRoom)}</p>
+          <p className="mt-0.5 truncate text-sm font-bold text-slate-900">NanoFile</p>
+        </div>
       </div>
 
       <div className="px-2">

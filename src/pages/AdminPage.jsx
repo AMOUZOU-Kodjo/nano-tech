@@ -72,7 +72,10 @@ const TEXT = {
   anonymous: { fr: 'Utilisation anonyme', en: 'Anonymous usage' },
   anonymousHelp: { fr: 'Statistiques agrégées des visiteurs.', en: 'Aggregated visitor statistics.' },
   settings: { fr: 'Paramètres', en: 'Settings' },
-  settingsHelp: { fr: 'Clés documentées : tools_enabled, limits, compression.', en: 'Documented keys: tools_enabled, limits, compression.' },
+  settingsHelp: {
+    fr: 'Trois paramètres documentés sont modifiables ci-dessous : outils activés, limites et compression.',
+    en: 'Three documented settings are editable below: enabled tools, limits and compression.',
+  },
   settingKey: { fr: 'Clé', en: 'Key' },
   save: { fr: 'Enregistrer', en: 'Save' },
   noData: { fr: 'Aucune donnée disponible.', en: 'No data available.' },
@@ -125,7 +128,48 @@ const inputClass =
 
 const SETTING_KEYS = ['tools_enabled', 'limits', 'compression']
 
+const SETTING_LABELS = {
+  tools_enabled: { fr: 'Outils activés', en: 'Enabled tools' },
+  limits: { fr: 'Limites', en: 'Limits' },
+  compression: { fr: 'Compression', en: 'Compression' },
+}
+
 const TAB_IDS = ['overview', 'users', 'runs', 'events', 'errors', 'anonymous', 'photo', 'settings']
+
+const HEADER_CONTENT = {
+  overview: {
+    title: { fr: 'Vue d’ensemble', en: 'Overview' },
+    description: { fr: 'Indicateurs clés de la plateforme sur les 30 derniers jours.', en: 'Key platform metrics over the last 30 days.' },
+  },
+  users: {
+    title: { fr: 'Utilisateurs', en: 'Users' },
+    description: { fr: 'Comptes inscrits, statuts et actions administratives par compte.', en: 'Registered accounts, statuses and per-account admin actions.' },
+  },
+  runs: {
+    title: { fr: 'Exécutions d’outils', en: 'Tool runs' },
+    description: { fr: 'Historique des traitements avec filtres par outil et par statut.', en: 'Processing history with filters by tool and status.' },
+  },
+  events: {
+    title: { fr: 'Événements', en: 'Events' },
+    description: { fr: 'Événements reçus par l’API et répartition par outil.', en: 'Events received by the API, grouped by tool.' },
+  },
+  errors: {
+    title: { fr: 'Erreurs d’événements', en: 'Event errors' },
+    description: { fr: 'Événements rejetés ou en échec, regroupés par outil et code.', en: 'Rejected or failed events, grouped by tool and code.' },
+  },
+  anonymous: {
+    title: { fr: 'Utilisation anonyme', en: 'Anonymous usage' },
+    description: { fr: 'Statistiques agrégées des visiteurs non connectés.', en: 'Aggregated statistics for guest visitors.' },
+  },
+  photo: {
+    title: { fr: 'Photo d’identité', en: 'ID photo' },
+    description: { fr: 'Pays, documents et exclusions exposés par le catalogue.', en: 'Countries, documents and exclusions exposed by the catalog.' },
+  },
+  settings: {
+    title: { fr: 'Paramètres', en: 'Settings' },
+    description: { fr: 'Outils activés, limites et compression modifiables.', en: 'Editable enabled tools, limits and compression.' },
+  },
+}
 
 const COLUMN_LABELS = {
   id: { fr: 'ID', en: 'ID' },
@@ -236,12 +280,6 @@ const LIMIT_LABELS = {
 function limitLabel(key, locale) {
   const label = LIMIT_LABELS[key]
   return label ? (locale === 'en' ? label.en : label.fr) : key.replaceAll('_', ' ')
-}
-
-function settingLabel(name, key, locale, t) {
-  if (name === 'limits') return limitLabel(key, locale)
-  if (name === 'compression' && key === 'max_target_pct') return t(TEXT.maxTargetPct)
-  return key.replaceAll('_', ' ')
 }
 
 function formatDate(value, locale) {
@@ -886,59 +924,6 @@ function RunsView({ value, empty, labelFor, t, locale }) {
   )
 }
 
-function SettingValue({ name, value, t, locale }) {
-  if (value === null || value === undefined) return <p className="mt-4 text-sm text-slate-500">{t(TEXT.noData)}</p>
-
-  if (name === 'tools_enabled' && value && typeof value === 'object') {
-    const enabled = Object.values(value).filter(Boolean).length
-    const disabled = Object.values(value).filter((item) => !item).length
-
-    return (
-      <>
-        <div className="mt-4 flex gap-2">
-          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">
-            {enabled} {t(TEXT.enabled).toLowerCase()}
-          </span>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-            {disabled} {t(TEXT.disabled).toLowerCase()}
-          </span>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {Object.entries(value).map(([key, active]) => (
-            <span
-              key={key}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold ring-1 ${
-                active ? 'bg-emerald-50 text-emerald-700 ring-emerald-100' : 'bg-slate-50 text-slate-400 ring-slate-200'
-              }`}
-              title={key}
-            >
-              {active ? <FiCheckCircle aria-hidden="true" className="h-3 w-3" /> : <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />}
-              {toolLabel(key, locale)}
-            </span>
-          ))}
-        </div>
-      </>
-    )
-  }
-
-  if (value && typeof value === 'object') {
-    return (
-      <dl className="mt-4 grid gap-2 sm:grid-cols-2">
-        {Object.entries(value).map(([key, item]) => (
-          <div key={key} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-            <dt className="truncate text-[11px] font-semibold text-slate-500" title={key}>
-              {settingLabel(name, key, locale, t)}
-            </dt>
-            <dd className="shrink-0 text-sm font-bold tabular-nums text-slate-800">{formatCell(item)}</dd>
-          </div>
-        ))}
-      </dl>
-    )
-  }
-
-  return <p className="mt-4 font-mono text-sm text-slate-700">{formatCell(value)}</p>
-}
-
 function SaveButton({ disabled, t }) {
   return (
     <button type="submit" disabled={disabled} className="inline-flex w-fit items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50">
@@ -1060,10 +1045,9 @@ function SettingsView({ value, empty, t, locale, onSave, disabled, formError, fo
         {SETTING_KEYS.filter((key) => key in values).map((key) => (
           <section key={key} className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="font-mono text-sm font-bold text-slate-800">{key}</h3>
+              <h3 className="text-sm font-bold text-slate-800" title={key}>{t(SETTING_LABELS[key])}</h3>
               {key === 'compression' && <FiTrendingUp aria-hidden="true" className="h-5 w-5 text-violet-500" />}
             </div>
-            <SettingValue name={key} value={values[key]} t={t} locale={locale} />
             {key === 'tools_enabled' && (
               <ToolsEditor
                 key={JSON.stringify(values[key])}
@@ -1243,6 +1227,7 @@ export default function AdminPage() {
 
   const tools = mergeTools(dashboard?.tools)
   const labelFor = (value) => toolLabel(value, locale)
+  const header = HEADER_CONTENT[activeTab] ?? HEADER_CONTENT.overview
   const tabs = [
     ['overview', TEXT.overview, FiBarChart2],
     ['users', TEXT.users, FiUsers],
@@ -1264,8 +1249,8 @@ export default function AdminPage() {
                 <FiCpu aria-hidden="true" className="h-3.5 w-3.5" />
                 {t(TEXT.controlRoom)}
               </span>
-              <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">{t(TEXT.title)}</h1>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">{t(TEXT.intro)}</p>
+              <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">{t(header.title)}</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">{t(header.description)}</p>
             </div>
           </div>
         </div>

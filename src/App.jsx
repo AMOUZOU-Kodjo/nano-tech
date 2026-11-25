@@ -1,10 +1,13 @@
-import { useEffect } from 'react'
-import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { BrowserRouter, Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { FiMonitor } from 'react-icons/fi'
 import { LocaleProvider } from '@/contexts/LocaleContext.jsx'
 import { MeProvider } from '@/contexts/MeContext.jsx'
 import AdminSidebar from '@/components/AdminSidebar.jsx'
 import Navbar from '@/components/Navbar.jsx'
 import SiteFooter from '@/components/SiteFooter.jsx'
+import { useLocale } from '@/hooks/useLocale.js'
+import { MESSAGES } from '@/i18n/messages.js'
 import AccountPage from '@/pages/AccountPage.jsx'
 import AdminPage from '@/pages/AdminPage.jsx'
 import BillingPage from '@/pages/BillingPage.jsx'
@@ -28,9 +31,36 @@ import VerifyEmailPage from '@/pages/VerifyEmailPage.jsx'
 
 const AUTH_ROUTES = new Set(['/login', '/register'])
 
+const MOBILE_DENIED = {
+  label: { fr: 'Espace réservé', en: 'Restricted area' },
+  title: { fr: 'Administration indisponible sur mobile', en: 'Admin unavailable on mobile' },
+  description: {
+    fr: 'Ouvrez le centre de contrôle sur un écran d’ordinateur de 1024 px ou plus.',
+    en: 'Open the control room on a desktop screen of 1024px or wider.',
+  },
+}
+
+// Détecte un écran assez large pour afficher la sidebar administrative.
+function useDesktopViewport() {
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches,
+  )
+
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 1024px)')
+    const update = () => setIsDesktop(query.matches)
+    query.addEventListener('change', update)
+    return () => query.removeEventListener('change', update)
+  }, [])
+
+  return isDesktop
+}
+
 function AppLayout() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { t } = useLocale()
+  const isDesktop = useDesktopViewport()
   const isAdminRoute = location.pathname.startsWith('/admin')
   const hideFooter = AUTH_ROUTES.has(location.pathname) || isAdminRoute
 
@@ -42,6 +72,27 @@ function AppLayout() {
     }
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
   }, [location.key, location.hash])
+
+  if (isAdminRoute && !isDesktop) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12 text-slate-900">
+        <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-sky-50 text-sky-600">
+            <FiMonitor aria-hidden="true" className="h-6 w-6" />
+          </span>
+          <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.14em] text-sky-600">{t(MOBILE_DENIED.label)}</p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">{t(MOBILE_DENIED.title)}</h1>
+          <p className="mt-3 text-sm leading-relaxed text-slate-600">{t(MOBILE_DENIED.description)}</p>
+          <Link
+            to="/"
+            className="mt-6 inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
+          >
+            {t(MESSAGES.common.home)}
+          </Link>
+        </section>
+      </main>
+    )
+  }
 
   return (
     <>
