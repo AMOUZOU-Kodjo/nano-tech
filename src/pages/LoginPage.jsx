@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { FiArrowRight, FiCheck, FiFileText, FiShield } from 'react-icons/fi'
 import { Link, useNavigate } from 'react-router-dom'
-import authIllustration from '@/assets/auth-illustration.svg'
+import loginHero from '@/assets/login-hero.jpg'
 import logoUrl from '../../Logo NanoFile bleu et cyan.png'
 import { MESSAGES } from '@/i18n/messages.js'
 import { useLocale } from '@/hooks/useLocale.js'
@@ -117,11 +117,15 @@ export default function LoginPage() {
   return (
     <section className="min-h-[calc(100dvh-4.5rem)] bg-white lg:h-[calc(100dvh-4.5rem)] lg:overflow-hidden">
       <div className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-7xl lg:h-full lg:min-h-0 lg:grid-cols-2">
-        <aside
-          style={{ backgroundImage: `url(${authIllustration})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-          className="relative overflow-hidden border-b border-line bg-brand-surface bg-no-repeat p-5 sm:p-8 lg:min-h-0 lg:border-b-0 lg:border-r lg:p-10"
-        >
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand-surface/75 via-brand-surface/55 to-brand-surface/30" />
+        <aside className="relative overflow-hidden border-b border-line bg-brand-surface p-5 sm:p-8 lg:min-h-0 lg:border-b-0 lg:border-r lg:p-10">
+          <img
+            src={loginHero}
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
+          />
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand-surface/90 via-brand-surface/70 to-brand-surface/25" />
           <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-brand/10 blur-3xl" />
           <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-brand-soft/10 blur-3xl" />
 
