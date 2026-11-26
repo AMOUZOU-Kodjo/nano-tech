@@ -386,7 +386,7 @@ export default function StudioPage() {
       {activeTab === 'studio' && (
         <>
         <div className="mt-6 grid gap-4 sm:gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+        <div className="rounded-2xl  bg-white p-5 sm:p-6">
           <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">{t(TEXT.templateCatalog)}</h2>
           <div className="mt-4 flex flex-wrap gap-3">
             <select

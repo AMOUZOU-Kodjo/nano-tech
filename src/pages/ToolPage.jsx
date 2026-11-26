@@ -1200,7 +1200,7 @@ export default function ToolPage() {
                     (toolInfo.tool === 'photo_id' &&
                       (specsLoading || photoSetupUnavailable || !selectedPhotoCountry || !photoOptions.document))
                   }
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
+                  className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-sky-600 to-cyan-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
                 >
                   {t(creating ? TEXT.creating : TEXT.startProcessing)}
                   <FiArrowRight aria-hidden="true" className="h-4 w-4" />
