@@ -44,6 +44,27 @@ const AI_LABELS = {
   resets_at: { fr: 'Prochaine réinitialisation', en: 'Next reset' },
 }
 
+const PDF_LABELS = {
+  id: { fr: 'Identifiant', en: 'Identifier' },
+  user_id: { fr: 'Identifiant', en: 'Identifier' },
+  email: { fr: 'Adresse email', en: 'Email address' },
+  first_name: { fr: 'Prénom', en: 'First name' },
+  last_name: { fr: 'Nom', en: 'Last name' },
+  name: { fr: 'Nom', en: 'Name' },
+  profession: { fr: 'Profession', en: 'Profession' },
+  terms_accepted: { fr: 'Conditions acceptées', en: 'Terms accepted' },
+  marketing_opt_in: { fr: 'Actualités acceptées', en: 'News accepted' },
+  created_at: { fr: 'Date de création', en: 'Creation date' },
+  updated_at: { fr: 'Dernière mise à jour', en: 'Last update' },
+  user: { fr: 'Votre profil', en: 'Your profile' },
+  quota: { fr: 'Votre offre', en: 'Your plan' },
+  usage: { fr: 'Votre consommation', en: 'Your usage' },
+  preferences: { fr: 'Vos préférences', en: 'Your preferences' },
+  limits: { fr: 'Vos limites', en: 'Your limits' },
+  ai: { fr: 'Vos améliorations IA', en: 'Your AI improvements' },
+  tools_enabled: { fr: 'Vos outils disponibles', en: 'Your available tools' },
+}
+
 const TABS = [
   {
     id: 'overview',
@@ -111,12 +132,17 @@ const TEXT = {
   catalogueAccess: { fr: 'Accès disponibles', en: 'Available access' },
   exportTitle: { fr: 'Exporter mes données', en: 'Export my data' },
   exportDescription: {
-    fr: 'Téléchargez une copie des informations associées à votre compte.',
-    en: 'Download a copy of the information linked to your account.',
+    fr: 'Téléchargez une copie lisible des informations associées à votre compte.',
+    en: 'Download a readable copy of the information linked to your account.',
   },
-  requestExport: { fr: 'Préparer l’export', en: 'Prepare export' },
-  exportReady: { fr: 'Votre export est prêt.', en: 'Your export is ready.' },
-  downloadExport: { fr: 'Télécharger mes données', en: 'Download my data' },
+  requestExport: { fr: 'Préparer le PDF', en: 'Prepare PDF' },
+  exportReady: { fr: 'Votre PDF est prêt.', en: 'Your PDF is ready.' },
+  downloadExport: { fr: 'Télécharger mon PDF', en: 'Download my PDF' },
+  pdfTitle: { fr: 'Export de mes données NanoFile', en: 'My NanoFile data export' },
+  pdfGeneratedOn: { fr: 'Généré le', en: 'Generated on' },
+  pdfDetails: { fr: 'Informations', en: 'Information' },
+  pdfEmptyList: { fr: 'Aucune information', en: 'No information' },
+  pdfPage: { fr: 'Page', en: 'Page' },
   deleteTitle: { fr: 'Supprimer mes données', en: 'Delete my data' },
   deleteDescription: {
     fr: 'Cette action est irréversible. La suppression du compte est facultative.',
@@ -212,16 +238,207 @@ function initials(value) {
     .join('') || 'NF'
 }
 
-function downloadJson(value, filename) {
-  const blob = new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  URL.revokeObjectURL(url)
+function cleanPdfText(value) {
+  return String(value)
+    .replace(/[’‘]/g, "'")
+    .replace(/[–—]/g, '-')
+    .replace(/…/g, '...')
+}
+
+function pdfLabel(path, locale, t) {
+  return path
+    .split('.')
+    .map((part) => {
+      const label = PDF_LABELS[part]
+        ?? QUOTA_LABELS[part]
+        ?? USAGE_LABELS[part]
+        ?? LIMIT_LABELS[part]
+        ?? AI_LABELS[part]
+
+      if (label) {
+        return t(label)
+      }
+
+      return part.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+    })
+    .join(' > ')
+}
+
+function formatPdfValue(key, value, locale, t) {
+  if (value === null || value === undefined || value === '') {
+    return '—'
+  }
+  if (typeof value === 'boolean') {
+    return t(value ? TEXT.yes : TEXT.no)
+  }
+  if (key === 'plan' && value === 'free') {
+    return t(TEXT.freePlan)
+  }
+  if (key === 'plan' && value === 'pro') {
+    return t(TEXT.proPlan)
+  }
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) && !Number.isNaN(Date.parse(value))) {
+    const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-US'
+    return new Intl.DateTimeFormat(dateLocale, { dateStyle: 'long', timeStyle: 'short' }).format(new Date(value))
+  }
+  if (typeof value === 'number' && key.endsWith('_mb')) {
+    return `${value} ${locale === 'fr' ? 'Mo' : 'MB'}`
+  }
+  if (typeof value === 'number' && key.endsWith('_minutes')) {
+    return `${value} min`
+  }
+  return String(value)
+}
+
+function flattenPdfData(value, prefix, locale, t, rows = []) {
+  if (Array.isArray(value)) {
+    if (!value.length) {
+      rows.push({ label: pdfLabel(prefix || 'details', locale, t), value: t(TEXT.pdfEmptyList) })
+      return rows
+    }
+
+    value.forEach((entry, index) => {
+      const path = prefix ? `${prefix} ${index + 1}` : String(index + 1)
+      flattenPdfData(entry, path, locale, t, rows)
+    })
+    return rows
+  }
+
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value)
+    if (!entries.length) {
+      rows.push({ label: pdfLabel(prefix || 'details', locale, t), value: t(TEXT.pdfEmptyList) })
+      return rows
+    }
+
+    entries.forEach(([key, entry]) => {
+      const path = prefix ? `${prefix}.${key}` : key
+      flattenPdfData(entry, path, locale, t, rows)
+    })
+    return rows
+  }
+
+  rows.push({
+    label: pdfLabel(prefix || 'value', locale, t),
+    value: formatPdfValue(prefix, value, locale, t),
+  })
+  return rows
+}
+
+function buildPdfSections(value, locale, t) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return [{ title: t(TEXT.pdfDetails), rows: flattenPdfData(value, '', locale, t) }]
+  }
+
+  return Object.entries(value).map(([key, section]) => ({
+    title: pdfLabel(key, locale, t),
+    rows: flattenPdfData(section, '', locale, t),
+  }))
+}
+
+async function downloadPdf(value, locale, t) {
+  const { jsPDF } = await import('jspdf')
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const margin = 48
+  const contentWidth = pageWidth - margin * 2
+  const labelWidth = contentWidth * 0.42
+  const valueX = margin + contentWidth * 0.46
+  const valueWidth = contentWidth * 0.54
+  const lineHeight = 12
+  let y = margin
+
+  function ensureSpace(height) {
+    if (y + height > pageHeight - margin - 20) {
+      doc.addPage()
+      y = margin
+    }
+  }
+
+  doc.setFillColor(14, 165, 233)
+  doc.rect(0, 0, pageWidth, 8, 'F')
+  doc.setTextColor(15, 23, 42)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(18)
+  doc.text(cleanPdfText(t(TEXT.pdfTitle)), margin, y + 16)
+  y += 34
+
+  const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-US'
+  const generatedAt = new Intl.DateTimeFormat(dateLocale, { dateStyle: 'long' }).format(new Date())
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(10)
+  doc.setTextColor(100, 116, 139)
+  doc.text(cleanPdfText(`${t(TEXT.pdfGeneratedOn)} : ${generatedAt}`), margin, y)
+  y += 26
+
+  buildPdfSections(value, locale, t).forEach((section, sectionIndex) => {
+    if (sectionIndex > 0) {
+      y += 6
+    }
+    ensureSpace(38)
+
+    doc.setFillColor(240, 249, 255)
+    doc.roundedRect(margin, y, contentWidth, 24, 6, 6, 'F')
+    doc.setTextColor(3, 105, 161)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.text(cleanPdfText(section.title), margin + 10, y + 16)
+    y += 34
+
+    if (!section.rows.length) {
+      ensureSpace(20)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(100, 116, 139)
+      doc.text(cleanPdfText(t(TEXT.pdfEmptyList)), margin, y)
+      y += 20
+      return
+    }
+
+    section.rows.forEach((row) => {
+      const labelLines = doc.splitTextToSize(cleanPdfText(row.label), labelWidth)
+      const valueLines = doc.splitTextToSize(cleanPdfText(row.value), valueWidth)
+      const rowHeight = Math.max(labelLines.length, valueLines.length) * lineHeight + 8
+      ensureSpace(rowHeight)
+
+      let cursor = y
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      doc.setTextColor(71, 85, 105)
+      labelLines.forEach((line) => {
+        doc.text(line, margin, cursor)
+        cursor += lineHeight
+      })
+
+      cursor = y
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(15, 23, 42)
+      valueLines.forEach((line) => {
+        doc.text(line, valueX, cursor)
+        cursor += lineHeight
+      })
+
+      y += rowHeight
+      doc.setDrawColor(226, 232, 240)
+      doc.line(margin, y - 4, pageWidth - margin, y - 4)
+    })
+  })
+
+  const pageCount = doc.getNumberOfPages()
+  for (let page = 1; page <= pageCount; page += 1) {
+    doc.setPage(page)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    doc.setTextColor(100, 116, 139)
+    doc.text(
+      cleanPdfText(`${t(TEXT.pdfPage)} ${page} / ${pageCount}`),
+      pageWidth - margin,
+      pageHeight - 14,
+      { align: 'right' },
+    )
+  }
+
+  doc.save('nanofile-export.pdf')
 }
 
 function ValueList({ rows }) {
@@ -535,7 +752,7 @@ export default function AccountPage() {
                 <p role="status" className="text-sm font-medium text-ink">{t(TEXT.exportReady)}</p>
                 <button
                   type="button"
-                  onClick={() => downloadJson(actions.exportedData, 'nanofile-export.json')}
+                  onClick={() => downloadPdf(actions.exportedData, locale, t)}
                   className="self-start rounded-xl bg-surface-muted px-4 py-2.5 text-sm font-semibold text-ink ring-1 ring-line/60 transition hover:text-brand sm:self-auto"
                 >
                   {t(TEXT.downloadExport)}
