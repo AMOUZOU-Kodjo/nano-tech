@@ -68,7 +68,7 @@ const TEXT = {
 
 // Affiche une réponse API non typée sous forme JSON, sans interprétation hasardeuse.
 function JsonBlock({ value }) {
-  return <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-900 p-3 text-xs text-slate-300">{JSON.stringify(value, null, 2)}</pre>
+  return <pre className="mt-4 overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs text-slate-300">{JSON.stringify(value, null, 2)}</pre>
 }
 
 // Normalise une liste non typée pour afficher au minimum un identifiant exploitable.
@@ -113,15 +113,15 @@ function ValueRows({ value, t }) {
 
   const rows = Object.entries(value).filter(([, item]) => item !== null && item !== undefined)
   if (!rows.length) {
-    return <p className="mt-3 text-sm text-slate-600">{t(TEXT.noExtraInfo)}</p>
+    return <p className="mt-4 text-sm text-ink-muted">{t(TEXT.noExtraInfo)}</p>
   }
 
   return (
-    <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+    <dl className="mt-4 grid gap-3 sm:grid-cols-2">
       {rows.map(([key, item]) => (
-        <div key={key} className="rounded-lg bg-slate-50 p-3">
-          <dt className="break-all text-xs uppercase tracking-wide text-slate-500">{key}</dt>
-          <dd className="mt-1 break-all text-sm text-slate-700">{formatValue(item, t)}</dd>
+        <div key={key} className="rounded-xl bg-surface-muted/60 p-4">
+          <dt className="break-all text-xs font-medium uppercase tracking-wide text-ink-faint">{key}</dt>
+          <dd className="mt-1.5 break-all text-sm text-ink">{formatValue(item, t)}</dd>
         </div>
       ))}
     </dl>
@@ -138,13 +138,13 @@ function resolveUrl(value) {
 function RenderResult({ data, t }) {
   if (typeof data === 'string') {
     return (
-      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-        <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">{t(TEXT.renderPreviewTitle)}</h2>
+      <div className="mt-8 rounded-3xl bg-surface-muted/40 p-6 sm:p-8">
+        <h2 className="text-lg font-semibold text-ink sm:text-xl">{t(TEXT.renderPreviewTitle)}</h2>
         <iframe
           srcDoc={data}
           sandbox=""
           title={t(TEXT.renderPreviewTitle)}
-          className="mt-4 h-96 w-full rounded-lg border border-slate-200 bg-white"
+          className="mt-5 h-96 w-full rounded-2xl bg-surface ring-1 ring-line/60"
         />
       </div>
     )
@@ -156,17 +156,17 @@ function RenderResult({ data, t }) {
   const hasRows = details && typeof details === 'object' && !Array.isArray(details) && Object.keys(details).length > 0
 
   return (
-    <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-      <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">{t(TEXT.renderResultTitle)}</h2>
+    <div className="mt-8 rounded-3xl bg-surface-muted/40 p-6 sm:p-8">
+      <h2 className="text-lg font-semibold text-ink sm:text-xl">{t(TEXT.renderResultTitle)}</h2>
       {downloadUrl ? (
         <a
           href={downloadUrl}
-          className="mt-4 inline-block w-full rounded-lg bg-sky-500 px-5 py-3 text-center text-sm font-semibold text-white hover:bg-sky-600 sm:w-auto"
+          className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-soft sm:w-auto"
         >
           {fileName ? t(TEXT.downloadNamed(fileName)) : t(TEXT.downloadDocument)}
         </a>
       ) : (
-        <p className="mt-3 text-sm text-slate-600">{t(TEXT.noDownloadLink)}</p>
+        <p className="mt-4 text-sm text-ink-muted">{t(TEXT.noDownloadLink)}</p>
       )}
       {hasRows ? <ValueRows value={details} t={t} /> : <JsonBlock value={data} />}
     </div>
@@ -178,16 +178,16 @@ function RewriteResult({ data, t }) {
   const hasRows = data?.data && typeof data.data === 'object' && !Array.isArray(data.data) && Object.keys(data.data).length > 0
 
   return (
-    <div className="mt-6 rounded-2xl border border-emerald-200 bg-white p-5 sm:p-6">
-      <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">{t(TEXT.rewriteResultTitle)}</h2>
+    <div className="mt-8 rounded-3xl bg-surface-muted/40 p-6 sm:p-8">
+      <h2 className="text-lg font-semibold text-ink sm:text-xl">{t(TEXT.rewriteResultTitle)}</h2>
       {hasRows && <ValueRows value={data.data} t={t} />}
       {missing.length > 0 && (
-        <div className="mt-5">
-          <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.missingInfo)}</h3>
-          <ul className="mt-2 space-y-2 text-sm text-slate-600">
+        <div className="mt-6">
+          <h3 className="text-sm font-semibold text-ink">{t(TEXT.missingInfo)}</h3>
+          <ul className="mt-3 space-y-3 text-sm text-ink-muted">
             {missing.map((item, index) => (
-              <li key={`${item?.path ?? 'question'}-${index}`} className="rounded-lg bg-amber-50 p-3">
-                <span className="font-medium text-amber-900">{item?.path ?? t(TEXT.question)}</span>
+              <li key={`${item?.path ?? 'question'}-${index}`} className="rounded-xl bg-amber-50/80 p-4 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                <span className="font-medium">{item?.path ?? t(TEXT.question)}</span>
                 {item?.question ? ` — ${item.question}` : ''}
               </li>
             ))}
@@ -351,21 +351,24 @@ export default function StudioPage() {
     }
   }
 
+  const fieldClassName = 'mt-2 w-full rounded-xl bg-surface px-4 py-3 text-sm text-ink ring-1 ring-line/60 transition focus:outline-none focus:ring-2 focus:ring-brand/40'
+  const labelClassName = 'block text-sm font-medium text-ink-muted'
+
   return (
-    <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-      <div className="flex flex-col gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
+    <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+      <div className="flex flex-col gap-6 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">{t(TEXT.title)}</h1>
-          <p className="mx-auto mt-2 text-sm text-slate-600 sm:mx-0">{t(TEXT.subtitle)}</p>
+          <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">{t(TEXT.title)}</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-ink-muted sm:mx-0">{t(TEXT.subtitle)}</p>
         </div>
 
-        <div className="grid w-full grid-cols-2 self-stretch rounded-xl border border-slate-200 bg-slate-50 p-1 sm:inline-flex sm:w-auto sm:self-auto">
+        <div className="grid w-full grid-cols-2 self-stretch rounded-2xl bg-surface-muted/60 p-1.5 sm:inline-flex sm:w-auto sm:self-auto">
           <button
             type="button"
             onClick={() => setActiveTab('studio')}
             aria-pressed={activeTab === 'studio'}
-            className={`rounded-lg px-2 py-2 text-[11px] font-semibold transition sm:px-4 sm:text-sm ${
-              activeTab === 'studio' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+            className={`rounded-xl px-3 py-2.5 text-[11px] font-semibold transition sm:px-5 sm:text-sm ${
+              activeTab === 'studio' ? 'bg-surface text-ink shadow-sm' : 'text-ink-faint hover:text-ink'
             }`}
           >
             {t(TEXT.templatesTab)}
@@ -374,8 +377,8 @@ export default function StudioPage() {
             type="button"
             onClick={() => setActiveTab('rewrite')}
             aria-pressed={activeTab === 'rewrite'}
-            className={`rounded-lg px-2 py-2 text-[11px] font-semibold transition sm:px-4 sm:text-sm ${
-              activeTab === 'rewrite' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+            className={`rounded-xl px-3 py-2.5 text-[11px] font-semibold transition sm:px-5 sm:text-sm ${
+              activeTab === 'rewrite' ? 'bg-surface text-ink shadow-sm' : 'text-ink-faint hover:text-ink'
             }`}
           >
             {t(TEXT.rewriteTab)}
@@ -385,42 +388,42 @@ export default function StudioPage() {
 
       {activeTab === 'studio' && (
         <>
-        <div className="mt-6 grid gap-4 sm:gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl  bg-white p-5 sm:p-6">
-          <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">{t(TEXT.templateCatalog)}</h2>
-          <div className="mt-4 flex flex-wrap gap-3">
+        <div className="mt-10 grid gap-8 lg:grid-cols-2">
+        <div className="rounded-3xl bg-surface-muted/40 p-6 sm:p-8">
+          <h2 className="text-lg font-semibold text-ink sm:text-xl">{t(TEXT.templateCatalog)}</h2>
+          <div className="mt-5 flex flex-wrap gap-3">
             <select
               value={templateKind}
               onChange={(event) => {
                 setTemplateKind(event.target.value)
                 setPreviewId('')
               }}
-              className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 sm:w-auto"
+              className="w-full rounded-xl bg-surface px-4 py-3 text-sm text-ink ring-1 ring-line/60 transition focus:outline-none focus:ring-2 focus:ring-brand/40 sm:w-auto"
             >
               <option value="cv">CV</option>
               <option value="letter">{t(TEXT.letter)}</option>
             </select>
           </div>
 
-          {catalogLoading && !items.length && <p className="mt-4 text-sm text-slate-600">{t(TEXT.loading)}</p>}
-          {!catalogLoading && !items.length && <p className="mt-4 text-sm text-slate-600">{t(TEXT.noTemplate)}</p>}
+          {catalogLoading && !items.length && <p className="mt-5 text-sm text-ink-muted">{t(TEXT.loading)}</p>}
+          {!catalogLoading && !items.length && <p className="mt-5 text-sm text-ink-muted">{t(TEXT.noTemplate)}</p>}
 
-          <div className="mt-4 space-y-2">
+          <div className="mt-5 divide-y divide-line/60">
             {items.map((item) => (
-              <div key={item.id} className="flex flex-col items-start gap-2 rounded-lg bg-slate-50 p-3 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-sm text-slate-700">{item.title}</span>
-                <div className="flex w-full gap-3 sm:w-auto">
+              <div key={item.id} className="flex flex-col items-start gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-sm font-medium text-ink">{item.title}</span>
+                <div className="flex w-full gap-4 sm:w-auto">
                   <button
                     type="button"
                     onClick={() => setRenderForm((current) => ({ ...current, template_id: item.id }))}
-                    className="flex-1 text-center text-sm text-sky-700 hover:text-sky-800 sm:flex-none"
+                    className="flex-1 text-center text-sm font-medium text-brand transition hover:text-brand-soft sm:flex-none"
                   >
                     {t(TEXT.use)}
                   </button>
                   <button
                     type="button"
                     onClick={() => setPreviewId(item.id)}
-                    className="flex-1 text-center text-sm text-sky-600 hover:text-sky-700 sm:flex-none"
+                    className="flex-1 text-center text-sm font-medium text-ink-muted transition hover:text-brand sm:flex-none"
                   >
                     {t(TEXT.preview)}
                   </button>
@@ -430,27 +433,27 @@ export default function StudioPage() {
           </div>
 
           {previewUrl && (
-            <div className="mt-4">
-              <p className="text-sm font-medium text-slate-700">{t(TEXT.templatePreview)}</p>
+            <div className="mt-6">
+              <p className="text-sm font-medium text-ink-muted">{t(TEXT.templatePreview)}</p>
               <img
                 src={previewUrl}
                 alt={t(TEXT.templatePreviewAlt(previewId))}
-                className="mt-2 max-h-96 w-full rounded-lg border border-slate-200 bg-white object-contain"
+                className="mt-3 max-h-96 w-full rounded-2xl bg-surface object-contain p-2 ring-1 ring-line/60"
               />
             </div>
           )}
         </div>
 
-        <form onSubmit={handleRender} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-          <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">{t(TEXT.renderTemplate)}</h2>
-          <div className="mt-4 space-y-4">
+        <form onSubmit={handleRender} className="rounded-3xl bg-surface-muted/40 p-6 sm:p-8">
+          <h2 className="text-lg font-semibold text-ink sm:text-xl">{t(TEXT.renderTemplate)}</h2>
+          <div className="mt-6 space-y-5">
             <div>
-              <label htmlFor="render-kind" className="block text-sm font-medium text-slate-700">{t(TEXT.type)}</label>
+              <label htmlFor="render-kind" className={labelClassName}>{t(TEXT.type)}</label>
               <select
                 id="render-kind"
                 value={renderForm.kind}
                 onChange={(event) => setRenderForm({ ...renderForm, kind: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
+                className={fieldClassName}
               >
                 <option value="cv">CV</option>
                 <option value="letter">{t(TEXT.letter)}</option>
@@ -459,7 +462,7 @@ export default function StudioPage() {
             </div>
 
             <div>
-              <label htmlFor="render-template" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="render-template" className={labelClassName}>
                 {t(TEXT.templateId)}
               </label>
               <input
@@ -469,7 +472,7 @@ export default function StudioPage() {
                 required
                 value={renderForm.template_id}
                 onChange={(event) => setRenderForm({ ...renderForm, template_id: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
+                className={fieldClassName}
               />
               <datalist id="render-templates">
                 {items.map((item) => (
@@ -479,12 +482,12 @@ export default function StudioPage() {
             </div>
 
             <div>
-              <label htmlFor="render-format" className="block text-sm font-medium text-slate-700">{t(TEXT.format)}</label>
+              <label htmlFor="render-format" className={labelClassName}>{t(TEXT.format)}</label>
               <select
                 id="render-format"
                 value={renderForm.format}
                 onChange={(event) => setRenderForm({ ...renderForm, format: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
+                className={fieldClassName}
               >
                 <option value="html">HTML</option>
                 <option value="pdf">PDF</option>
@@ -493,21 +496,21 @@ export default function StudioPage() {
             </div>
 
             <div>
-              <label htmlFor="render-data" className="block text-sm font-medium text-slate-700">{t(TEXT.data)}</label>
+              <label htmlFor="render-data" className={labelClassName}>{t(TEXT.data)}</label>
               <textarea
                 id="render-data"
                 rows="6"
                 required
                 value={renderForm.data}
                 onChange={(event) => setRenderForm({ ...renderForm, data: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 font-mono text-xs text-slate-900"
+                className={`${fieldClassName} font-mono text-xs`}
               />
             </div>
 
             <button
               type="submit"
               disabled={renderLoading}
-              className="w-full rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50 sm:w-auto"
+              className="inline-flex w-full items-center justify-center rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-soft disabled:opacity-50 sm:w-auto"
             >
               {t(renderLoading ? TEXT.rendering : TEXT.render)}
             </button>
@@ -520,18 +523,18 @@ export default function StudioPage() {
 
       {activeTab === 'rewrite' && (
         <>
-          <form onSubmit={handleRewrite} className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-        <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">{t(TEXT.rewritePanel)}</h2>
-        <p className="mt-2 text-sm text-slate-600">{t(TEXT.validatedFields)}</p>
+          <form onSubmit={handleRewrite} className="mt-10 rounded-3xl bg-surface-muted/40 p-6 sm:p-8">
+        <h2 className="text-lg font-semibold text-ink sm:text-xl">{t(TEXT.rewritePanel)}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-ink-muted">{t(TEXT.validatedFields)}</p>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="mt-6 grid gap-5 sm:grid-cols-2">
           <div>
-            <label htmlFor="rewrite-kind" className="block text-sm font-medium text-slate-700">{t(TEXT.type)}</label>
+            <label htmlFor="rewrite-kind" className={labelClassName}>{t(TEXT.type)}</label>
             <select
               id="rewrite-kind"
               value={rewriteForm.kind}
               onChange={(event) => setRewriteForm({ ...rewriteForm, kind: event.target.value })}
-              className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
+              className={fieldClassName}
             >
               <option value="cv">CV</option>
               <option value="letter">{t(TEXT.letter)}</option>
@@ -540,12 +543,12 @@ export default function StudioPage() {
           </div>
 
           <div>
-            <label htmlFor="rewrite-lang" className="block text-sm font-medium text-slate-700">{t(TEXT.language)}</label>
+            <label htmlFor="rewrite-lang" className={labelClassName}>{t(TEXT.language)}</label>
             <select
               id="rewrite-lang"
               value={rewriteForm.lang}
               onChange={(event) => setRewriteForm({ ...rewriteForm, lang: event.target.value })}
-              className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
+              className={fieldClassName}
             >
               <option value="fr">{t(TEXT.french)}</option>
               <option value="en">{t(TEXT.english)}</option>
@@ -554,30 +557,30 @@ export default function StudioPage() {
         </div>
 
         {rewriteForm.kind === 'cv' ? (
-          <div className="mt-4 space-y-4">
+          <div className="mt-6 space-y-5">
             <div>
-              <label htmlFor="rewrite-target" className="block text-sm font-medium text-slate-700">{t(TEXT.targetJob)}</label>
+              <label htmlFor="rewrite-target" className={labelClassName}>{t(TEXT.targetJob)}</label>
               <input
                 id="rewrite-target"
                 type="text"
                 maxLength={300}
                 value={rewriteForm.target_job}
                 onChange={(event) => setRewriteForm({ ...rewriteForm, target_job: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
+                className={fieldClassName}
               />
             </div>
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <label className="flex items-center gap-3 text-sm font-medium text-ink-muted">
                 <input
                   type="checkbox"
                   checked={rewriteForm.useStructuredCv}
                   onChange={(event) => setRewriteForm({ ...rewriteForm, useStructuredCv: event.target.checked })}
-                  className="h-4 w-4 rounded border-slate-300 bg-white"
+                  className="h-4 w-4 rounded border-line bg-surface text-brand focus:ring-brand/40"
                 />
                 {t(TEXT.structuredCv)}
               </label>
               {rewriteForm.useStructuredCv && (
-                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="mt-4 rounded-2xl bg-surface/70 p-4 ring-1 ring-line/50 sm:p-5">
                   <CvDataForm
                     value={rewriteForm.existing_data}
                     onChange={(next) => setRewriteForm((current) => ({ ...current, existing_data: next }))}
@@ -587,49 +590,49 @@ export default function StudioPage() {
             </div>
           </div>
         ) : (
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="mt-6 grid gap-5 sm:grid-cols-2">
             <div>
-              <label htmlFor="rewrite-letter-kind" className="block text-sm font-medium text-slate-700">{t(TEXT.letterType)}</label>
+              <label htmlFor="rewrite-letter-kind" className={labelClassName}>{t(TEXT.letterType)}</label>
               <input
                 id="rewrite-letter-kind"
                 type="text"
                 value={rewriteForm.letter_kind}
                 onChange={(event) => setRewriteForm({ ...rewriteForm, letter_kind: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
+                className={fieldClassName}
               />
             </div>
             <div>
-              <label htmlFor="rewrite-job" className="block text-sm font-medium text-slate-700">{t(TEXT.jobTitle)}</label>
+              <label htmlFor="rewrite-job" className={labelClassName}>{t(TEXT.jobTitle)}</label>
               <input
                 id="rewrite-job"
                 type="text"
                 value={rewriteForm.job_title}
                 onChange={(event) => setRewriteForm({ ...rewriteForm, job_title: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
+                className={fieldClassName}
               />
             </div>
             <div>
-              <label htmlFor="rewrite-company" className="block text-sm font-medium text-slate-700">{t(TEXT.company)}</label>
+              <label htmlFor="rewrite-company" className={labelClassName}>{t(TEXT.company)}</label>
               <input
                 id="rewrite-company"
                 type="text"
                 value={rewriteForm.company}
                 onChange={(event) => setRewriteForm({ ...rewriteForm, company: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
+                className={fieldClassName}
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <label className="flex items-center gap-3 text-sm font-medium text-ink-muted">
                 <input
                   type="checkbox"
                   checked={rewriteForm.useStructuredCvForLetter}
                   onChange={(event) => setRewriteForm({ ...rewriteForm, useStructuredCvForLetter: event.target.checked })}
-                  className="h-4 w-4 rounded border-slate-300 bg-white"
+                  className="h-4 w-4 rounded border-line bg-surface text-brand focus:ring-brand/40"
                 />
                 {t(TEXT.attachStructuredCv)}
               </label>
               {rewriteForm.useStructuredCvForLetter && (
-                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="mt-4 rounded-2xl bg-surface/70 p-4 ring-1 ring-line/50 sm:p-5">
                   <CvDataForm
                     value={rewriteForm.cv_data}
                     onChange={(next) => setRewriteForm((current) => ({ ...current, cv_data: next }))}
@@ -640,8 +643,8 @@ export default function StudioPage() {
           </div>
         )}
 
-        <div className="mt-4">
-          <label htmlFor="rewrite-raw" className="block text-sm font-medium text-slate-700">{t(TEXT.sourceText)}</label>
+        <div className="mt-6">
+          <label htmlFor="rewrite-raw" className={labelClassName}>{t(TEXT.sourceText)}</label>
           <textarea
             id="rewrite-raw"
             rows="6"
@@ -649,21 +652,21 @@ export default function StudioPage() {
             minLength={1}
             value={rewriteForm.raw_text}
             onChange={(event) => setRewriteForm({ ...rewriteForm, raw_text: event.target.value })}
-            className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900"
+            className={fieldClassName}
           />
         </div>
 
         <button
           type="submit"
           disabled={renderLoading}
-          className="mt-4 w-full rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50 sm:w-auto"
+          className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-soft disabled:opacity-50 sm:w-auto"
         >
           {t(renderLoading ? TEXT.processing : TEXT.rewrite)}
         </button>
       </form>
 
           {rewritten && (
-            <p role="status" className="mt-6 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
+            <p role="status" className="mt-6 rounded-xl bg-emerald-50/80 px-4 py-3 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
               {t(TEXT.rewriteDone)}
             </p>
           )}
@@ -672,7 +675,7 @@ export default function StudioPage() {
       )}
 
       {(localError || catalogError || renderError) && (
-        <p role="alert" className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+        <p role="alert" className="mt-6 rounded-xl bg-red-50/80 px-4 py-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
           {localError ?? catalogError?.message ?? renderError?.message}
         </p>
       )}

@@ -42,7 +42,7 @@ const TEXT = {
 
 // Affiche une réponse API non typée sous forme JSON, sans invention de champs.
 function JsonBlock({ value }) {
-  return <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-900 p-3 text-xs text-slate-300">{JSON.stringify(value, null, 2)}</pre>
+  return <pre className="mt-4 overflow-x-auto rounded-2xl bg-surface-muted/60 p-4 font-mono text-xs leading-relaxed text-ink-muted">{JSON.stringify(value, null, 2)}</pre>
 }
 
 // Normalise une liste non typée pour afficher au minimum un identifiant cliquable.
@@ -98,12 +98,12 @@ function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-semibold text-slate-900">{t(TEXT.editDocument)}</h2>
+    <div className="rounded-3xl bg-surface p-6 shadow-sm ring-1 ring-line/50 sm:p-8">
+      <h2 className="text-xl font-semibold tracking-tight text-ink">{t(TEXT.editDocument)}</h2>
 
-      <div className="mt-4 space-y-4">
+      <div className="mt-6 space-y-5">
         <div>
-          <label htmlFor="document-template" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="document-template" className="block text-sm font-medium text-ink-muted">
             {t(TEXT.templateId)}
           </label>
           <input
@@ -111,12 +111,12 @@ function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete
             type="text"
             value={templateId}
             onChange={(event) => setTemplateId(event.target.value)}
-            className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
+            className="mt-2 w-full rounded-xl bg-surface-muted/60 px-4 py-3 text-sm text-ink transition placeholder:text-ink-faint focus:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           />
         </div>
 
         <div>
-          <label htmlFor="document-data" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="document-data" className="block text-sm font-medium text-ink-muted">
             {t(TEXT.documentData)}
           </label>
           <textarea
@@ -124,23 +124,23 @@ function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete
             rows="10"
             value={dataText}
             onChange={(event) => setDataText(event.target.value)}
-            className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 font-mono text-xs text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
+            className="mt-2 w-full rounded-xl bg-surface-muted/60 p-4 font-mono text-xs leading-relaxed text-ink transition placeholder:text-ink-faint focus:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           />
         </div>
       </div>
 
       {localError && (
-        <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+        <p role="alert" className="mt-5 rounded-2xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200">
           {localError}
         </p>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-3">
+      <div className="mt-6 flex flex-wrap gap-3">
         <button
           type="button"
           onClick={handleSave}
           disabled={disabled}
-          className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-50"
+          className="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand/20 transition hover:bg-brand-soft disabled:opacity-50"
         >
           {t(TEXT.save)}
         </button>
@@ -148,7 +148,7 @@ function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete
           type="button"
           onClick={onDownload}
           disabled={disabled}
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:border-slate-300 disabled:opacity-50"
+          className="rounded-xl bg-surface-muted/60 px-4 py-2.5 text-sm font-medium text-ink-muted transition hover:bg-surface-strong hover:text-brand disabled:opacity-50"
         >
           {t(TEXT.download)}
         </button>
@@ -156,7 +156,7 @@ function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete
           type="button"
           onClick={onSend}
           disabled={disabled}
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:border-slate-300 disabled:opacity-50"
+          className="rounded-xl bg-surface-muted/60 px-4 py-2.5 text-sm font-medium text-ink-muted transition hover:bg-surface-strong hover:text-brand disabled:opacity-50"
         >
           {t(TEXT.sendByEmail)}
         </button>
@@ -164,7 +164,7 @@ function DocumentEditor({ detail, disabled, onSave, onDownload, onSend, onDelete
           type="button"
           onClick={onDelete}
           disabled={disabled}
-          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-50"
+          className="rounded-xl bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-500/20 dark:text-red-200 disabled:opacity-50"
         >
           {t(TEXT.remove)}
         </button>
@@ -292,34 +292,34 @@ export default function DocumentsPage() {
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-12">
-      <h1 className="text-3xl font-bold text-slate-900">{t(TEXT.title)}</h1>
-      <p className="mt-2 text-sm text-slate-600">{t(TEXT.subtitle)}</p>
+      <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">{t(TEXT.title)}</h1>
+      <p className="mt-2 text-sm leading-relaxed text-ink-muted">{t(TEXT.subtitle)}</p>
 
       {!meLoading && isGuest && (
-        <p className="mt-6 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
-          {t(TEXT.guestIntro)} <Link to="/login" className="text-sky-600 hover:text-sky-700">{t(TEXT.guestLink)}</Link> {t(TEXT.guestOutro)}
+        <p className="mt-6 rounded-2xl bg-brand-surface/70 px-5 py-4 text-sm text-ink-muted">
+          {t(TEXT.guestIntro)} <Link to="/login" className="font-semibold text-brand transition hover:text-brand-soft">{t(TEXT.guestLink)}</Link> {t(TEXT.guestOutro)}
         </p>
       )}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h2 className="text-xl font-semibold text-slate-900">{t(TEXT.myDocuments)}</h2>
-          {documentsLoading && !items.length && <p className="mt-4 text-sm text-slate-600">{t(TEXT.loading)}</p>}
-          {!documentsLoading && !items.length && <p className="mt-4 text-sm text-slate-600">{t(TEXT.noDocument)}</p>}
-          <div className="mt-4 space-y-2">
+      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+        <div className="rounded-3xl bg-surface-muted/60 p-5 shadow-sm sm:p-6">
+          <h2 className="text-xl font-semibold tracking-tight text-ink">{t(TEXT.myDocuments)}</h2>
+          {documentsLoading && !items.length && <p className="mt-4 text-sm text-ink-faint">{t(TEXT.loading)}</p>}
+          {!documentsLoading && !items.length && <p className="mt-4 text-sm text-ink-faint">{t(TEXT.noDocument)}</p>}
+          <div className="mt-5 divide-y divide-line/60 overflow-hidden rounded-2xl bg-surface/70">
             {items.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setSelected(item.id)}
-                className={`block w-full rounded-lg border p-3 text-left text-sm transition ${
+                className={`block w-full px-4 py-3 text-left text-sm transition ${
                   selected === item.id
-                    ? 'border-sky-500 bg-sky-50 text-slate-900'
-                    : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300'
+                    ? 'bg-brand text-white shadow-sm'
+                    : 'text-ink-muted hover:bg-surface-strong hover:text-ink'
                 }`}
               >
                 <span className="block break-all font-medium">{item.title}</span>
-                {item.type && <span className="mt-1 block text-xs text-slate-500">{item.type}</span>}
+                {item.type && <span className={`mt-1 block text-xs ${selected === item.id ? 'text-white/70' : 'text-ink-faint'}`}>{item.type}</span>}
               </button>
             ))}
           </div>
@@ -337,54 +337,54 @@ export default function DocumentsPage() {
               onDelete={handleDelete}
             />
           )}
-          {selected && !documentData && <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">{t(TEXT.loadingDocument)}</p>}
-          {!selected && <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">{t(TEXT.selectDocument)}</p>}
+          {selected && !documentData && <p className="rounded-3xl bg-surface-muted/60 p-6 text-sm text-ink-faint sm:p-8">{t(TEXT.loadingDocument)}</p>}
+          {!selected && <p className="rounded-3xl bg-surface-muted/60 p-6 text-sm text-ink-faint sm:p-8">{t(TEXT.selectDocument)}</p>}
         </div>
       </div>
 
       {sentEmail && (
-        <p role="status" className="mt-6 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
+        <p role="status" className="mt-6 rounded-2xl bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-200">
           {t(TEXT.emailSent)}
         </p>
       )}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h2 className="text-xl font-semibold text-slate-900">{t(TEXT.fileById)}</h2>
-          <div className="mt-4 flex flex-wrap gap-3">
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <div className="rounded-3xl bg-surface-muted/60 p-5 shadow-sm sm:p-6">
+          <h2 className="text-xl font-semibold tracking-tight text-ink">{t(TEXT.fileById)}</h2>
+          <div className="mt-5 flex flex-wrap gap-3">
             <input
               type="text"
               value={fileId}
               onChange={(event) => setFileId(event.target.value)}
               placeholder={t(TEXT.fileIdPlaceholder)}
-              className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
+              className="min-w-0 flex-1 rounded-xl bg-surface px-4 py-3 text-sm text-ink transition placeholder:text-ink-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             />
             <button
               type="button"
               onClick={handleGetFile}
               disabled={filesLoading}
-              className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-50"
+              className="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand/20 transition hover:bg-brand-soft disabled:opacity-50"
             >
               {t(TEXT.retrieve)}
             </button>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h2 className="text-xl font-semibold text-slate-900">{t(TEXT.publicFileByToken)}</h2>
-          <div className="mt-4 flex flex-wrap gap-3">
+        <div className="rounded-3xl bg-surface-muted/60 p-5 shadow-sm sm:p-6">
+          <h2 className="text-xl font-semibold tracking-tight text-ink">{t(TEXT.publicFileByToken)}</h2>
+          <div className="mt-5 flex flex-wrap gap-3">
             <input
               type="text"
               value={shareToken}
               onChange={(event) => setShareToken(event.target.value)}
               placeholder={t(TEXT.shareTokenPlaceholder)}
-              className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
+              className="min-w-0 flex-1 rounded-xl bg-surface px-4 py-3 text-sm text-ink transition placeholder:text-ink-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             />
             <button
               type="button"
               onClick={handleDownloadByToken}
               disabled={filesLoading}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:border-slate-300 disabled:opacity-50"
+              className="rounded-xl bg-surface px-4 py-2.5 text-sm font-medium text-ink-muted transition hover:bg-surface-strong hover:text-brand disabled:opacity-50"
             >
               {t(TEXT.open)}
             </button>
@@ -397,14 +397,14 @@ export default function DocumentsPage() {
         <a
           href={URL.createObjectURL(fileData)}
           download={fileData.name || t(TEXT.fileFallback)}
-          className="mt-6 inline-block text-sm text-sky-600 hover:text-sky-700"
+          className="mt-6 inline-flex text-sm font-semibold text-brand transition hover:text-brand-soft"
         >
           {t(TEXT.downloadRetrievedFile)}
         </a>
       )}
 
       {(localError || documentsError || filesError) && (
-        <p role="alert" className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+        <p role="alert" className="mt-6 rounded-2xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200">
           {localError ?? documentsError?.message ?? filesError?.message}
         </p>
       )}

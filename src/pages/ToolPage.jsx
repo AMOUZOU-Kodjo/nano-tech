@@ -41,7 +41,7 @@ const DOCUMENTED_OPTION_TOOLS = new Set([
 ])
 
 const OPTION_INPUT_CLASS =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50'
+  'w-full rounded-lg bg-surface px-3 py-2 text-sm text-ink ring-1 ring-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50'
 
 const TEXT = {
   unknownTool: { fr: 'Outil inconnu', en: 'Unknown tool' },
@@ -227,10 +227,10 @@ const STATUS_LABELS = {
 }
 
 const STATUS_STYLES = {
-  queued: 'bg-slate-100 text-slate-700',
-  running: 'bg-sky-50 text-sky-700',
-  done: 'bg-emerald-50 text-emerald-700',
-  failed: 'bg-red-50 text-red-700',
+  queued: 'bg-surface-strong text-ink-muted',
+  running: 'bg-sky-500/10 text-sky-700 dark:text-sky-200',
+  done: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-200',
+  failed: 'bg-red-500/10 text-red-700 dark:text-red-200',
 }
 
 function formatFileSize(bytes, locale) {
@@ -331,34 +331,28 @@ function normalizePhotoExcluded(specs) {
 function Step({ title, description, done, active, className = '' }) {
   return (
     <li
-      className={`flex gap-2.5 rounded-xl border p-2.5 transition ${
+      className={`flex gap-2.5 rounded-xl p-2.5 transition ${
         done
-          ? 'border-emerald-200 bg-emerald-50/70'
+          ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-200'
           : active
-            ? 'border-sky-200 bg-sky-50/70 shadow-sm'
-            : 'border-slate-200 bg-white'
+            ? 'bg-brand-surface/70 text-brand-soft'
+            : 'bg-surface-muted/60 text-ink-muted'
       } ${className}`}
     >
       <span
-        className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-bold ring-2 ring-white ${
-          done ? 'bg-emerald-500 text-white' : active ? 'bg-sky-500 text-white' : 'bg-slate-100 text-slate-400'
+        className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-bold ring-2 ring-surface ${
+          done ? 'bg-emerald-500 text-white' : active ? 'bg-brand text-white' : 'bg-surface-strong text-ink-faint'
         }`}
       >
         {done ? (
           <FiCheckCircle aria-hidden="true" className="h-4 w-4" />
         ) : (
-          <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-white' : 'bg-slate-300'}`} />
+          <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-white' : 'bg-line-strong'}`} />
         )}
       </span>
       <div className="min-w-0">
-        <p
-          className={`text-xs font-semibold ${
-            done ? 'text-emerald-800' : active ? 'text-sky-800' : 'text-slate-600'
-          }`}
-        >
-          {title}
-        </p>
-        <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">{description}</p>
+        <p className="text-xs font-semibold">{title}</p>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-ink-faint">{description}</p>
       </div>
     </li>
   )
@@ -375,11 +369,11 @@ function PhotoSpecSummary({ countries, excluded }) {
 
   return (
     <div className="mt-4 space-y-3">
-      <p className="text-sm text-slate-600">{countriesLabel}</p>
+      <p className="text-sm text-ink-muted">{countriesLabel}</p>
       {countries.length > 0 && (
         <ul className="flex flex-wrap gap-2">
           {countries.map((item) => (
-            <li key={item.value} className="rounded-lg bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800">
+            <li key={item.value} className="rounded-lg bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-200">
               {item.label}
             </li>
           ))}
@@ -546,8 +540,8 @@ export default function ToolPage() {
   if (!toolInfo) {
     return (
       <section className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-2xl font-semibold text-slate-900">{t(TEXT.unknownTool)}</h1>
-        <p className="mt-2 text-sm text-slate-600">{t(TEXT.unknownToolDescription)}</p>
+        <h1 className="text-2xl font-semibold text-ink">{t(TEXT.unknownTool)}</h1>
+        <p className="mt-2 text-sm text-ink-muted">{t(TEXT.unknownToolDescription)}</p>
         <Link to="/catalogue" className="mt-6 inline-block text-sky-600 hover:text-sky-700">
           {t(TEXT.backCatalogue)}
         </Link>
@@ -559,8 +553,8 @@ export default function ToolPage() {
   if (!isEnabled(tool)) {
     return (
       <section className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-2xl font-semibold text-slate-900">{t(TEXT.disabledTool)}</h1>
-        <p className="mt-2 text-sm text-slate-600">{t(TEXT.disabledToolDescription)}</p>
+        <h1 className="text-2xl font-semibold text-ink">{t(TEXT.disabledTool)}</h1>
+        <p className="mt-2 text-sm text-ink-muted">{t(TEXT.disabledToolDescription)}</p>
         <Link to="/catalogue" className="mt-6 inline-block text-sky-600 hover:text-sky-700">
           {t(TEXT.backCatalogue)}
         </Link>
@@ -813,31 +807,31 @@ export default function ToolPage() {
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-6 lg:py-4">
-      <nav aria-label={t(TEXT.breadcrumb)} className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+      <nav aria-label={t(TEXT.breadcrumb)} className="flex flex-wrap items-center gap-2 text-sm text-ink-faint">
         <Link to="/catalogue" className="text-sky-700 hover:text-sky-800">
           {t(TEXT.catalogue)}
         </Link>
         <span aria-hidden="true">/</span>
         <span>{categoryLabel}</span>
         <span aria-hidden="true">/</span>
-        <span className="text-slate-700">{toolName}</span>
+        <span className="text-ink-soft">{toolName}</span>
       </nav>
 
       <div className="mt-4 grid gap-5 lg:grid-cols-2">
         <div>
-          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-surface shadow-xl shadow-slate-900/5 ring-1 ring-line/40">
             <div className="h-1 w-full bg-gradient-to-r from-sky-400 via-cyan-400 to-sky-600" />
             <div className="p-5 lg:p-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-sky-700 ring-1 ring-sky-100">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-surface px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-soft">
                     <FiCpu aria-hidden="true" className="h-3.5 w-3.5" />
                     {categoryLabel}
                   </span>
-                  <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">{toolName}</h1>
-                  <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">{toolDescription}</p>
+                  <h1 className="mt-3 text-2xl font-bold tracking-tight text-ink lg:text-3xl">{toolName}</h1>
+                  <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-muted">{toolDescription}</p>
                 </div>
-                <span className="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100 sm:inline-flex">
+                <span className="hidden items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-200 sm:inline-flex">
                   <FiShield aria-hidden="true" className="h-3.5 w-3.5" />
                   {t(TEXT.secured)}
                 </span>
@@ -845,9 +839,9 @@ export default function ToolPage() {
 
               <form onSubmit={handleSubmit} className="mt-6">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">{t(TEXT.workspace)}</h2>
+                  <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-ink-faint">{t(TEXT.workspace)}</h2>
                   {files.length > 0 && (
-                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                    <span className="rounded-full bg-surface-strong px-2.5 py-1 text-[11px] font-semibold text-ink-muted">
                       {files.length}{' '}
                       {locale === 'fr'
                         ? files.length > 1 ? 'fichiers' : 'fichier'
@@ -869,8 +863,8 @@ export default function ToolPage() {
                   }}
                   className={`group relative mt-3 overflow-hidden rounded-2xl border-2 border-dashed p-7 text-center transition-all duration-200 ${
                     isDragging
-                      ? 'scale-[1.01] border-sky-500 bg-gradient-to-br from-sky-50 to-cyan-50 shadow-lg shadow-sky-100'
-                      : 'border-slate-300 bg-slate-50/70 hover:border-sky-400 hover:bg-sky-50/60'
+                      ? 'scale-[1.01] border-brand bg-brand-surface/70 shadow-lg shadow-brand/10'
+                      : 'border-line-strong bg-surface-muted/60 hover:border-brand hover:bg-brand-surface/60'
                   }`}
                 >
                   <input
@@ -882,15 +876,15 @@ export default function ToolPage() {
                   />
                   <label htmlFor="job-files" className="flex cursor-pointer flex-col items-center">
                     <span
-                      className={`grid h-14 w-14 place-items-center rounded-2xl bg-white shadow-md ring-1 ring-slate-200 transition duration-200 group-hover:scale-105 ${
-                        isDragging ? 'text-sky-600' : 'text-sky-500'
+                      className={`grid h-14 w-14 place-items-center rounded-2xl bg-surface shadow-lg shadow-slate-900/5 ring-1 ring-line/50 transition duration-200 group-hover:scale-105 ${
+                        isDragging ? 'text-brand-soft' : 'text-brand'
                       }`}
                     >
                       <FiUploadCloud aria-hidden="true" className="h-7 w-7" />
                     </span>
-                    <span className="mt-4 text-sm font-semibold text-slate-900">{t(TEXT.dropFiles)}</span>
-                    <span className="mt-1 text-xs text-slate-500">{t(TEXT.uploadHint)}</span>
-                    <span className="mt-1 text-[11px] text-slate-400">
+                    <span className="mt-4 text-sm font-semibold text-ink">{t(TEXT.dropFiles)}</span>
+                    <span className="mt-1 text-xs text-ink-faint">{t(TEXT.uploadHint)}</span>
+                    <span className="mt-1 text-[11px] text-ink-faint">
                       {[
                         limits.maxFiles ? t(TEXT.maxFilesHint).replace('{n}', String(limits.maxFiles)) : null,
                         limits.maxFileMb ? t(TEXT.maxFileSizeHint).replace('{n}', String(limits.maxFileMb)) : null,
@@ -899,7 +893,7 @@ export default function ToolPage() {
                         .filter(Boolean)
                         .join(' · ')}
                     </span>
-                    <span className="mt-4 inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition group-hover:bg-sky-700">
+                    <span className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-brand/20 transition group-hover:bg-brand-soft">
                       {t(TEXT.clickSelect)}
                       <FiArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
                     </span>
@@ -911,13 +905,13 @@ export default function ToolPage() {
                     {files.map((file, index) => (
                       <div
                         key={`${file.name}-${index}`}
-                        className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white ring-1 ring-slate-200/70"
+                        className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-surface ring-1 ring-line/50"
                       >
                         {previews[index] ? (
                           <img src={previews[index]} alt={file.name} className="h-full w-full object-cover" />
                         ) : (
                           <span className="grid h-full w-full place-items-center">
-                            <FiFile aria-hidden="true" className="h-5 w-5 text-slate-400" />
+                            <FiFile aria-hidden="true" className="h-5 w-5 text-ink-faint" />
                           </span>
                         )}
                         <button
@@ -925,7 +919,7 @@ export default function ToolPage() {
                           onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}
                           disabled={creating}
                           aria-label={t(TEXT.remove)}
-                          className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-lg bg-white/90 text-slate-500 shadow-sm transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                          className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-lg bg-surface/90 text-ink-faint shadow transition hover:bg-red-500/10 hover:text-red-600 disabled:opacity-50"
                         >
                           <FiX aria-hidden="true" className="h-3.5 w-3.5" />
                         </button>
@@ -938,19 +932,19 @@ export default function ToolPage() {
                     {files.map((file, index) => (
                       <li
                         key={`${file.name}-${index}`}
-                        className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition hover:border-sky-200 hover:shadow-sm"
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface px-3 py-2.5 transition hover:bg-surface-strong"
                       >
                         <div className="flex min-w-0 items-center gap-3">
-                          <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100 text-[10px] font-bold text-slate-500 ring-1 ring-slate-200/70">
+                          <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-muted text-[10px] font-bold text-ink-faint ring-1 ring-line/50">
                             {previews[index] ? (
                               <img src={previews[index]} alt="" className="h-full w-full object-cover" />
                             ) : (
-                              <FiFile aria-hidden="true" className="h-5 w-5 text-slate-400" />
+                              <FiFile aria-hidden="true" className="h-5 w-5 text-ink-faint" />
                             )}
                           </span>
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-slate-800">{file.name}</p>
-                            <p className="mt-0.5 text-xs text-slate-500">{formatFileSize(file.size, locale)}</p>
+                            <p className="truncate text-sm font-medium text-ink">{file.name}</p>
+                            <p className="mt-0.5 text-xs text-ink-faint">{formatFileSize(file.size, locale)}</p>
                           </div>
                         </div>
                         <button
@@ -958,7 +952,7 @@ export default function ToolPage() {
                           onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}
                           disabled={creating}
                           aria-label={t(TEXT.remove)}
-                          className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                          className="grid h-8 w-8 place-items-center rounded-lg text-ink-faint transition hover:bg-red-500/10 hover:text-red-600 disabled:opacity-50"
                         >
                           <FiX aria-hidden="true" className="h-4 w-4" />
                         </button>
@@ -968,11 +962,11 @@ export default function ToolPage() {
                 )}
 
               {hasAdvancedOptions && toolInfo.tool !== 'compress' && toolInfo.tool !== 'photo_id' && (
-                <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:p-3">
-                  <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.advancedOptions)}</h3>
+                <div className="mt-4 space-y-3 rounded-xl bg-surface-muted/70 p-4 lg:p-3">
+                  <h3 className="text-sm font-semibold text-ink">{t(TEXT.advancedOptions)}</h3>
                   {toolInfo.tool === 'pdf_to_images' && (
                     <div className="grid gap-3 sm:grid-cols-3">
-                      <div className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <div className="grid gap-1 text-xs font-semibold text-ink-soft">
                         <span>{t(TEXT.pages)}</span>
                         <span className={`${OPTION_INPUT_CLASS} truncate`}>
                           {Array.isArray(toolOptions.pages)
@@ -980,7 +974,7 @@ export default function ToolPage() {
                             : t(TEXT.allPages)}
                         </span>
                       </div>
-                      <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <label className="grid gap-1 text-xs font-semibold text-ink-soft">
                         <span>{t(TEXT.format)}</span>
                         <select
                           value={toolOptions.format}
@@ -992,7 +986,7 @@ export default function ToolPage() {
                           <option value="jpg">JPG</option>
                         </select>
                       </label>
-                      <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <label className="grid gap-1 text-xs font-semibold text-ink-soft">
                         <span>{t(TEXT.resolution)}</span>
                         <input
                           type="number"
@@ -1008,7 +1002,7 @@ export default function ToolPage() {
                     </div>
                   )}
                   {toolInfo.tool === 'pdf_split' && (
-                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                    <label className="grid gap-1 text-xs font-semibold text-ink-soft">
                       <span>{t(TEXT.pageRanges)}</span>
                       <input
                         type="text"
@@ -1021,7 +1015,7 @@ export default function ToolPage() {
                     </label>
                   )}
                   {toolInfo.tool === 'pdf_reorder' && (
-                    <div className="grid gap-1 text-xs font-semibold text-slate-700">
+                    <div className="grid gap-1 text-xs font-semibold text-ink-soft">
                       <span>{t(TEXT.pageOrder)}</span>
                       <span className={`${OPTION_INPUT_CLASS} truncate`}>
                         {Array.isArray(toolOptions.order)
@@ -1031,13 +1025,13 @@ export default function ToolPage() {
                     </div>
                   )}
                   {toolInfo.tool === 'images_to_pdf' && (
-                    <p className="text-xs leading-relaxed text-slate-600">
+                    <p className="text-xs leading-relaxed text-ink-muted">
                       {t(TEXT.imagesOrderHelp)}
                     </p>
                   )}
                   {toolInfo.tool === 'pdf_sign' && (
                     <div className="grid gap-3 sm:grid-cols-3">
-                      <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <label className="grid gap-1 text-xs font-semibold text-ink-soft">
                         <span>{t(TEXT.signatureText)}</span>
                         <input
                           type="text"
@@ -1047,7 +1041,7 @@ export default function ToolPage() {
                           className={OPTION_INPUT_CLASS}
                         />
                       </label>
-                      <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <label className="grid gap-1 text-xs font-semibold text-ink-soft">
                         <span>{t(TEXT.page)}</span>
                         <input
                           type="number"
@@ -1058,7 +1052,7 @@ export default function ToolPage() {
                           className={OPTION_INPUT_CLASS}
                         />
                       </label>
-                      <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                      <label className="grid gap-1 text-xs font-semibold text-ink-soft">
                         <span>{t(TEXT.position)}</span>
                         <select
                           value={toolOptions.position}
@@ -1075,7 +1069,7 @@ export default function ToolPage() {
                     </div>
                   )}
                   {toolInfo.tool === 'pdf_protect' && (
-                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                    <label className="grid gap-1 text-xs font-semibold text-ink-soft">
                       <span>{t(TEXT.password)}</span>
                       <input
                         type="password"
@@ -1087,7 +1081,7 @@ export default function ToolPage() {
                     </label>
                   )}
                   {toolInfo.tool === 'pdf_watermark' && (
-                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                    <label className="grid gap-1 text-xs font-semibold text-ink-soft">
                       <span>{t(TEXT.watermarkText)}</span>
                       <input
                         type="text"
@@ -1101,11 +1095,11 @@ export default function ToolPage() {
                 </div>
               )}
               {toolInfo.tool === 'photo_id' && (
-                <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:p-3">
-                  <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.photoOptions)}</h3>
-                  {specsLoading && <p className="text-sm text-slate-600">{t(TEXT.loadingCountries)}</p>}
+                <div className="mt-4 space-y-3 rounded-xl bg-surface-muted/70 p-4 lg:p-3">
+                  <h3 className="text-sm font-semibold text-ink">{t(TEXT.photoOptions)}</h3>
+                  {specsLoading && <p className="text-sm text-ink-muted">{t(TEXT.loadingCountries)}</p>}
                   {specsError && (
-                    <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                    <p role="alert" className="rounded-lg bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-200">
                       {specsError.message}
                     </p>
                   )}
@@ -1115,13 +1109,13 @@ export default function ToolPage() {
                     </p>
                   )}
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                    <label className="grid gap-1 text-xs font-semibold text-ink-soft">
                       <span>{t(TEXT.country)}</span>
                       <select
                         value={selectedPhotoCountry}
                         onChange={(event) => updatePhotoOption('country', event.target.value)}
                         disabled={specsLoading || photoCountries.length === 0 || creating}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                        className="w-full rounded-lg bg-surface px-3 py-2 text-sm text-ink ring-1 ring-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50"
                       >
                         {photoCountries.length === 0 && <option value="">{t(TEXT.noCountries)}</option>}
                         {photoCountries.map((item) => (
@@ -1131,13 +1125,13 @@ export default function ToolPage() {
                         ))}
                       </select>
                     </label>
-                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                    <label className="grid gap-1 text-xs font-semibold text-ink-soft">
                       <span>{t(TEXT.document)}</span>
                       <select
                         value={photoOptions.document}
                         onChange={(event) => updatePhotoOption('document', event.target.value)}
                         disabled={!selectedPhotoCountry || creating}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                        className="w-full rounded-lg bg-surface px-3 py-2 text-sm text-ink ring-1 ring-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50"
                       >
                         <option value="">
                           {selectedPhotoCountry ? t(TEXT.selectDocument) : t(TEXT.chooseCountryFirst)}
@@ -1149,29 +1143,29 @@ export default function ToolPage() {
                         ))}
                       </select>
                     </label>
-                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                    <label className="grid gap-1 text-xs font-semibold text-ink-soft">
                       <span>{t(TEXT.background)}</span>
                       <input
                         type="text"
                         value={photoOptions.background}
                         onChange={(event) => updatePhotoOption('background', event.target.value)}
                         disabled={creating}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                        className="w-full rounded-lg bg-surface px-3 py-2 text-sm text-ink ring-1 ring-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50"
                       />
                     </label>
-                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                    <label className="grid gap-1 text-xs font-semibold text-ink-soft">
                       <span>{t(TEXT.sheet)}</span>
                       <select
                         value={photoOptions.sheet}
                         onChange={(event) => updatePhotoOption('sheet', event.target.value)}
                         disabled={creating}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                        className="w-full rounded-lg bg-surface px-3 py-2 text-sm text-ink ring-1 ring-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50"
                       >
                         <option value="">{t(TEXT.standardSize)}</option>
                         <option value="10x15">10x15</option>
                       </select>
                     </label>
-                    <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                    <label className="grid gap-1 text-xs font-semibold text-ink-soft">
                       <span>{t(TEXT.targetSizeKb)}</span>
                       <input
                         type="number"
@@ -1179,14 +1173,14 @@ export default function ToolPage() {
                         value={photoOptions.maxSizeKb}
                         onChange={(event) => updatePhotoOption('maxSizeKb', event.target.value)}
                         disabled={creating}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                        className="w-full rounded-lg bg-surface px-3 py-2 text-sm text-ink ring-1 ring-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50"
                       />
                     </label>
                   </div>
                 </div>
               )}
               {!hasAdvancedOptions && (
-                <p className="mt-4 text-xs text-slate-500">
+                <p className="mt-4 text-xs text-ink-faint">
                   {t(TEXT.noAdvancedOptions)}
                 </p>
               )}
@@ -1200,7 +1194,7 @@ export default function ToolPage() {
                     (toolInfo.tool === 'photo_id' &&
                       (specsLoading || photoSetupUnavailable || !selectedPhotoCountry || !photoOptions.document))
                   }
-                  className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-sky-600 to-cyan-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
+                  className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-brand/20 transition hover:-translate-y-0.5 hover:bg-brand-soft hover:shadow-xl disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
                 >
                   {t(creating ? TEXT.creating : TEXT.startProcessing)}
                   <FiArrowRight aria-hidden="true" className="h-4 w-4" />
@@ -1209,7 +1203,7 @@ export default function ToolPage() {
                   <button
                     type="button"
                     onClick={resetTool}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    className="inline-flex items-center gap-2 rounded-xl bg-surface-muted px-5 py-3 text-sm font-semibold text-ink-muted transition hover:bg-surface-strong"
                   >
                     <FiRefreshCw aria-hidden="true" className="h-4 w-4" />
                     {t(TEXT.newProcessing)}
@@ -1230,14 +1224,14 @@ export default function ToolPage() {
 
         <aside className="space-y-4 lg:space-y-3">
           {toolInfo.tool === 'compress' && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
+            <div className="rounded-2xl bg-surface-muted/60 p-5 lg:p-4">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-800">
+                <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-ink">
                   {t(TEXT.compressionOptions)}
                 </h2>
                 <FiCpu aria-hidden="true" className="h-4 w-4 text-sky-500" />
               </div>
-              <p className="mt-2 text-xs leading-relaxed text-slate-600">{t(TEXT.levelHelp)}</p>
+              <p className="mt-2 text-xs leading-relaxed text-ink-muted">{t(TEXT.levelHelp)}</p>
               <div className="mt-4 grid grid-cols-2 gap-2">
                 {[
                   { value: '', label: t(TEXT.default), hint: t(TEXT.hintAuto) },
@@ -1252,23 +1246,23 @@ export default function ToolPage() {
                       type="button"
                       disabled={creating || Boolean(compressOptions.targetSizeKb)}
                       onClick={() => updateCompressOption('level', option.value)}
-                      className={`rounded-xl border px-3 py-2.5 text-left transition disabled:opacity-50 ${
+                      className={`rounded-xl px-3 py-2.5 text-left transition disabled:opacity-50 ${
                         active
-                          ? 'border-sky-500 bg-sky-50 shadow-sm ring-1 ring-sky-200'
-                          : 'border-slate-200 bg-white hover:border-sky-300 hover:bg-slate-50'
+                          ? 'bg-brand text-white shadow-lg shadow-brand/20'
+                          : 'bg-surface text-ink-muted hover:bg-surface-strong hover:text-brand'
                       }`}
                     >
-                      <span className={`block text-xs font-semibold ${active ? 'text-sky-700' : 'text-slate-700'}`}>
+                      <span className={`block text-xs font-semibold ${active ? 'text-white' : 'text-ink'}`}>
                         {option.label}
                       </span>
-                      <span className="mt-0.5 block text-[10px] text-slate-500">{option.hint}</span>
+                      <span className={`mt-0.5 block text-[10px] ${active ? 'text-white/70' : 'text-ink-faint'}`}>{option.hint}</span>
                     </button>
                   )
                 })}
               </div>
-              <div className="mt-4 border-t border-slate-100 pt-4">
-                <p className="text-xs font-semibold text-slate-700">{t(TEXT.targetSizeKb)}</p>
-                <p className="mt-1 text-[11px] text-slate-500">{t(TEXT.targetHelp)}</p>
+              <div className="mt-4 border-t border-line/50 pt-4">
+                <p className="text-xs font-semibold text-ink-soft">{t(TEXT.targetSizeKb)}</p>
+                <p className="mt-1 text-[11px] text-ink-faint">{t(TEXT.targetHelp)}</p>
                 <div className="relative mt-2">
                   <input
                     type="number"
@@ -1276,27 +1270,27 @@ export default function ToolPage() {
                     value={compressOptions.targetSizeKb}
                     onChange={(event) => updateCompressOption('targetSizeKb', event.target.value)}
                     disabled={creating || Boolean(compressOptions.level)}
-                    className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-3 pr-12 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50"
+                    className="w-full rounded-xl bg-surface py-2.5 pl-3 pr-12 text-sm text-ink ring-1 ring-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50"
                     placeholder="500"
                   />
-                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-ink-faint">
                     Ko
                   </span>
                 </div>
               </div>
-              <p className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
+              <p className="mt-4 rounded-lg bg-surface-muted px-3 py-2 text-[11px] leading-relaxed text-ink-faint">
                 {t(TEXT.acceptedFormats)}
               </p>
             </div>
           )}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
+          <div className="rounded-2xl bg-surface-muted/60 p-5 lg:p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-slate-800">
+              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-ink">
                 <FiCpu aria-hidden="true" className="h-4 w-4 text-sky-500" />
                 {t(TEXT.liveTracking)}
               </h2>
               {jobId && (
-                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${STATUS_STYLES[status] ?? 'bg-slate-100 text-slate-700'}`}>
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${STATUS_STYLES[status] ?? 'bg-surface-strong text-ink-muted'}`}>
                   <span
                     className={`h-1.5 w-1.5 rounded-full ${
                       status === 'done'
@@ -1305,7 +1299,7 @@ export default function ToolPage() {
                           ? 'bg-red-500'
                           : status === 'running'
                             ? 'animate-pulse bg-sky-500'
-                            : 'bg-slate-400'
+                            : 'bg-line-strong'
                     }`}
                   />
                   {t(STATUS_LABELS[status] ?? STATUS_LABELS.queued)}
@@ -1314,15 +1308,15 @@ export default function ToolPage() {
             </div>
             {jobId && (
               <>
-                <p className="mt-3 truncate rounded-lg bg-slate-50 px-3 py-2 font-mono text-[11px] text-slate-500">
+                <p className="mt-3 truncate rounded-lg bg-surface-muted px-3 py-2 font-mono text-[11px] text-ink-faint">
                   {t(TEXT.identifier)} · {jobId}
                 </p>
                 <div className="mt-4">
                   <div className="flex items-end justify-between">
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
                       {t(TEXT.jobProgress)}
                     </span>
-                    <span className="text-lg font-bold tabular-nums text-slate-900">{progress}%</span>
+                    <span className="text-lg font-bold tabular-nums text-ink">{progress}%</span>
                   </div>
                   <div
                     role="progressbar"
@@ -1330,7 +1324,7 @@ export default function ToolPage() {
                     aria-valuenow={progress}
                     aria-valuemin={0}
                     aria-valuemax={100}
-                    className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200/70"
+                    className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-surface-strong"
                   >
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-400 shadow-[0_0_12px_rgba(14,165,233,0.5)] transition-[width] duration-500 ease-out"
@@ -1340,13 +1334,13 @@ export default function ToolPage() {
                   {((job?.stage) || (typeof job?.eta_seconds === 'number' && job.eta_seconds > 0)) && (
                     <div className="mt-3 flex flex-wrap gap-2">
                       {job.stage && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-medium text-sky-700 ring-1 ring-sky-100">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/10 px-2.5 py-1 text-[11px] font-medium text-sky-700 dark:text-sky-200">
                           <FiCpu aria-hidden="true" className="h-3 w-3" />
                           {job.stage}
                         </span>
                       )}
                       {typeof job.eta_seconds === 'number' && job.eta_seconds > 0 && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-strong px-2.5 py-1 text-[11px] font-medium text-ink-muted">
                           <FiClock aria-hidden="true" className="h-3 w-3" />
                           {t(TEXT.eta)} {job.eta_seconds} {t(TEXT.seconds)}
                         </span>
@@ -1356,9 +1350,9 @@ export default function ToolPage() {
                 </div>
               </>
             )}
-            {jobLoading && !job && <p className="mt-3 text-sm text-slate-600">{t(TEXT.loadingStatus)}</p>}
+            {jobLoading && !job && <p className="mt-3 text-sm text-ink-muted">{t(TEXT.loadingStatus)}</p>}
             {jobError && (
-              <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+              <p role="alert" className="mt-3 rounded-lg bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-200">
                 {jobError.message}
               </p>
             )}
@@ -1411,30 +1405,28 @@ export default function ToolPage() {
           )}
           {job && (status === 'failed' || status === 'done') && (
             <div
-              className={`rounded-2xl border p-5 shadow-sm lg:p-4 ${
-                status === 'done'
-                  ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-white'
-                  : 'border-red-200 bg-gradient-to-br from-red-50 to-white'
+              className={`rounded-2xl p-5 lg:p-4 ${
+                status === 'done' ? 'bg-emerald-500/10' : 'bg-red-500/10'
               }`}
             >
               {status === 'failed' && (
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-red-100 text-red-600">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-red-500/15 text-red-600 dark:text-red-200">
                       <FiAlertCircle aria-hidden="true" className="h-5 w-5" />
                     </span>
-                    <p className="text-sm font-bold text-red-800">{t(TEXT.resultFailed)}</p>
+                    <p className="text-sm font-bold text-red-700 dark:text-red-200">{t(TEXT.resultFailed)}</p>
                   </div>
                   <p
                     role="alert"
-                    className="mt-3 rounded-lg bg-white/80 p-3 text-xs leading-relaxed text-red-700 ring-1 ring-red-100"
+                    className="mt-3 rounded-lg bg-surface/70 p-3 text-xs leading-relaxed text-red-700 dark:text-red-200"
                   >
                     {job.error?.message ?? t(TEXT.processingFailed)}
                   </p>
                   <button
                     type="button"
                     onClick={resetTool}
-                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50"
+                    className="mt-3 inline-flex items-center gap-2 rounded-xl bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-700 dark:text-red-200 transition hover:bg-red-500/20"
                   >
                     <FiRefreshCw aria-hidden="true" className="h-3.5 w-3.5" />
                     {t(TEXT.retry)}
@@ -1444,36 +1436,36 @@ export default function ToolPage() {
               {status === 'done' && (
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-100 text-emerald-600">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-200">
                       <FiCheckCircle aria-hidden="true" className="h-5 w-5" />
                     </span>
                     <div>
-                      <p className="text-sm font-bold text-emerald-800">{t(TEXT.resultReady)}</p>
-                      <p className="text-[11px] text-emerald-600">{t(TEXT.resultAvailable)}</p>
+                      <p className="text-sm font-bold text-emerald-700 dark:text-emerald-200">{t(TEXT.resultReady)}</p>
+                      <p className="text-[11px] text-emerald-600 dark:text-emerald-300">{t(TEXT.resultAvailable)}</p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={handleDownloadResult}
                     disabled={downloading}
-                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-200 transition hover:-translate-y-0.5 hover:shadow-xl disabled:translate-y-0 disabled:opacity-50"
+                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:bg-emerald-500 hover:shadow-xl disabled:translate-y-0 disabled:opacity-50"
                   >
                     <FiDownload aria-hidden="true" className="h-4 w-4" />
                     {t(downloading ? TEXT.retrieving : TEXT.download)}
                   </button>
                   <Link
                     to="/jobs"
-                    className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-white/80 px-5 py-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-white"
+                    className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500/10 px-5 py-2.5 text-xs font-semibold text-emerald-700 dark:text-emerald-200 transition hover:bg-emerald-500/20"
                   >
                     {t(TEXT.viewHistory)}
                   </Link>
                   {downloadedJobId === jobId && downloadError && (
-                    <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-xs text-red-700">
+                      <p role="alert" className="mt-3 rounded-lg bg-red-500/10 p-3 text-xs text-red-700 dark:text-red-200">
                       {downloadError.message}
                     </p>
                   )}
                   {downloadedJobId === jobId && !downloadError && !downloading && (
-                    <p className="mt-3 text-center text-xs font-medium text-emerald-700">
+                    <p className="mt-3 text-center text-xs font-medium text-emerald-700 dark:text-emerald-200">
                       {t(TEXT.downloadStarted)}
                     </p>
                   )}
@@ -1482,20 +1474,20 @@ export default function ToolPage() {
             </div>
           )}
           {toolInfo.tool === 'photo_id' && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-4">
+            <div className="rounded-2xl bg-surface-muted/60 p-5 lg:p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-slate-900">{t(TEXT.photoSpecs)}</h2>
+                <h2 className="text-lg font-semibold text-ink">{t(TEXT.photoSpecs)}</h2>
                 <button
                   type="button"
                   onClick={getPhotoSpecs}
                   disabled={specsLoading}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  className="rounded-lg bg-surface px-3 py-2 text-sm text-ink-muted ring-1 ring-line hover:bg-surface-strong disabled:opacity-50"
                 >
                   {t(specsLoading ? TEXT.loading : TEXT.refresh)}
                 </button>
               </div>
               {specsError && (
-                <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                <p role="alert" className="mt-3 rounded-lg bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-200">
                   {specsError.message}
                 </p>
               )}
@@ -1504,14 +1496,14 @@ export default function ToolPage() {
           )}
 
           {relatedTools.length > 0 && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:hidden">
-              <h2 className="text-lg font-semibold text-slate-900">{t(TEXT.similarTools)}</h2>
+            <div className="rounded-2xl bg-surface p-5 ring-1 ring-line/40 lg:hidden">
+              <h2 className="text-lg font-semibold text-ink">{t(TEXT.similarTools)}</h2>
               <div className="mt-4 space-y-2">
                 {relatedTools.map((item) => (
                   <Link
                     key={item.tool}
                     to={`/tools/${item.tool}`}
-                    className="block rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:border-sky-300 hover:text-sky-700"
+                    className="block rounded-lg px-3 py-2 text-sm text-ink-muted hover:bg-surface-muted hover:text-brand"
                   >
                     {locale === 'en' ? item.nameEn : item.name}
                   </Link>
@@ -1520,12 +1512,12 @@ export default function ToolPage() {
             </div>
           )}
 
-          <div className="rounded-2xl border border-sky-200 bg-sky-50 p-6 lg:hidden">
-            <h2 className="text-sm font-semibold text-sky-900">{t(TEXT.needAnotherTool)}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-sky-800">
+          <div className="rounded-2xl bg-brand-surface p-6 lg:hidden">
+            <h2 className="text-sm font-semibold text-brand-soft">{t(TEXT.needAnotherTool)}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-ink-muted">
               {t(TEXT.catalogueHelp)}
             </p>
-            <Link to="/catalogue" className="mt-4 inline-block text-sm font-semibold text-sky-700 hover:text-sky-800">
+            <Link to="/catalogue" className="mt-4 inline-block text-sm font-semibold text-brand hover:text-brand-soft">
               {t(TEXT.viewCatalogue)}
             </Link>
           </div>

@@ -19,28 +19,28 @@ export default function DashboardPage() {
   const { t } = useLocale()
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-8 text-center sm:px-6 sm:py-12 sm:text-left">
-      <p className="text-sm font-semibold text-sky-700">{t(TEXT.userSpace)}</p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{t(TEXT.title)}</h1>
-      <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mx-0">
+    <section className="mx-auto max-w-5xl px-4 py-10 text-center sm:px-6 sm:py-14 sm:text-left">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">{t(TEXT.userSpace)}</p>
+      <h1 className="mt-3 text-3xl font-bold tracking-tight text-ink sm:text-4xl">{t(TEXT.title)}</h1>
+      <p className="mx-auto mt-4 max-w-3xl text-base leading-relaxed text-ink-muted sm:mx-0">
         {t(TEXT.intro)}
       </p>
 
-      <div className="mt-6 grid gap-4 sm:mt-8 sm:gap-6 lg:grid-cols-2">
+      <div className="mt-10 grid gap-6 lg:grid-cols-2 lg:gap-8">
         <HealthStatus />
         <MeStatus />
       </div>
 
-      <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:mt-8 sm:flex-row sm:items-center sm:justify-start">
+      <div className="mt-10 flex flex-col items-stretch justify-center gap-4 sm:flex-row sm:items-center sm:justify-start">
         <Link
           to="/account"
-          className="rounded-lg bg-sky-500 px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600"
+          className="rounded-xl bg-brand px-6 py-3.5 text-center text-sm font-semibold text-white shadow-sm shadow-brand/20 transition hover:bg-brand-soft"
         >
           {t(TEXT.manageAccount)}
         </Link>
         <Link
           to="/jobs"
-          className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-center text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          className="rounded-xl bg-surface-muted/60 px-6 py-3.5 text-center text-sm font-semibold text-ink-soft shadow-sm transition hover:bg-surface-strong"
         >
           {t(TEXT.seeJobs)}
         </Link>

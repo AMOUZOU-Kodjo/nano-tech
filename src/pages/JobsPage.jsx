@@ -9,6 +9,7 @@ import {
   FiClock,
   FiDownload,
   FiFile,
+  FiInbox,
   FiInfo,
   FiRefreshCw,
 } from 'react-icons/fi'
@@ -27,11 +28,11 @@ const STATUS_LABELS = {
   failed: { fr: 'Échec', en: 'Failed' },
 }
 
-const STATUS_STYLES = {
-  queued: 'bg-slate-100 text-slate-700 ring-slate-200',
-  running: 'bg-sky-50 text-sky-700 ring-sky-200',
-  done: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-  failed: 'bg-red-50 text-red-700 ring-red-200',
+const STATUS_TONES = {
+  queued: 'bg-slate-500/10 text-slate-600 dark:text-slate-200',
+  running: 'bg-sky-500/10 text-sky-700 dark:text-sky-200',
+  done: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-200',
+  failed: 'bg-red-500/10 text-red-700 dark:text-red-200',
 }
 
 const STATUS_DOTS = {
@@ -75,7 +76,10 @@ const TEXT = {
   information: { fr: 'Informations', en: 'Information' },
   preview: { fr: 'Aperçu', en: 'Preview' },
   previewTitle: { fr: 'Aperçu du résultat', en: 'Result preview' },
-  noPreview: { fr: 'L’aperçu sera disponible une fois le traitement terminé.', en: 'The preview will be available once processing is complete.' },
+  noPreview: {
+    fr: 'L’aperçu sera disponible une fois le traitement terminé.',
+    en: 'The preview will be available once processing is complete.',
+  },
   previewUnavailable: {
     fr: 'Aperçu indisponible pour ce format.',
     en: 'Preview is not available for this format.',
@@ -177,24 +181,29 @@ function shortId(id) {
 function StatusBadge({ status, t }) {
   const key = status || 'queued'
   return (
-    <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${STATUS_STYLES[key] ?? STATUS_STYLES.queued}`}>
+    <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${STATUS_TONES[key] ?? STATUS_TONES.queued}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOTS[key] ?? STATUS_DOTS.queued}`} />
       {statusLabel(status, t)}
     </span>
   )
 }
 
-function SummaryCard({ label, value, tone }) {
+function SummaryCard({ label, value, tone, icon: Icon }) {
   const tones = {
-    emerald: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-    sky: 'bg-sky-50 text-sky-700 ring-sky-100',
-    red: 'bg-red-50 text-red-700 ring-red-100',
+    emerald: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-200',
+    sky: 'bg-sky-500/10 text-sky-700 dark:text-sky-200',
+    red: 'bg-red-500/10 text-red-700 dark:text-red-200',
   }
 
   return (
-    <div className={`rounded-xl px-4 py-3 ring-1 ${tones[tone]}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-wide">{label}</p>
-      <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
+    <div className={`flex items-center gap-4 rounded-2xl px-4 py-3.5 ${tones[tone]}`}>
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/60 dark:bg-white/5">
+        <Icon aria-hidden="true" className="h-5 w-5" />
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-[11px] font-semibold uppercase tracking-wide opacity-80">{label}</p>
+        <p className="mt-0.5 text-2xl font-bold tabular-nums">{value}</p>
+      </div>
     </div>
   )
 }
@@ -202,8 +211,8 @@ function SummaryCard({ label, value, tone }) {
 function InfoRow({ label, value }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-3">
-      <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</dt>
-      <dd className="max-w-full break-words text-right text-sm font-medium text-slate-800">{value}</dd>
+      <dt className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{label}</dt>
+      <dd className="max-w-full break-words text-right text-sm font-medium text-ink">{value}</dd>
     </div>
   )
 }
@@ -307,49 +316,56 @@ export default function JobsPage() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-12">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+    <section className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
+      <header className="flex flex-wrap items-end justify-between gap-6">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-sky-700 ring-1 ring-sky-100">
-            <FiActivity aria-hidden="true" className="h-3 w-3" />
+          <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-brand">
+            <FiActivity aria-hidden="true" className="h-3.5 w-3.5" />
             NanoFile
           </span>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">{t(TEXT.title)}</h1>
-          <p className="mt-2 text-sm text-slate-600">{t(TEXT.subtitle)}</p>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-ink sm:text-4xl">{t(TEXT.title)}</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-muted">{t(TEXT.subtitle)}</p>
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm">
-          <FiClock aria-hidden="true" className="h-4 w-4 text-slate-400" />
+        <p className="flex items-center gap-2 text-xs font-semibold text-ink-faint">
+          <FiClock aria-hidden="true" className="h-4 w-4" />
           {items.length} {t(TEXT.recentJobs).toLowerCase()}
-        </div>
+        </p>
       </header>
 
       {!meLoading && isGuest && (
-        <p className="mt-6 rounded-xl border border-sky-100 bg-sky-50 p-4 text-sm text-sky-800">
-          {t(TEXT.guestBrowsing)}{' '}
-          <Link to="/login" className="font-semibold text-sky-700 underline decoration-sky-300 underline-offset-2 hover:text-sky-900">
-            {t(TEXT.signIn)}
-          </Link>{' '}
-          {t(TEXT.toSeeJobs)}
-        </p>
+        <div className="mt-8 flex flex-wrap items-center gap-2 rounded-2xl bg-brand-surface/70 px-4 py-3 text-sm text-brand-soft">
+          <FiInfo aria-hidden="true" className="h-4 w-4 shrink-0" />
+          <span>
+            {t(TEXT.guestBrowsing)}{' '}
+            <Link to="/login" className="font-bold underline decoration-brand/40 underline-offset-2 hover:text-brand">
+              {t(TEXT.signIn)}
+            </Link>{' '}
+            {t(TEXT.toSeeJobs)}
+          </span>
+        </div>
       )}
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        <SummaryCard label={t(TEXT.doneCount)} value={counts.done} tone="emerald" />
-        <SummaryCard label={t(TEXT.runningCount)} value={counts.running} tone="sky" />
-        <SummaryCard label={t(TEXT.failedCount)} value={counts.failed} tone="red" />
+      <div className="mt-8 grid gap-3 sm:grid-cols-3">
+        <SummaryCard label={t(TEXT.doneCount)} value={counts.done} tone="emerald" icon={FiCheckCircle} />
+        <SummaryCard label={t(TEXT.runningCount)} value={counts.running} tone="sky" icon={FiClock} />
+        <SummaryCard label={t(TEXT.failedCount)} value={counts.failed} tone="red" icon={FiAlertCircle} />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-slate-900">{t(TEXT.recentJobs)}</h2>
-            <span className="rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-500">{items.length}</span>
+      <div className="mt-8 grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8">
+        <div className="lg:sticky lg:top-6 lg:self-start">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-ink-muted">{t(TEXT.recentJobs)}</h2>
+            <span className="text-xs font-bold tabular-nums text-ink-faint">{items.length}</span>
           </div>
 
-          {loading && !items.length && <p className="mt-4 text-sm text-slate-600">{t(TEXT.loading)}</p>}
-          {!loading && !items.length && <p className="mt-4 text-sm text-slate-600">{t(TEXT.noJobs)}</p>}
-
-          <div className="mt-4 space-y-2">
+          <div className="mt-4 divide-y divide-line/70 overflow-hidden rounded-2xl bg-surface-muted/60">
+            {loading && !items.length && <p className="px-4 py-5 text-sm text-ink-muted">{t(TEXT.loading)}</p>}
+            {!loading && !items.length && (
+              <div className="flex flex-col items-center gap-2 px-4 py-10 text-center text-ink-faint">
+                <FiInbox aria-hidden="true" className="h-7 w-7" />
+                <p className="text-sm">{t(TEXT.noJobs)}</p>
+              </div>
+            )}
             {items.map((item) => (
               <button
                 key={item.id}
@@ -358,39 +374,33 @@ export default function JobsPage() {
                   setSelected(item.id)
                   setDownloadedFileKey('')
                 }}
-                className={`w-full rounded-xl border p-3.5 text-left transition ${
-                  selected === item.id
-                    ? 'border-sky-400 bg-sky-50/70 shadow-sm ring-1 ring-sky-100'
-                    : 'border-slate-200 bg-white hover:border-sky-200 hover:bg-slate-50'
+                className={`group flex w-full items-center gap-3 px-4 py-3.5 text-left transition ${
+                  selected === item.id ? 'bg-brand-surface/70' : 'hover:bg-surface-strong/60'
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-sky-50 text-sky-600 ring-1 ring-sky-100">
-                      <FiActivity aria-hidden="true" className="h-4 w-4" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-800">
-                        {toolLabel(item.tool, locale) || item.id}
-                      </p>
-                      <p className="mt-0.5 font-mono text-[11px] text-slate-400" title={item.id}>
-                        {shortId(item.id)}
-                      </p>
-                    </div>
-                  </div>
-                  <StatusBadge status={item.status} t={t} />
-                </div>
-                <p className="mt-3 text-[11px] text-slate-400">{formatDate(item.created_at, locale)}</p>
+                <span className={`h-8 w-1 shrink-0 rounded-full transition ${selected === item.id ? 'bg-brand' : 'bg-transparent group-hover:bg-line-strong'}`} />
+                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl transition ${selected === item.id ? 'bg-brand text-white' : 'bg-surface text-brand'}`}>
+                  <FiActivity aria-hidden="true" className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-ink">
+                    {toolLabel(item.tool, locale) || item.id}
+                  </span>
+                  <span className="mt-0.5 block truncate font-mono text-[11px] text-ink-faint" title={item.id}>
+                    {shortId(item.id)} · {formatDate(item.created_at, locale)}
+                  </span>
+                </span>
+                <StatusBadge status={item.status} t={t} />
               </button>
             ))}
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+          <div className="mt-4 flex flex-wrap items-center gap-1 px-1">
             <button
               type="button"
               onClick={handlePrevious}
               disabled={offset === 0 || loading}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-ink-muted transition hover:bg-surface-muted hover:text-brand disabled:opacity-40"
             >
               <FiChevronLeft aria-hidden="true" className="h-3.5 w-3.5" />
               {t(TEXT.previous)}
@@ -399,12 +409,12 @@ export default function JobsPage() {
               type="button"
               onClick={handleNext}
               disabled={items.length < limit || loading}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-ink-muted transition hover:bg-surface-muted hover:text-brand disabled:opacity-40"
             >
               {t(TEXT.next)}
               <FiChevronRight aria-hidden="true" className="h-3.5 w-3.5" />
             </button>
-            <label className="ml-auto flex items-center gap-2 text-xs text-slate-500">
+            <label className="ml-auto flex items-center gap-2 text-xs text-ink-faint">
               {t(TEXT.perPage)}
               <select
                 value={limit}
@@ -414,7 +424,7 @@ export default function JobsPage() {
                   setSelected('')
                   setDownloadedFileKey('')
                 }}
-                className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700"
+                className="rounded-lg bg-surface px-2 py-1.5 text-xs font-semibold text-ink ring-1 ring-line"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -424,15 +434,15 @@ export default function JobsPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-slate-900">{t(TEXT.jobDetail)}</h2>
+        <div className="overflow-hidden rounded-3xl bg-surface shadow-xl shadow-slate-900/5 ring-1 ring-line/40">
+          <div className="flex items-center justify-between gap-3 px-5 py-4 sm:px-6">
+            <h2 className="text-base font-semibold text-ink">{t(TEXT.jobDetail)}</h2>
             {selected && (
               <button
                 type="button"
                 onClick={job.reload}
                 disabled={job.loading}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-ink-muted transition hover:bg-surface-muted hover:text-brand disabled:opacity-40"
               >
                 <FiRefreshCw aria-hidden="true" className="h-3.5 w-3.5" />
                 {t(TEXT.refreshStatus)}
@@ -441,51 +451,53 @@ export default function JobsPage() {
           </div>
 
           {!selected && (
-            <div className="mt-6 grid min-h-64 place-items-center rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-6 text-center">
-              <div>
-                <FiActivity aria-hidden="true" className="mx-auto h-8 w-8 text-slate-300" />
-                <p className="mt-3 text-sm text-slate-500">{t(TEXT.selectJob)}</p>
+            <div className="mx-5 mb-5 grid min-h-72 place-items-center rounded-2xl bg-surface-muted/60 px-6 text-center sm:mx-6 sm:mb-6">
+              <div className="max-w-sm">
+                <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-brand-surface text-brand">
+                  <FiActivity aria-hidden="true" className="h-6 w-6" />
+                </span>
+                <p className="mt-4 text-sm text-ink-muted">{t(TEXT.selectJob)}</p>
               </div>
             </div>
           )}
-          {selected && job.loading && <p className="mt-4 text-sm text-slate-600">{t(TEXT.loading)}</p>}
+          {selected && job.loading && <p className="px-5 pb-5 text-sm text-ink-muted sm:px-6">{t(TEXT.loading)}</p>}
           {selected && job.error && (
-            <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            <p role="alert" className="mx-5 mb-5 rounded-2xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200 sm:mx-6">
               {job.error.message}
             </p>
           )}
 
           {selected && job.data && (
-            <div className="mt-5 space-y-5">
-              <div className="relative overflow-hidden rounded-2xl bg-slate-900 p-5 text-white shadow-sm">
-                <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-sky-500/20 blur-2xl" />
+            <div className="space-y-5 px-5 pb-5 sm:px-6 sm:pb-6">
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-5 text-white shadow-lg shadow-slate-900/10 sm:p-6">
+                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-sky-400/20 blur-3xl" />
                 <div className="relative flex flex-wrap items-start justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-4">
-                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white/10 ring-1 ring-white/15">
+                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/10">
                       {job.data.status === 'done' ? (
                         <FiCheckCircle aria-hidden="true" className="h-6 w-6 text-emerald-300" />
                       ) : job.data.status === 'failed' ? (
                         <FiAlertCircle aria-hidden="true" className="h-6 w-6 text-red-300" />
                       ) : (
-                        <FiClock aria-hidden="true" className="h-6 w-6 text-sky-300" />
+                        <FiClock aria-hidden="true" className="h-6 w-6 text-sky-200" />
                       )}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-sky-300">{t(TEXT.overview)}</p>
-                      <p className="mt-0.5 truncate text-xl font-semibold">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-100/80">{t(TEXT.overview)}</p>
+                      <p className="mt-1 truncate text-xl font-semibold">
                         {toolLabel(job.data.tool, locale) || t(TEXT.unknownTool)}
                       </p>
-                      <p className="mt-1 text-xs text-slate-300">
+                      <p className="mt-1 text-xs text-white/60">
                         {t(TEXT.identifier)} · <span className="font-mono" title={job.data.id || selected}>{shortId(job.data.id || selected)}</span>
                       </p>
                     </div>
                   </div>
-                  <span className="shrink-0 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold ring-1 ring-white/15">
+                  <span className="shrink-0 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">
                     {statusLabel(job.data.status, t)}
                   </span>
                 </div>
-                <div className="relative mt-5 rounded-xl bg-white/10 p-3.5 ring-1 ring-white/10">
-                  <div className="flex justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-200">
+                <div className="relative mt-5 rounded-xl bg-white/10 p-3.5">
+                  <div className="flex justify-between text-[11px] font-semibold uppercase tracking-wider text-white/70">
                     <span>{t(TEXT.progress)}</span>
                     <span className="tabular-nums">{progress}%</span>
                   </div>
@@ -502,49 +514,45 @@ export default function JobsPage() {
                 </div>
               </div>
 
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(240px,0.8fr)]">
-                <section className="rounded-xl border border-slate-200 p-4">
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(240px,0.75fr)]">
+                <section className="rounded-2xl bg-surface-muted/70 p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.previewTitle)}</h3>
-                    {firstResultFile && (
-                      <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                        {t(TEXT.preview)}
-                      </span>
-                    )}
+                    <h3 className="text-sm font-semibold text-ink">{t(TEXT.previewTitle)}</h3>
+                    {firstResultFile && <span className="text-[10px] font-bold uppercase tracking-wide text-ink-faint">{t(TEXT.preview)}</span>}
                   </div>
-                  <div className="mt-3 grid min-h-44 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                  <div className="mt-3 grid min-h-44 place-items-center overflow-hidden rounded-xl bg-surface p-2.5 shadow-inner shadow-slate-900/5">
                     {job.data.status !== 'done' && (
-                      <div className="text-center text-slate-400">
+                      <div className="text-center text-ink-faint">
                         <FiClock aria-hidden="true" className="mx-auto h-7 w-7" />
                         <p className="mt-2 text-sm">{t(TEXT.noPreview)}</p>
                       </div>
                     )}
                     {job.data.status === 'done' && previewLoading && (
-                      <p className="text-sm text-slate-500">{t(TEXT.loading)}</p>
+                      <p className="text-sm text-ink-muted">{t(TEXT.loading)}</p>
                     )}
                     {job.data.status === 'done' && !previewLoading && preview && isImagePreview && (
                       <img
                         src={preview.url}
                         alt={previewName || t(TEXT.preview)}
-                        className="max-h-64 w-full rounded-lg bg-white object-contain shadow-sm"
+                        className="max-h-64 w-full rounded-lg object-contain"
                       />
                     )}
                     {job.data.status === 'done' && !previewLoading && preview && isPdfPreview && (
                       <iframe
                         src={preview.url}
                         title={previewName || t(TEXT.preview)}
-                        className="h-64 w-full rounded-lg bg-white shadow-sm"
+                        className="h-64 w-full rounded-lg"
                       />
                     )}
                     {job.data.status === 'done' && !previewLoading && (!preview || (!isImagePreview && !isPdfPreview)) && (
-                      <div className="text-center text-slate-400">
+                      <div className="text-center text-ink-faint">
                         <FiFile aria-hidden="true" className="mx-auto h-7 w-7" />
                         <p className="mt-2 text-sm">{t(TEXT.previewUnavailable)}</p>
                       </div>
                     )}
                   </div>
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                    <p className="min-w-0 truncate text-xs text-slate-500" title={previewName}>
+                    <p className="min-w-0 truncate text-xs text-ink-faint" title={previewName}>
                       {firstResultFile ? previewName : '—'}
                     </p>
                     {firstResultFile && job.data.status === 'done' && (
@@ -552,7 +560,7 @@ export default function JobsPage() {
                         type="button"
                         onClick={() => handleDownloadResult(firstResultFile, 0)}
                         disabled={jobDownload.loading}
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-soft disabled:opacity-40"
                       >
                         <FiDownload aria-hidden="true" className="h-3.5 w-3.5" />
                         {t(TEXT.download)}
@@ -561,12 +569,12 @@ export default function JobsPage() {
                   </div>
                 </section>
 
-                <section className="rounded-xl border border-slate-200 p-4">
-                  <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                    <FiInfo aria-hidden="true" className="h-4 w-4 text-sky-600" />
-                    <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.information)}</h3>
+                <section className="rounded-2xl bg-surface-muted/70 p-4">
+                  <div className="flex items-center gap-2">
+                    <FiInfo aria-hidden="true" className="h-4 w-4 text-brand" />
+                    <h3 className="text-sm font-semibold text-ink">{t(TEXT.information)}</h3>
                   </div>
-                  <dl className="mt-1 divide-y divide-slate-100">
+                  <dl className="mt-2 divide-y divide-line/60">
                     <InfoRow label={t(TEXT.createdAt)} value={formatDate(job.data.created_at, locale)} />
                     <InfoRow label={t(TEXT.finishedAt)} value={formatDate(job.data.finished_at, locale)} />
                     <InfoRow label={t(TEXT.inputSize)} value={formatBytes(job.data.input_bytes, locale)} />
@@ -575,44 +583,42 @@ export default function JobsPage() {
                 </section>
               </div>
 
-              <section className="overflow-hidden rounded-xl border border-slate-200">
-                <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3">
+              <section className="rounded-2xl bg-surface-muted/70 p-4">
+                <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <FiFile aria-hidden="true" className="h-4 w-4 text-slate-500" />
-                    <h3 className="text-sm font-semibold text-slate-900">{t(TEXT.resultFiles)}</h3>
+                    <FiFile aria-hidden="true" className="h-4 w-4 text-ink-faint" />
+                    <h3 className="text-sm font-semibold text-ink">{t(TEXT.resultFiles)}</h3>
                   </div>
-                  <span className="rounded-md bg-white px-2 py-1 text-[11px] font-bold text-slate-500 ring-1 ring-slate-200">
-                    {resultFiles.length}
-                  </span>
+                  <span className="rounded-md bg-surface px-2 py-0.5 text-xs font-bold text-ink-faint">{resultFiles.length}</span>
                 </div>
                 {resultFiles.length === 0 ? (
-                  <p className="p-4 text-sm text-slate-500">{t(TEXT.noFiles)}</p>
+                  <p className="mt-3 text-sm text-ink-muted">{t(TEXT.noFiles)}</p>
                 ) : (
-                  <ul className="divide-y divide-slate-100">
+                  <ul className="mt-2 divide-y divide-line/60">
                     {resultFiles.map((file, index) => {
                       const name = decodeFileName(file?.name) || `${t(TEXT.file)} ${index + 1}`
                       const fileKey = `${selected}:${file?.file_id ?? index}`
 
                       return (
-                        <li key={file?.file_id ?? `${name}-${index}`} className="flex flex-wrap items-center gap-3 p-3.5">
-                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-500">
+                        <li key={file?.file_id ?? `${name}-${index}`} className="flex flex-wrap items-center gap-3 py-3">
+                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-surface text-brand">
                             <FiFile aria-hidden="true" className="h-4 w-4" />
                           </span>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-slate-800" title={name}>{name}</p>
-                            <p className="text-xs text-slate-500">{formatBytes(file?.size_bytes, locale)}</p>
+                            <p className="truncate text-sm font-medium text-ink" title={name}>{name}</p>
+                            <p className="text-xs text-ink-faint">{formatBytes(file?.size_bytes, locale)}</p>
                           </div>
                           <button
                             type="button"
                             onClick={() => handleDownloadResult(file, index)}
                             disabled={job.data.status !== 'done' || jobDownload.loading}
-                            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-soft disabled:opacity-40"
                           >
                             <FiDownload aria-hidden="true" className="h-3.5 w-3.5" />
                             {jobDownload.loading && downloadedFileKey === fileKey ? t(TEXT.downloading) : t(TEXT.download)}
                           </button>
                           {downloadedFileKey === fileKey && !jobDownload.error && !jobDownload.loading && (
-                            <p className="w-full text-xs text-emerald-700">{t(TEXT.downloadStarted)}</p>
+                            <p className="w-full text-xs text-emerald-700 dark:text-emerald-200">{t(TEXT.downloadStarted)}</p>
                           )}
                         </li>
                       )
@@ -622,16 +628,20 @@ export default function JobsPage() {
               </section>
 
               {job.data.quality_warning?.message && (
-                <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{job.data.quality_warning.message}</p>
+                <p className="rounded-2xl bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-100">
+                  {job.data.quality_warning.message}
+                </p>
               )}
               {job.data.error?.message && (
-                <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{job.data.error.message}</p>
+                <p role="alert" className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200">
+                  {job.data.error.message}
+                </p>
               )}
             </div>
           )}
 
           {jobDownload.error && (
-            <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            <p role="alert" className="mx-5 mb-5 rounded-2xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200 sm:mx-6">
               {jobDownload.error.message}
             </p>
           )}
@@ -639,7 +649,7 @@ export default function JobsPage() {
       </div>
 
       {error && (
-        <p role="alert" className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+        <p role="alert" className="mt-6 rounded-2xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200">
           {error.message}
         </p>
       )}
