@@ -5,130 +5,158 @@ import { useMeContext } from '@/hooks/useMeContext.js'
 import { useUsage } from '@/hooks/useUsage.js'
 import { useLocale } from '@/hooks/useLocale.js'
 
-// Libellés des compteurs documentés, affichés seulement quand la réponse les contient.
 const QUOTA_LABELS = {
-  plan: { fr: 'Formule', en: 'Plan' },
-  credits: { fr: 'Crédits', en: 'Credits' },
-  paywall_enabled: { fr: 'Paywall actif', en: 'Paywall enabled' },
+  plan: { fr: 'Votre formule', en: 'Your plan' },
+  credits: { fr: 'Crédits disponibles', en: 'Available credits' },
   free_uses_left: { fr: 'Essais gratuits restants', en: 'Free trials remaining' },
-  ai_uses_left_today: { fr: 'Rendus IA restants aujourd’hui', en: 'AI renders remaining today' },
-  daily_jobs_left: { fr: 'Jobs restants aujourd’hui', en: 'Jobs remaining today' },
-  daily_renders_left: { fr: 'Rendus restants aujourd’hui', en: 'Renders remaining today' },
-  limit: { fr: 'Limite', en: 'Limit' },
-  used: { fr: 'Utilisé', en: 'Used' },
-  remaining: { fr: 'Restant', en: 'Remaining' },
+  ai_uses_left_today: { fr: 'Améliorations IA restantes', en: 'AI improvements remaining' },
+  daily_jobs_left: { fr: 'Traitements restants', en: 'Processing left' },
+  daily_renders_left: { fr: 'Documents restants', en: 'Documents left' },
+  limit: { fr: 'Limite quotidienne', en: 'Daily limit' },
+  used: { fr: 'Utilisé aujourd’hui', en: 'Used today' },
+  remaining: { fr: 'Restant aujourd’hui', en: 'Left today' },
 }
 
 const USAGE_LABELS = {
-  authenticated: { fr: 'Compte authentifié', en: 'Authenticated account' },
-  plan: { fr: 'Formule', en: 'Plan' },
-  credits: { fr: 'Crédits', en: 'Credits' },
-  paywall_enabled: { fr: 'Paywall actif', en: 'Paywall enabled' },
+  plan: { fr: 'Votre formule', en: 'Your plan' },
+  credits: { fr: 'Crédits disponibles', en: 'Available credits' },
   free_uses_left: { fr: 'Essais gratuits restants', en: 'Free trials remaining' },
-  ai_uses_left_today: { fr: 'Rendus IA restants aujourd’hui', en: 'AI renders remaining today' },
-  daily_jobs_left: { fr: 'Jobs restants aujourd’hui', en: 'Jobs remaining today' },
-  daily_renders_left: { fr: 'Rendus restants aujourd’hui', en: 'Renders remaining today' },
+  ai_uses_left_today: { fr: 'Améliorations IA restantes', en: 'AI improvements remaining' },
+  daily_jobs_left: { fr: 'Traitements restants', en: 'Processing left' },
+  daily_renders_left: { fr: 'Documents restants', en: 'Documents left' },
 }
 
 const LIMIT_LABELS = {
   tier: { fr: 'Niveau', en: 'Tier' },
-  max_file_mb: { fr: 'Taille max. par fichier', en: 'Max. size per file' },
-  max_total_mb: { fr: 'Total max. par lot', en: 'Max. total per batch' },
-  max_files: { fr: 'Nombre max. de fichiers', en: 'Max. number of files' },
-  max_pdf_pages: { fr: 'Pages PDF max.', en: 'Max. PDF pages' },
-  max_video_minutes: { fr: 'Durée vidéo max.', en: 'Max. video duration' },
-  max_documents: { fr: 'Documents max.', en: 'Max. documents' },
-  max_document_storage_mb: { fr: 'Stockage documents max.', en: 'Max. document storage' },
+  max_file_mb: { fr: 'Taille maximale par fichier', en: 'Maximum size per file' },
+  max_total_mb: { fr: 'Taille maximale par lot', en: 'Maximum size per batch' },
+  max_files: { fr: 'Nombre maximal de fichiers', en: 'Maximum number of files' },
+  max_pdf_pages: { fr: 'Nombre maximal de pages PDF', en: 'Maximum PDF pages' },
+  max_video_minutes: { fr: 'Durée maximale des vidéos', en: 'Maximum video duration' },
+  max_documents: { fr: 'Nombre maximal de documents', en: 'Maximum number of documents' },
+  max_document_storage_mb: { fr: 'Espace maximal pour les documents', en: 'Maximum document storage' },
 }
 
 const AI_LABELS = {
-  limit: { fr: 'Limite quotidienne', en: 'Daily limit' },
-  used: { fr: 'Utilisé', en: 'Used' },
-  remaining: { fr: 'Restant', en: 'Remaining' },
-  resets_at: { fr: 'Réinitialisation', en: 'Resets at' },
+  limit: { fr: 'Quota quotidien', en: 'Daily allowance' },
+  used: { fr: 'Utilisé aujourd’hui', en: 'Used today' },
+  remaining: { fr: 'Restant aujourd’hui', en: 'Left today' },
+  resets_at: { fr: 'Prochaine réinitialisation', en: 'Next reset' },
 }
 
 const TABS = [
-  { id: 'overview', label: { fr: 'Vue d’ensemble', en: 'Overview' }, description: { fr: 'Quota et consommation', en: 'Quota and usage' } },
-  { id: 'data', label: { fr: 'Données personnelles', en: 'Personal data' }, description: { fr: 'Export et suppression', en: 'Export and deletion' } },
-  { id: 'communication', label: { fr: 'Communication', en: 'Communication' }, description: { fr: 'Préférences email', en: 'Email preferences' } },
-]
-
-const OVERVIEW_TABS = [
-  { id: 'quota', label: { fr: 'Quota courant', en: 'Current quota' } },
-  { id: 'access', label: { fr: 'Accès et compteurs', en: 'Access and counters' } },
-  { id: 'limits', label: { fr: 'Limites du compte', en: 'Account limits' } },
-  { id: 'ai', label: { fr: 'Rendus IA', en: 'AI renders' } },
-  { id: 'tools', label: { fr: 'Outils activés', en: 'Enabled tools' } },
+  {
+    id: 'overview',
+    label: { fr: 'Mon activité', en: 'My activity' },
+    description: { fr: 'Offre, consommation et limites', en: 'Plan, usage and limits' },
+  },
+  {
+    id: 'data',
+    label: { fr: 'Mes données', en: 'My data' },
+    description: { fr: 'Exporter ou supprimer', en: 'Export or delete' },
+  },
+  {
+    id: 'communication',
+    label: { fr: 'Communications', en: 'Communications' },
+    description: { fr: 'Préférences email', en: 'Email preferences' },
+  },
 ]
 
 const TEXT = {
+  userSpace: { fr: 'Espace utilisateur', en: 'User space' },
+  deleteConfirmationRequired: {
+    fr: 'Saisissez SUPPRIMER pour confirmer.',
+    en: 'Type DELETE to confirm.',
+  },
+  unsubscribeTokenRequired: {
+    fr: 'Saisissez le code reçu par email.',
+    en: 'Enter the code received by email.',
+  },
   yes: { fr: 'Oui', en: 'Yes' },
   no: { fr: 'Non', en: 'No' },
+  freePlan: { fr: 'Gratuite', en: 'Free' },
+  proPlan: { fr: 'Pro', en: 'Pro' },
   guest: { fr: 'Invité', en: 'Guest' },
   signedInAccount: { fr: 'Compte connecté', en: 'Signed-in account' },
-  noData: { fr: 'Aucune donnée disponible.', en: 'No data available.' },
+  noData: { fr: 'Aucune information disponible.', en: 'No information available.' },
   accountSections: { fr: 'Sections du compte', en: 'Account sections' },
-  overviewDetails: { fr: 'Détails de la vue d’ensemble', en: 'Overview details' },
-  rawResponse: { fr: 'Réponse brute', en: 'Raw response' },
-  deleteConfirmationRequired: { fr: 'Saisissez SUPPRIMER pour confirmer.', en: 'Type DELETE to confirm.' },
-  unsubscribeTokenRequired: {
-    fr: 'Saisissez le jeton de désinscription.',
-    en: 'Enter the unsubscribe token.',
-  },
-  userSpace: { fr: 'Espace utilisateur', en: 'User space' },
-  myAccount: { fr: 'Mon compte', en: 'My account' },
   accountIntro: {
-    fr: 'Suivez votre quota, consultez votre consommation et gérez vos données personnelles.',
-    en: 'Track your quota, review your usage and manage your personal data.',
+    fr: 'Retrouvez votre offre, votre consommation et vos préférences au même endroit.',
+    en: 'Find your plan, usage and preferences in one place.',
   },
-  currentAccount: { fr: 'Compte courant', en: 'Current account' },
+  myAccount: { fr: 'Mon compte', en: 'My account' },
+  currentAccount: { fr: 'Compte actuel', en: 'Current account' },
   loading: { fr: 'Chargement…', en: 'Loading…' },
   signedIn: { fr: 'Connecté', en: 'Signed in' },
   editProfile: { fr: 'Modifier mon profil', en: 'Edit my profile' },
   signIn: { fr: 'Se connecter', en: 'Sign in' },
-  navigation: { fr: 'Navigation', en: 'Navigation' },
-  detailsTitle: { fr: 'Détails du compte', en: 'Account details' },
-  detailsDescription: {
-    fr: 'Choisissez une section pour afficher les données correspondantes.',
-    en: 'Choose a section to display the corresponding data.',
-  },
   refresh: { fr: 'Actualiser', en: 'Refresh' },
-  identity: { fr: 'Identité', en: 'Identity' },
-  availableTools: { fr: 'Outils disponibles', en: 'Available tools' },
+  activityTitle: { fr: 'Votre activité', en: 'Your activity' },
+  activityDescription: {
+    fr: 'Ce que vous pouvez encore faire aujourd’hui.',
+    en: 'What you can still do today.',
+  },
+  planDetails: { fr: 'Votre offre', en: 'Your plan' },
+  usageDetails: { fr: 'Vos possibilités du jour', en: 'What you can do today' },
+  limitsDetails: { fr: 'Vos limites', en: 'Your limits' },
+  aiDetails: { fr: 'Vos améliorations IA', en: 'Your AI improvements' },
+  toolsDetails: { fr: 'Vos outils disponibles', en: 'Your available tools' },
+  statPlan: { fr: 'Formule', en: 'Plan' },
+  statCredits: { fr: 'Crédits', en: 'Credits' },
+  statTrials: { fr: 'Essais gratuits', en: 'Free trials' },
+  statTools: { fr: 'Outils activés', en: 'Enabled tools' },
+  currentOffer: { fr: 'Offre en cours', en: 'Current offer' },
+  availableBalance: { fr: 'Solde disponible', en: 'Available balance' },
+  trialsLeft: { fr: 'Restants aujourd’hui', en: 'Left today' },
+  catalogueAccess: { fr: 'Accès disponibles', en: 'Available access' },
   exportTitle: { fr: 'Exporter mes données', en: 'Export my data' },
-  exportDescription: { fr: 'Récupère l’export RGPD prévu par l’API.', en: 'Retrieves the GDPR export provided by the API.' },
-  requestExport: { fr: 'Demander l’export', en: 'Request export' },
+  exportDescription: {
+    fr: 'Téléchargez une copie des informations associées à votre compte.',
+    en: 'Download a copy of the information linked to your account.',
+  },
+  requestExport: { fr: 'Préparer l’export', en: 'Prepare export' },
+  exportReady: { fr: 'Votre export est prêt.', en: 'Your export is ready.' },
+  downloadExport: { fr: 'Télécharger mes données', en: 'Download my data' },
   deleteTitle: { fr: 'Supprimer mes données', en: 'Delete my data' },
   deleteDescription: {
-    fr: 'Action irréversible. La suppression du compte est optionnelle.',
-    en: 'Irreversible action. Deleting the account is optional.',
+    fr: 'Cette action est irréversible. La suppression du compte est facultative.',
+    en: 'This action cannot be undone. Deleting the account is optional.',
   },
-  deleteAccountToo: { fr: 'Supprimer également le compte.', en: 'Delete the account as well.' },
+  deleteAccountToo: { fr: 'Supprimer également mon compte.', en: 'Delete my account as well.' },
   confirmDelete: { fr: 'Confirmer la suppression', en: 'Confirm deletion' },
-  dataDeleted: { fr: 'Données supprimées.', en: 'Data deleted.' },
-  unsubscribeTitle: { fr: 'Désinscription marketing', en: 'Marketing unsubscribe' },
+  dataDeleted: { fr: 'Vos données ont été supprimées.', en: 'Your data has been deleted.' },
+  unsubscribeTitle: { fr: 'Ne plus recevoir d’actualités', en: 'Stop receiving news' },
   unsubscribeDescription: {
-    fr: 'Utilisez le jeton reçu dans l’email de communication.',
-    en: 'Use the token received in the marketing email.',
+    fr: 'Collez le code reçu dans l’email pour vous désinscrire.',
+    en: 'Paste the code from the email to unsubscribe.',
   },
-  unsubscribeToken: { fr: 'Jeton de désinscription', en: 'Unsubscribe token' },
-  pasteToken: { fr: 'Collez votre jeton', en: 'Paste your token' },
+  unsubscribeCode: { fr: 'Code reçu par email', en: 'Code received by email' },
+  pasteCode: { fr: 'Collez votre code ici', en: 'Paste your code here' },
   unsubscribe: { fr: 'Se désinscrire', en: 'Unsubscribe' },
-  unsubscribed: { fr: 'Désinscription effectuée.', en: 'Unsubscribed successfully.' },
-  planStat: { fr: 'Formule', en: 'Plan' },
-  creditsStat: { fr: 'Crédits', en: 'Credits' },
-  trialsStat: { fr: 'Essais restants', en: 'Trials remaining' },
-  toolsStat: { fr: 'Outils activés', en: 'Enabled tools' },
-  currentOffer: { fr: 'Offre actuelle', en: 'Current offer' },
-  availableBalance: { fr: 'Solde disponible', en: 'Available balance' },
-  freeQuota: { fr: 'Quota gratuit', en: 'Free quota' },
-  catalogueAccess: { fr: 'Accès catalogue', en: 'Catalogue access' },
+  unsubscribed: { fr: 'Vous n’êtes plus inscrit aux actualités.', en: 'You are no longer subscribed to news.' },
+  usageError: {
+    fr: 'Impossible d’actualiser votre activité pour le moment.',
+    en: 'Unable to refresh your activity right now.',
+  },
+  actionError: {
+    fr: 'Une erreur est survenue. Réessayez dans quelques instants.',
+    en: 'Something went wrong. Please try again shortly.',
+  },
 }
+
+const CARD_CLASS = 'rounded-3xl bg-surface-muted/40 p-6 ring-1 ring-line/50 sm:p-8'
 
 function formatValue(key, value, locale, t) {
   if (typeof value === 'boolean') {
     return t(value ? TEXT.yes : TEXT.no)
+  }
+  if (key === 'plan') {
+    if (value === 'free') {
+      return t(TEXT.freePlan)
+    }
+    if (value === 'pro') {
+      return t(TEXT.proPlan)
+    }
   }
   if (key === 'resets_at' && typeof value === 'string' && !Number.isNaN(Date.parse(value))) {
     const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-US'
@@ -184,19 +212,31 @@ function initials(value) {
     .join('') || 'NF'
 }
 
+function downloadJson(value, filename) {
+  const blob = new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
 function ValueList({ rows }) {
   const { t } = useLocale()
 
   if (!rows.length) {
-    return <p className="mt-5 text-sm text-slate-600">{t(TEXT.noData)}</p>
+    return <p className="mt-4 text-sm text-ink-muted">{t(TEXT.noData)}</p>
   }
 
   return (
-    <dl className="mt-5 grid gap-3 sm:grid-cols-2">
+    <dl className="mt-4 grid gap-3 sm:grid-cols-2">
       {rows.map((row) => (
-        <div key={row.key} className="rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3">
-          <dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{row.label}</dt>
-          <dd className="mt-1 break-words text-sm font-medium text-slate-900">{row.value}</dd>
+        <div key={row.key} className="rounded-2xl bg-surface px-4 py-3 ring-1 ring-line/50">
+          <dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-faint">{row.label}</dt>
+          <dd className="mt-1 break-words text-sm font-medium text-ink">{row.value}</dd>
         </div>
       ))}
     </dl>
@@ -205,10 +245,10 @@ function ValueList({ rows }) {
 
 function StatCard({ label, value, hint }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
-      <p className="mt-2 truncate text-2xl font-semibold tracking-tight text-slate-950">{value}</p>
-      <p className="mt-1 text-xs text-slate-500">{hint}</p>
+    <div className="rounded-2xl bg-surface p-5 ring-1 ring-line/50">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-faint">{label}</p>
+      <p className="mt-2 truncate text-2xl font-semibold tracking-tight text-ink">{value}</p>
+      <p className="mt-1 text-xs text-ink-muted">{hint}</p>
     </div>
   )
 }
@@ -217,16 +257,20 @@ function SectionCard({ title, description, action, children, tone = 'default' })
   const danger = tone === 'danger'
 
   return (
-    <div className={`rounded-2xl border p-6 shadow-sm ${danger ? 'border-red-200 bg-red-50/70' : 'border-slate-200 bg-white'}`}>
+    <section className={`${CARD_CLASS} ${danger ? 'bg-red-50/60 ring-red-200 dark:bg-red-950/20' : ''}`}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className={`text-lg font-semibold tracking-tight ${danger ? 'text-red-900' : 'text-slate-950'}`}>{title}</h2>
-          {description && <p className={`mt-1 text-sm ${danger ? 'text-red-700' : 'text-slate-600'}`}>{description}</p>}
+          <h2 className={`text-lg font-semibold ${danger ? 'text-red-900 dark:text-red-200' : 'text-ink'}`}>{title}</h2>
+          {description && (
+            <p className={`mt-1 text-sm leading-relaxed ${danger ? 'text-red-800 dark:text-red-300' : 'text-ink-muted'}`}>
+              {description}
+            </p>
+          )}
         </div>
         {action}
       </div>
       {children}
-    </div>
+    </section>
   )
 }
 
@@ -237,8 +281,7 @@ function AccountTabs({ active, onChange }) {
     <div
       role="tablist"
       aria-label={t(TEXT.accountSections)}
-      aria-orientation="vertical"
-      className="space-y-2 lg:sticky lg:top-24"
+      className="grid gap-2 sm:grid-cols-3"
     >
       {TABS.map((tab) => {
         const isActive = tab.id === active
@@ -252,16 +295,14 @@ function AccountTabs({ active, onChange }) {
             aria-selected={isActive}
             aria-controls={`panel-${tab.id}`}
             onClick={() => onChange(tab.id)}
-            className={`w-full rounded-xl border px-4 py-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 ${
-              isActive
-                ? 'border-sky-200 bg-sky-50 shadow-sm'
-                : 'border-transparent bg-white hover:border-slate-200 hover:bg-slate-50'
+            className={`rounded-2xl px-4 py-4 text-left ring-1 transition focus:outline-none focus:ring-2 focus:ring-brand/40 ${
+              isActive ? 'bg-surface ring-brand/40' : 'bg-surface-muted/40 ring-line/50 hover:text-brand'
             }`}
           >
-            <span className={`block text-sm font-semibold ${isActive ? 'text-sky-800' : 'text-slate-800'}`}>
+            <span className={`block text-sm font-semibold ${isActive ? 'text-brand' : 'text-ink'}`}>
               {t(tab.label)}
             </span>
-            <span className="mt-1 block text-xs text-slate-500">{t(tab.description)}</span>
+            <span className="mt-1 block text-xs leading-relaxed text-ink-muted">{t(tab.description)}</span>
           </button>
         )
       })}
@@ -269,52 +310,16 @@ function AccountTabs({ active, onChange }) {
   )
 }
 
-function OverviewTabs({ active, onChange }) {
-  const { t } = useLocale()
-
+function DetailGroup({ title, rows }) {
   return (
-    <div
-      role="tablist"
-      aria-label={t(TEXT.overviewDetails)}
-      className="mt-5 flex flex-wrap gap-2 border-b border-slate-200 pb-3"
-    >
-      {OVERVIEW_TABS.map((tab) => {
-        const isActive = tab.id === active
-
-        return (
-          <button
-            key={tab.id}
-            id={`overview-tab-${tab.id}`}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            aria-controls={`overview-panel-${tab.id}`}
-            onClick={() => onChange(tab.id)}
-            className={`rounded-lg px-3 py-2 text-xs font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 ${
-              isActive ? 'bg-sky-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            {t(tab.label)}
-          </button>
-        )
-      })}
+    <div>
+      <h3 className="text-sm font-semibold text-ink">{title}</h3>
+      <ValueList rows={rows} />
     </div>
   )
 }
 
-// Affiche une réponse API non typée sous forme JSON, sans interprétation hasardeuse.
-function JsonBlock({ value }) {
-  const { t } = useLocale()
-
-  return (
-    <div className="mt-5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{t(TEXT.rawResponse)}</p>
-      <pre className="mt-2 overflow-x-auto rounded-xl bg-slate-950 p-4 text-xs leading-relaxed text-slate-300">{JSON.stringify(value, null, 2)}</pre>
-    </div>
-  )
-}
-
-// Page compte : quota courant, consommation détaillée et actions RGPD documentées.
+// Page compte : offre, consommation et actions personnelles, présentées sans vocabulaire technique.
 export default function AccountPage() {
   const { locale, t } = useLocale()
   const [searchParams] = useSearchParams()
@@ -323,7 +328,6 @@ export default function AccountPage() {
   const { getUsage } = usage
   const actions = useMeActions({ onSuccess: reload })
   const [activeTab, setActiveTab] = useState('overview')
-  const [overviewTab, setOverviewTab] = useState('quota')
   const [token, setToken] = useState(searchParams.get('token') ?? '')
   const [deleteConfirmation, setDeleteConfirmation] = useState('')
   const [includeAccount, setIncludeAccount] = useState(false)
@@ -388,232 +392,241 @@ export default function AccountPage() {
   const toolsLabel = enabledTools !== null ? `${enabledTools} / ${enabledToolsTotal}` : '—'
 
   const stats = [
-    { key: 'plan', label: t(TEXT.planStat), value: rowValue(rows, 'plan'), hint: t(TEXT.currentOffer) },
-    { key: 'credits', label: t(TEXT.creditsStat), value: rowValue(rows, 'credits'), hint: t(TEXT.availableBalance) },
-    { key: 'trials', label: t(TEXT.trialsStat), value: rowValue(rows, 'free_uses_left'), hint: t(TEXT.freeQuota) },
-    { key: 'tools', label: t(TEXT.toolsStat), value: toolsLabel, hint: t(TEXT.catalogueAccess) },
+    { key: 'plan', label: t(TEXT.statPlan), value: rowValue(rows, 'plan'), hint: t(TEXT.currentOffer) },
+    { key: 'credits', label: t(TEXT.statCredits), value: rowValue(rows, 'credits'), hint: t(TEXT.availableBalance) },
+    { key: 'trials', label: t(TEXT.statTrials), value: rowValue(rows, 'free_uses_left'), hint: t(TEXT.trialsLeft) },
+    { key: 'tools', label: t(TEXT.statTools), value: toolsLabel, hint: t(TEXT.catalogueAccess) },
   ]
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-12">
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div aria-hidden="true" className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-sky-400/20 blur-3xl" />
-        <div className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 px-8 py-10 text-white">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-300">{t(TEXT.userSpace)}</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight">{t(TEXT.myAccount)}</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300">
-            {t(TEXT.accountIntro)}
-          </p>
-
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-5 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
-            <div className="flex min-w-0 items-center gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-400/20 text-sm font-semibold text-sky-200">
-                {meLoading ? '…' : initials(identity)}
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{t(TEXT.currentAccount)}</p>
-                <p className="mt-1 truncate text-base font-semibold">{meLoading ? t(TEXT.loading) : identity}</p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                isGuest ? 'bg-amber-400/15 text-amber-200' : 'bg-emerald-400/15 text-emerald-200'
-              }`}>
-                {t(isGuest ? TEXT.guest : TEXT.signedIn)}
-              </span>
-              {!meLoading && !isGuest && (
-                <Link
-                  to="/profile"
-                  className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-                >
-                  {t(TEXT.editProfile)}
-                </Link>
-              )}
-              {!meLoading && isGuest && (
-                <Link
-                  to="/login"
-                  className="rounded-lg bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-300"
-                >
-                  {t(TEXT.signIn)}
-                </Link>
-              )}
-            </div>
-          </div>
+    <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="max-w-2xl">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">{t(TEXT.userSpace)}</p>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-ink sm:text-4xl">{t(TEXT.myAccount)}</h1>
+          <p className="mt-4 text-base leading-relaxed text-ink-muted">{t(TEXT.accountIntro)}</p>
         </div>
+        {!meLoading && !isGuest && (
+          <Link
+            to="/profile"
+            className="self-start rounded-xl bg-surface-muted/60 px-5 py-3 text-sm font-semibold text-ink ring-1 ring-line/50 transition hover:text-brand"
+          >
+            {t(TEXT.editProfile)}
+          </Link>
+        )}
+        {!meLoading && isGuest && (
+          <Link
+            to="/login"
+            className="self-start rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-soft"
+          >
+            {t(TEXT.signIn)}
+          </Link>
+        )}
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
-        <aside>
-          <p className="mb-3 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{t(TEXT.navigation)}</p>
-          <AccountTabs active={activeTab} onChange={setActiveTab} />
-        </aside>
+      <div className="mt-8 flex flex-col gap-4 rounded-3xl bg-surface-muted/40 p-5 ring-1 ring-line/50 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-sm font-semibold text-brand">
+            {meLoading ? '…' : initials(identity)}
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-faint">{t(TEXT.currentAccount)}</p>
+            <p className="mt-1 truncate text-base font-semibold text-ink">
+              {meLoading ? t(TEXT.loading) : identity}
+            </p>
+          </div>
+        </div>
+        <span className={`self-start rounded-full px-3 py-1 text-xs font-medium ring-1 sm:self-auto ${
+          isGuest
+            ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:ring-amber-900'
+            : 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:ring-emerald-900'
+        }`}>
+          {t(isGuest ? TEXT.guest : TEXT.signedIn)}
+        </span>
+      </div>
 
-        <div className="min-w-0">
-          <div
-            id="panel-overview"
-            role="tabpanel"
-            aria-labelledby="tab-overview"
-            hidden={activeTab !== 'overview'}
-            className={activeTab === 'overview' ? 'space-y-6' : undefined}
+      <div className="mt-8">
+        <AccountTabs active={activeTab} onChange={setActiveTab} />
+      </div>
+
+      <div className="mt-6">
+        <div
+          id="panel-overview"
+          role="tabpanel"
+          aria-labelledby="tab-overview"
+          hidden={activeTab !== 'overview'}
+          className={activeTab === 'overview' ? 'space-y-6' : undefined}
+        >
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {stats.map((stat) => <StatCard key={stat.key} {...stat} />)}
+          </div>
+
+          <SectionCard
+            title={t(TEXT.activityTitle)}
+            description={t(TEXT.activityDescription)}
+            action={(
+              <button
+                type="button"
+                onClick={getUsage}
+                disabled={usage.loading}
+                className="rounded-xl bg-surface px-4 py-2.5 text-sm font-semibold text-ink ring-1 ring-line/60 transition hover:text-brand disabled:opacity-50"
+              >
+                {t(usage.loading ? TEXT.loading : TEXT.refresh)}
+              </button>
+            )}
           >
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {stats.map((stat) => <StatCard key={stat.key} {...stat} />)}
+            {usage.error && (
+              <p role="alert" className="mt-5 rounded-xl bg-red-50/80 px-4 py-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
+                {t(TEXT.usageError)}
+              </p>
+            )}
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              <DetailGroup title={t(TEXT.planDetails)} rows={rows} />
+              <DetailGroup
+                title={t(TEXT.usageDetails)}
+                rows={usageData ? [
+                  { key: 'identity', label: t(TEXT.currentAccount), value: usageIdentity(usageData, t) },
+                  ...usageRows,
+                ] : []}
+              />
             </div>
 
-            <SectionCard
-              title={t(TEXT.detailsTitle)}
-              description={t(TEXT.detailsDescription)}
-              action={(
-                <button
-                  type="button"
-                  onClick={getUsage}
-                  disabled={usage.loading}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-                >
-                  {t(usage.loading ? TEXT.loading : TEXT.refresh)}
-                </button>
-              )}
-            >
-              {usage.error && (
-                <p role="alert" className="mt-5 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                  {usage.error.message}
-                </p>
-              )}
-
-              <OverviewTabs active={overviewTab} onChange={setOverviewTab} />
-
-              <div id="overview-panel-quota" role="tabpanel" aria-labelledby="overview-tab-quota" hidden={overviewTab !== 'quota'}>
-                <ValueList rows={rows} />
-              </div>
-
-              <div id="overview-panel-access" role="tabpanel" aria-labelledby="overview-tab-access" hidden={overviewTab !== 'access'}>
-                <ValueList rows={usageData ? [{ key: 'identity', label: t(TEXT.identity), value: usageIdentity(usageData, t) }, ...usageRows] : []} />
-              </div>
-
-              <div id="overview-panel-limits" role="tabpanel" aria-labelledby="overview-tab-limits" hidden={overviewTab !== 'limits'}>
+            <div className="mt-6 space-y-2 border-t border-line/60 pt-5">
+              <details className="rounded-2xl bg-surface px-4 py-3 ring-1 ring-line/50">
+                <summary className="cursor-pointer text-sm font-semibold text-ink">{t(TEXT.limitsDetails)}</summary>
                 <ValueList rows={limitRows} />
-              </div>
-
-              <div id="overview-panel-ai" role="tabpanel" aria-labelledby="overview-tab-ai" hidden={overviewTab !== 'ai'}>
+              </details>
+              <details className="rounded-2xl bg-surface px-4 py-3 ring-1 ring-line/50">
+                <summary className="cursor-pointer text-sm font-semibold text-ink">{t(TEXT.aiDetails)}</summary>
                 <ValueList rows={aiRows} />
-              </div>
-
-              <div id="overview-panel-tools" role="tabpanel" aria-labelledby="overview-tab-tools" hidden={overviewTab !== 'tools'}>
-                <ValueList rows={enabledTools !== null ? [{ key: 'enabled', label: t(TEXT.availableTools), value: toolsLabel }] : []} />
-              </div>
-            </SectionCard>
-          </div>
-
-          <div
-            id="panel-data"
-            role="tabpanel"
-            aria-labelledby="tab-data"
-            hidden={activeTab !== 'data'}
-            className={activeTab === 'data' ? 'space-y-6' : undefined}
-          >
-            <SectionCard
-              title={t(TEXT.exportTitle)}
-              description={t(TEXT.exportDescription)}
-              action={(
-                <button
-                  type="button"
-                  onClick={handleExport}
-                  disabled={actions.loading}
-                  className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:opacity-50"
-                >
-                  {t(TEXT.requestExport)}
-                </button>
-              )}
-            >
-              {actions.exportedData && <JsonBlock value={actions.exportedData} />}
-              {actions.data && !actions.exportedData && <JsonBlock value={actions.data} />}
-            </SectionCard>
-
-            <SectionCard
-              title={t(TEXT.deleteTitle)}
-              description={t(TEXT.deleteDescription)}
-              tone="danger"
-            >
-              <div className="mt-5 space-y-4">
-                <label className="flex items-start gap-3 text-sm text-red-800">
-                  <input
-                    type="checkbox"
-                    checked={includeAccount}
-                    onChange={(event) => setIncludeAccount(event.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-red-300 bg-white"
-                  />
-                  <span>{t(TEXT.deleteAccountToo)}</span>
-                </label>
-                <input
-                  type="text"
-                  value={deleteConfirmation}
-                  onChange={(event) => setDeleteConfirmation(event.target.value)}
-                  placeholder={locale === 'fr' ? 'Saisir SUPPRIMER' : 'Type DELETE'}
-                  className="w-full rounded-lg border border-red-300 bg-white p-3 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500"
-                />
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={actions.loading}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
-                >
-                  {t(TEXT.confirmDelete)}
-                </button>
-              </div>
-              {actions.deleted && (
-                <p role="status" className="mt-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
-                  {t(TEXT.dataDeleted)}
-                </p>
-              )}
-            </SectionCard>
-          </div>
-
-          <div
-            id="panel-communication"
-            role="tabpanel"
-            aria-labelledby="tab-communication"
-            hidden={activeTab !== 'communication'}
-          >
-            <SectionCard
-              title={t(TEXT.unsubscribeTitle)}
-              description={t(TEXT.unsubscribeDescription)}
-            >
-              <div className="mt-5 max-w-xl space-y-4">
-                <label htmlFor="unsubscribe-token" className="block text-sm font-medium text-slate-700">
-                  {t(TEXT.unsubscribeToken)}
-                </label>
-                <input
-                  id="unsubscribe-token"
-                  type="text"
-                  value={token}
-                  onChange={(event) => setToken(event.target.value)}
-                  placeholder={t(TEXT.pasteToken)}
-                  className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
-                />
-                <button
-                  type="button"
-                  onClick={handleUnsubscribe}
-                  disabled={actions.loading}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-                >
-                  {t(TEXT.unsubscribe)}
-                </button>
-              </div>
-              {actions.unsubscribed && (
-                <p role="status" className="mt-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
-                  {t(TEXT.unsubscribed)}
-                </p>
-              )}
-            </SectionCard>
-          </div>
-
-          {(localError || actions.error) && (
-            <p role="alert" className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-              {localError ?? actions.error.message}
-            </p>
-          )}
+              </details>
+              <details className="rounded-2xl bg-surface px-4 py-3 ring-1 ring-line/50">
+                <summary className="cursor-pointer text-sm font-semibold text-ink">{t(TEXT.toolsDetails)}</summary>
+                <ValueList rows={enabledTools !== null ? [{ key: 'enabled', label: t(TEXT.statTools), value: toolsLabel }] : []} />
+              </details>
+            </div>
+          </SectionCard>
         </div>
+
+        <div
+          id="panel-data"
+          role="tabpanel"
+          aria-labelledby="tab-data"
+          hidden={activeTab !== 'data'}
+          className={activeTab === 'data' ? 'space-y-6' : undefined}
+        >
+          <SectionCard
+            title={t(TEXT.exportTitle)}
+            description={t(TEXT.exportDescription)}
+            action={(
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={actions.loading}
+                className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-soft disabled:opacity-50"
+              >
+                {t(TEXT.requestExport)}
+              </button>
+            )}
+          >
+            {actions.exportedData && (
+              <div className="mt-5 flex flex-col gap-3 rounded-2xl bg-surface px-4 py-4 ring-1 ring-line/50 sm:flex-row sm:items-center sm:justify-between">
+                <p role="status" className="text-sm font-medium text-ink">{t(TEXT.exportReady)}</p>
+                <button
+                  type="button"
+                  onClick={() => downloadJson(actions.exportedData, 'nanofile-export.json')}
+                  className="self-start rounded-xl bg-surface-muted px-4 py-2.5 text-sm font-semibold text-ink ring-1 ring-line/60 transition hover:text-brand sm:self-auto"
+                >
+                  {t(TEXT.downloadExport)}
+                </button>
+              </div>
+            )}
+          </SectionCard>
+
+          <SectionCard
+            title={t(TEXT.deleteTitle)}
+            description={t(TEXT.deleteDescription)}
+            tone="danger"
+          >
+            <div className="mt-5 space-y-4">
+              <label className="flex items-start gap-3 text-sm text-red-800 dark:text-red-200">
+                <input
+                  type="checkbox"
+                  checked={includeAccount}
+                  onChange={(event) => setIncludeAccount(event.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-red-300 bg-white"
+                />
+                <span>{t(TEXT.deleteAccountToo)}</span>
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmation}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                placeholder={locale === 'fr' ? 'Saisir SUPPRIMER' : 'Type DELETE'}
+                className="w-full rounded-xl bg-white p-3 text-sm text-slate-900 ring-1 ring-red-300 focus:outline-none focus:ring-2 focus:ring-red-500/40"
+              />
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={actions.loading}
+                className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+              >
+                {t(TEXT.confirmDelete)}
+              </button>
+            </div>
+            {actions.deleted && (
+              <p role="status" className="mt-5 rounded-xl bg-emerald-50/80 px-4 py-3 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+                {t(TEXT.dataDeleted)}
+              </p>
+            )}
+          </SectionCard>
+        </div>
+
+        <div
+          id="panel-communication"
+          role="tabpanel"
+          aria-labelledby="tab-communication"
+          hidden={activeTab !== 'communication'}
+        >
+          <SectionCard
+            title={t(TEXT.unsubscribeTitle)}
+            description={t(TEXT.unsubscribeDescription)}
+          >
+            <div className="mt-5 max-w-xl space-y-4">
+              <label htmlFor="unsubscribe-code" className="block text-sm font-medium text-ink-muted">
+                {t(TEXT.unsubscribeCode)}
+              </label>
+              <input
+                id="unsubscribe-code"
+                type="text"
+                value={token}
+                onChange={(event) => setToken(event.target.value)}
+                placeholder={t(TEXT.pasteCode)}
+                className="mt-2 w-full rounded-xl bg-surface px-4 py-3 text-sm text-ink ring-1 ring-line/60 transition focus:outline-none focus:ring-2 focus:ring-brand/40"
+              />
+              <button
+                type="button"
+                onClick={handleUnsubscribe}
+                disabled={actions.loading}
+                className="rounded-xl bg-surface px-4 py-2.5 text-sm font-semibold text-ink ring-1 ring-line/60 transition hover:text-brand disabled:opacity-50"
+              >
+                {t(TEXT.unsubscribe)}
+              </button>
+            </div>
+            {actions.unsubscribed && (
+              <p role="status" className="mt-5 rounded-xl bg-emerald-50/80 px-4 py-3 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+                {t(TEXT.unsubscribed)}
+              </p>
+            )}
+          </SectionCard>
+        </div>
+
+        {(localError || actions.error) && (
+          <p role="alert" className="mt-6 rounded-xl bg-red-50/80 px-4 py-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
+            {t(TEXT.actionError)}
+          </p>
+        )}
       </div>
     </section>
   )

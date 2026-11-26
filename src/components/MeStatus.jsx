@@ -2,61 +2,78 @@ import { useLocale } from '@/hooks/useLocale.js'
 import { useMeContext } from '@/hooks/useMeContext.js'
 
 const TEXT = {
-  loading: { fr: 'Chargement du statut…', en: 'Loading status…' },
-  loadError: { fr: 'Impossible de charger le statut.', en: 'Unable to load status.' },
-  reload: { fr: 'Recharger le statut du compte', en: 'Reload account status' },
+  loading: { fr: 'Préparation de votre espace…', en: 'Preparing your space…' },
+  loadError: { fr: 'Impossible d’afficher votre compte.', en: 'Unable to display your account.' },
   retry: { fr: 'Réessayer', en: 'Try again' },
-  signedInAccount: { fr: 'Compte connecté', en: 'Signed-in account' },
-  accountStatus: { fr: 'Statut du compte', en: 'Account status' },
-  guest: { fr: 'Invité', en: 'Guest' },
-  signedIn: { fr: 'Connecté', en: 'Signed in' },
-  guestMessage: { fr: 'Vous utilisez NanoFile sans compte.', en: 'You are using NanoFile without an account.' },
-  quotaUsed: { fr: 'Quota utilisé', en: 'Quota used' },
-  plan: { fr: 'Formule', en: 'Plan' },
-  credits: { fr: 'Crédits', en: 'Credits' },
-  freeTrials: { fr: 'Essais gratuits', en: 'Free trials' },
-  freeTrialsRemaining: { fr: 'Essais gratuits restants', en: 'Free trials remaining' },
-  dailyJobs: { fr: 'Jobs du jour', en: "Today's jobs" },
-  dailyRenders: { fr: 'Rendus du jour', en: "Today's renders" },
-  dailyAi: { fr: 'IA du jour', en: "Today's AI uses" },
+  accountTitle: { fr: 'Votre compte', en: 'Your account' },
+  guestPill: { fr: 'Sans compte', en: 'No account' },
+  signedInPill: { fr: 'Connecté', en: 'Signed in' },
+  guestMessage: {
+    fr: 'Vous utilisez NanoFile sans créer de compte.',
+    en: 'You are using NanoFile without an account.',
+  },
+  planTitle: { fr: 'Votre formule', en: 'Your plan' },
+  freePlan: { fr: 'Gratuite', en: 'Free' },
+  proPlan: { fr: 'Pro', en: 'Pro' },
+  unknownPlan: { fr: 'Non définie', en: 'Not set' },
+  creditsTitle: { fr: 'Crédits disponibles', en: 'Available credits' },
+  dailyTitle: { fr: 'Vos possibilités aujourd’hui', en: 'What you can do today' },
+  trialsLabel: { fr: 'Essais gratuits', en: 'Free trials' },
+  processingLabel: { fr: 'Traitements de fichiers', en: 'File processing' },
+  documentsLabel: { fr: 'Documents générés', en: 'Generated documents' },
+  assistantLabel: { fr: 'Améliorations IA', en: 'AI improvements' },
+  quotaUsed: { fr: 'Utilisation du jour', en: 'Today’s usage' },
+  trialsRemaining: { fr: 'Essais gratuits restants', en: 'Free trials remaining' },
+  remaining: { fr: 'restants', en: 'remaining' },
 }
 
-// Affiche une paire libellé/valeur pour les compteurs documentés du quota.
+const CARD_CLASS = 'h-full rounded-3xl bg-surface-muted/40 p-6 ring-1 ring-line/50 sm:p-8'
+const BUTTON_CLASS =
+  'rounded-xl bg-surface px-4 py-2.5 text-sm font-semibold text-ink ring-1 ring-line/60 transition hover:text-brand'
+
+function planLabel(plan, t) {
+  if (plan === 'free') {
+    return t(TEXT.freePlan)
+  }
+  if (plan === 'pro') {
+    return t(TEXT.proPlan)
+  }
+  if (plan === null || plan === undefined || plan === '') {
+    return t(TEXT.unknownPlan)
+  }
+  return String(plan)
+}
+
 function Stat({ label, value }) {
   const { t } = useLocale()
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-      <dt className="text-xs uppercase tracking-wide text-slate-500">{t(label)}</dt>
-      <dd className="mt-1 text-sm font-medium text-slate-900">{value ?? '—'}</dd>
+    <div className="rounded-2xl bg-surface px-4 py-4 ring-1 ring-line/50">
+      <dt className="text-xs font-medium uppercase tracking-wide text-ink-faint">{t(label)}</dt>
+      <dd className="mt-2 text-lg font-semibold text-ink">{value ?? '—'}</dd>
     </div>
   )
 }
 
-// Composant principal : statut utilisateur et quota, avec états de chargement et d'erreur.
+// Composant principal : statut du compte et possibilités restantes, avec états de chargement et d'erreur.
 export default function MeStatus() {
-  const { locale, t } = useLocale()
+  const { t } = useLocale()
   const { user, quota, loading, error, isGuest, reload } = useMeContext()
 
   if (loading) {
     return (
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-slate-600">{t(TEXT.loading)}</p>
+      <section className={CARD_CLASS} role="status">
+        <p className="text-sm text-ink-muted">{t(TEXT.loading)}</p>
       </section>
     )
   }
 
   if (error) {
     return (
-      <section className="rounded-2xl border border-red-200 bg-red-50 p-6 shadow-sm">
-        <p className="font-medium text-red-700">{t(TEXT.loadError)}</p>
-        <p className="mt-1 text-sm text-red-700">{error.message}</p>
-        <button
-          type="button"
-          onClick={reload}
-          aria-label={t(TEXT.reload)}
-          className="mt-4 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-        >
+      <section className={CARD_CLASS} role="alert">
+        <h2 className="text-xl font-semibold text-ink">{t(TEXT.loadError)}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-ink-muted">{t(TEXT.retry)}</p>
+        <button type="button" onClick={reload} className={`${BUTTON_CLASS} mt-6`}>
           {t(TEXT.retry)}
         </button>
       </section>
@@ -66,7 +83,7 @@ export default function MeStatus() {
   const displayName =
     [user?.first_name, user?.last_name].filter(Boolean).join(' ') ||
     user?.email ||
-    t(TEXT.signedInAccount)
+    t(TEXT.accountTitle)
   const limit = quota?.limit
   const used = quota?.used
   const remaining = quota?.remaining
@@ -82,77 +99,74 @@ export default function MeStatus() {
         : 0
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <header className="flex items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold text-slate-900">{t(TEXT.accountStatus)}</h2>
+    <section className={CARD_CLASS}>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-ink">{t(TEXT.accountTitle)}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+            {isGuest ? t(TEXT.guestMessage) : displayName}
+          </p>
+        </div>
         <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ${
+          className={`self-start rounded-full px-3 py-1 text-xs font-medium ring-1 ${
             isGuest
-              ? 'bg-amber-50 text-amber-700 ring-amber-200'
-              : 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+              ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:ring-amber-900'
+              : 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:ring-emerald-900'
           }`}
         >
-          {t(isGuest ? TEXT.guest : TEXT.signedIn)}
+          {t(isGuest ? TEXT.guestPill : TEXT.signedInPill)}
         </span>
       </header>
 
-      <p className="mt-2 text-sm text-slate-600">
-        {isGuest ? t(TEXT.guestMessage) : displayName}
-      </p>
-
-      {freeTrialsLeft !== null ? (
-        <div className="mt-5">
-          <div className="flex items-center justify-between text-sm text-slate-600">
-            <span>{t(TEXT.freeTrialsRemaining)}</span>
-            <span>
-              {freeTrialsLeft}
-              {typeof limit === 'number' ? ` / ${limit}` : ''}
+      {freeTrialsLeft !== null || hasGuestQuota ? (
+        <div className="mt-7 border-t border-line/60 pt-6">
+          <div className="flex items-center justify-between gap-4 text-sm text-ink-muted">
+            <span>{t(freeTrialsLeft !== null ? TEXT.trialsRemaining : TEXT.quotaUsed)}</span>
+            <span className="font-semibold text-ink">
+              {freeTrialsLeft !== null
+                ? `${freeTrialsLeft}${typeof limit === 'number' ? ` / ${limit}` : ''}`
+                : `${used} / ${limit}`}
             </span>
           </div>
           <div
-            className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200"
+            className="mt-3 h-2 w-full overflow-hidden rounded-full bg-surface-strong"
             role="progressbar"
-            aria-label={t(TEXT.freeTrialsRemaining)}
+            aria-label={t(freeTrialsLeft !== null ? TEXT.trialsRemaining : TEXT.quotaUsed)}
             aria-valuenow={percent}
             aria-valuemin={0}
             aria-valuemax={100}
           >
-            <div className="h-full rounded-full bg-sky-500" style={{ width: `${percent}%` }} />
+            <div className="h-full rounded-full bg-brand" style={{ width: `${percent}%` }} />
           </div>
-        </div>
-      ) : hasGuestQuota ? (
-        <div className="mt-5">
-          <div className="flex items-center justify-between text-sm text-slate-600">
-            <span>{t(TEXT.quotaUsed)}</span>
-            <span>
-              {used} / {limit}
-            </span>
-          </div>
-          <div
-            className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200"
-            role="progressbar"
-            aria-label={t(TEXT.quotaUsed)}
-            aria-valuenow={percent}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          >
-            <div className="h-full rounded-full bg-sky-500" style={{ width: `${percent}%` }} />
-          </div>
-          {typeof remaining === 'number' && (
-            <p className="mt-2 text-xs text-slate-500">
-              {remaining} {locale === 'fr' ? 'restants' : 'remaining'}
+          {freeTrialsLeft === null && typeof remaining === 'number' && (
+            <p className="mt-3 text-xs text-ink-faint">
+              {remaining} {t(TEXT.remaining)}
             </p>
           )}
         </div>
       ) : (
-        <dl className="mt-5 grid gap-3 sm:grid-cols-2">
-          <Stat label={TEXT.plan} value={quota?.plan} />
-          <Stat label={TEXT.credits} value={quota?.credits} />
-          <Stat label={TEXT.freeTrials} value={quota?.free_uses_left} />
-          <Stat label={TEXT.dailyJobs} value={quota?.daily_jobs_left} />
-          <Stat label={TEXT.dailyRenders} value={quota?.daily_renders_left} />
-          <Stat label={TEXT.dailyAi} value={quota?.ai_uses_left_today} />
-        </dl>
+        <div className="mt-7 space-y-6 border-t border-line/60 pt-6">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl bg-surface px-4 py-4 ring-1 ring-line/50">
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-faint">{t(TEXT.planTitle)}</p>
+              <p className="mt-2 text-xl font-semibold text-ink">{planLabel(quota?.plan, t)}</p>
+            </div>
+            <div className="rounded-2xl bg-brand/10 px-4 py-4 ring-1 ring-brand/20">
+              <p className="text-xs font-medium uppercase tracking-wide text-brand">{t(TEXT.creditsTitle)}</p>
+              <p className="mt-2 text-2xl font-bold text-brand">{quota?.credits ?? '—'}</p>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold text-ink">{t(TEXT.dailyTitle)}</p>
+            <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <Stat label={TEXT.trialsLabel} value={quota?.free_uses_left} />
+              <Stat label={TEXT.processingLabel} value={quota?.daily_jobs_left} />
+              <Stat label={TEXT.documentsLabel} value={quota?.daily_renders_left} />
+              <Stat label={TEXT.assistantLabel} value={quota?.ai_uses_left_today} />
+            </dl>
+          </div>
+        </div>
       )}
     </section>
   )
