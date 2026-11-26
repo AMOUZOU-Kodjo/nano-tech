@@ -2,108 +2,61 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocale } from '@/hooks/useLocale.js'
 import { useBilling } from '@/hooks/useBilling.js'
 
-const BILLING_LABELS = {
-  billing_enabled: { fr: 'Facturation active', en: 'Billing enabled' },
-  paywall_enabled: { fr: 'Paywall actif', en: 'Paywall enabled' },
-  credits: { fr: 'Crédits', en: 'Credits' },
-  plan: { fr: 'Formule actuelle', en: 'Current plan' },
-  plans: { fr: 'Formules disponibles', en: 'Available plans' },
-  price_id: { fr: 'Identifiant du tarif', en: 'Price ID' },
-}
-
-const CHECKOUT_LABELS = {
-  session_id: { fr: 'Identifiant de session', en: 'Session ID' },
-}
-
 const TEXT = {
   yes: { fr: 'Oui', en: 'Yes' },
   no: { fr: 'Non', en: 'No' },
-  noInformation: { fr: 'Aucune information disponible.', en: 'No information available.' },
-  paywallActive: { fr: 'Paywall actif', en: 'Paywall enabled' },
-  paywallDisabled: { fr: 'Paywall désactivé', en: 'Paywall disabled' },
+  paywallActive: { fr: 'Abonnement requis', en: 'Subscription required' },
+  paywallDisabled: { fr: 'Accès gratuit', en: 'Free access' },
   loading: { fr: 'Chargement…', en: 'Loading…' },
   refresh: { fr: 'Actualiser', en: 'Refresh' },
   title: { fr: 'Facturation', en: 'Billing' },
   subtitle: {
-    fr: 'État des crédits, du paywall et session de paiement.',
-    en: 'Credits status, paywall status and payment session.',
+    fr: 'Consultez votre formule, vos crédits et vos paiements.',
+    en: 'View your plan, credits and payments.',
   },
-  statusTitle: { fr: 'État de facturation', en: 'Billing status' },
+  statusTitle: { fr: 'Votre formule', en: 'Your plan' },
   freePeriod: {
-    fr: 'Le paywall est désactivé pendant la période gratuite.',
-    en: 'The paywall is disabled during the free period.',
+    fr: 'Vous profitez actuellement de la période gratuite. Aucun paiement n’est nécessaire.',
+    en: 'You are currently in the free period. No payment is required.',
   },
-  noStatus: { fr: 'Aucun état disponible.', en: 'No status available.' },
-  startPayment: { fr: 'Démarrer un paiement', en: 'Start a payment' },
+  noStatus: {
+    fr: 'Les informations de facturation ne sont pas encore disponibles.',
+    en: 'Billing information is not available yet.',
+  },
+  currentPlan: { fr: 'Formule actuelle', en: 'Current plan' },
+  availableCredits: { fr: 'Crédits disponibles', en: 'Available credits' },
+  freePlan: { fr: 'Gratuit', en: 'Free' },
+  proPlan: { fr: 'Pro', en: 'Pro' },
+  startPayment: { fr: 'Passer à la formule Pro', en: 'Upgrade to Pro' },
   checkoutIntro: {
-    fr: 'La session est créée par l’API, sans choix de plan inventé.',
-    en: 'The session is created by the API, without any invented plan choice.',
+    fr: 'Vous serez redirigé vers une page de paiement sécurisée.',
+    en: 'You will be redirected to a secure payment page.',
   },
-  creating: { fr: 'Création…', en: 'Creating…' },
-  createSession: { fr: 'Créer une session', en: 'Create a session' },
+  creating: { fr: 'Préparation du paiement…', en: 'Preparing payment…' },
+  createSession: { fr: 'Continuer vers le paiement', en: 'Continue to payment' },
   checkoutUnavailable: {
-    fr: 'La création de session sera disponible quand la facturation sera activée côté API.',
-    en: 'Session creation will be available once billing is enabled on the API side.',
+    fr: 'Le paiement en ligne sera bientôt disponible. Vous pouvez continuer à utiliser la formule gratuite.',
+    en: 'Online payment will be available soon. You can keep using the free plan.',
   },
-  openSession: { fr: 'Ouvrir la session de paiement', en: 'Open the payment session' },
+  openSession: { fr: 'Reprendre le paiement', en: 'Resume payment' },
   noCheckoutLink: {
-    fr: 'La session a été créée mais aucun lien de paiement n’a été renvoyé.',
-    en: 'The session was created but no payment link was returned.',
+    fr: 'Le lien de paiement n’est pas disponible pour le moment. Réessayez dans quelques instants.',
+    en: 'The payment link is not available right now. Please try again shortly.',
+  },
+  error: {
+    fr: 'Une erreur est survenue. Réessayez dans quelques instants.',
+    en: 'Something went wrong. Please try again shortly.',
   },
 }
 
-function formatValue(value, t) {
-  if (value === null || value === undefined) {
-    return '—'
+function planLabel(value, t) {
+  if (value === 'free') {
+    return t(TEXT.freePlan)
   }
-  if (typeof value === 'boolean') {
-    return t(value ? TEXT.yes : TEXT.no)
+  if (value === 'pro') {
+    return t(TEXT.proPlan)
   }
-  if (Array.isArray(value)) {
-    return value.map((item) => {
-      if (item && typeof item === 'object') {
-        return item.name ?? item.title ?? item.id ?? item.code ?? String(item)
-      }
-      return String(item)
-    }).join(', ') || '—'
-  }
-  if (typeof value === 'object') {
-    return Object.keys(value).join(', ') || '—'
-  }
-  return String(value)
-}
-
-function rowsFrom(values, labels, excluded, t) {
-  if (!values || typeof values !== 'object' || Array.isArray(values)) {
-    return []
-  }
-
-  return Object.entries(values)
-    .filter(([key, value]) => !excluded.includes(key) && value !== null && value !== undefined)
-    .map(([key, value]) => ({
-      key,
-      label: t(labels[key] ?? key),
-      value: formatValue(value, t),
-    }))
-}
-
-function ValueList({ rows }) {
-  const { t } = useLocale()
-
-  if (!rows.length) {
-    return <p className="mt-4 text-sm text-slate-600">{t(TEXT.noInformation)}</p>
-  }
-
-  return (
-    <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-      {rows.map((row) => (
-        <div key={row.key} className="rounded-lg bg-slate-50 p-3">
-          <dt className="text-xs uppercase tracking-wide text-slate-500">{row.label}</dt>
-          <dd className="mt-1 break-all text-sm text-slate-700">{row.value}</dd>
-        </div>
-      ))}
-    </dl>
-  )
+  return null
 }
 
 // N'autorise qu'une URL http(s) avant d'afficher un lien de paiement externe.
@@ -111,7 +64,7 @@ function safeCheckoutUrl(value) {
   return typeof value === 'string' && /^https?:\/\//i.test(value) ? value : ''
 }
 
-// Page facturation : état du paywall et lancement du checkout documenté.
+// Page facturation : formule, crédits et accès au paiement.
 export default function BillingPage() {
   const { t } = useLocale()
   const billing = useBilling()
@@ -119,7 +72,6 @@ export default function BillingPage() {
     status,
     checkout,
     checkoutUrl,
-    sessionId,
     loading,
     error,
     getBillingStatus: fetchBillingStatus,
@@ -145,8 +97,6 @@ export default function BillingPage() {
   }, [fetchBillingStatus])
 
   const checkoutLink = safeCheckoutUrl(checkoutUrl)
-  const statusRows = rowsFrom(status, BILLING_LABELS, ['checkout_url', 'session_id'], t)
-  const checkoutRows = rowsFrom(checkout, CHECKOUT_LABELS, ['checkout_url'], t)
   const paywallLabel = typeof status?.paywall_enabled === 'boolean'
     ? t(status.paywall_enabled ? TEXT.paywallActive : TEXT.paywallDisabled)
     : null
@@ -154,6 +104,11 @@ export default function BillingPage() {
     ? status.plans.find((plan) => plan?.id === 'pro')
     : null
   const checkoutAvailable = status?.billing_enabled === true && proPlan?.checkout_available !== false
+  const currentPlan = planLabel(status?.plan, t)
+    ?? (typeof status?.paywall_enabled === 'boolean'
+      ? t(status.paywall_enabled ? TEXT.proPlan : TEXT.freePlan)
+      : '—')
+  const credits = status?.credits ?? '—'
 
   async function handleCheckout() {
     if (checkoutInFlight.current) {
@@ -206,7 +161,18 @@ export default function BillingPage() {
           </p>
         )}
 
-        {status && <ValueList rows={statusRows} />}
+        {status && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-500">{t(TEXT.currentPlan)}</p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">{currentPlan}</p>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-500">{t(TEXT.availableCredits)}</p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">{credits}</p>
+            </div>
+          </div>
+        )}
         {!status && !loading && <p className="mt-4 text-sm text-slate-600">{t(TEXT.noStatus)}</p>}
       </div>
 
@@ -222,7 +188,7 @@ export default function BillingPage() {
           {t(checkoutPending ? TEXT.creating : TEXT.createSession)}
         </button>
 
-        {status && !checkoutAvailable && (
+        {status && !checkoutAvailable && !checkoutLink && (
           <p className="mt-4 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
             {t(TEXT.checkoutUnavailable)}
           </p>
@@ -237,22 +203,16 @@ export default function BillingPage() {
           </a>
         )}
 
-        {checkout && (
-          <div className="mt-5">
-            {checkoutLink || sessionId ? (
-              <ValueList rows={checkoutRows} />
-            ) : (
-              <p className="mt-3 text-sm text-slate-600">
-                {t(TEXT.noCheckoutLink)}
-              </p>
-            )}
-          </div>
+        {checkout && !checkoutLink && (
+          <p className="mt-3 text-sm text-slate-600">
+            {t(TEXT.noCheckoutLink)}
+          </p>
         )}
       </div>
 
       {error && (
         <p role="alert" className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-          {error.message}
+          {t(TEXT.error)}
         </p>
       )}
     </section>
